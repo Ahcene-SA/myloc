@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MYLOC.DZ
 
-## Getting Started
+Site vitrine de location de voitures en Algérie, construit avec [Next.js](https://nextjs.org) et [Tailwind CSS](https://tailwindcss.com).
 
-First, run the development server:
+## À propos
+
+MYLOC.DZ est une agence de location de voitures proposant une large gamme de véhicules : citadines, SUV et berlines. Le site présente la flotte, les avantages du service, les coordonnées et un formulaire de réservation qui redirige vers WhatsApp.
+
+## Structure
+
+- `app/` — pages et layout Next.js (App Router)
+- `components/` — composants React réutilisables (Navbar, Hero, Fleet, Features, About, Contact, Booking, Footer)
+- `public/images/` — images et logos
+- `lib/utils.ts` — utilitaires Tailwind (`cn`)
+
+## Développement
+
+Lancer le serveur de développement :
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Ouvrir [http://localhost:3000](http://localhost:3000) dans le navigateur.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Build
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Générer une version statique dans le dossier `dist/` :
 
-## Learn More
+```bash
+npm run build
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Déploiement
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Le projet est configuré en `output: "export"` pour produire un site statique. Le contenu du dossier `dist/` peut être déployé sur n’importe quel hébergement statique.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Personnalisation
 
-## Deploy on Vercel
+- Modifier les véhicules dans `components/Fleet.tsx`
+- Modifier les coordonnées dans `components/Contact.tsx` et `components/Footer.tsx`
+- Modifier le numéro WhatsApp dans `components/Booking.tsx`
+- Remplacer les images dans `public/images/`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Contact
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Téléphone / WhatsApp : +213 555 00 00 00
+- Email : contact@myloc.dz
+- Adresse : Alger, Algérie

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 48" fill="none">
+  <!-- Stylized car icon -->
+  <g transform="translate(0, 8)">
+    <path d="M4 22h24c2 0 4-1 4-3l-2-6c-1-2-3-3-5-3H9C6 10 4 12 3 14L1 18c0 1 1 3 3 4z" fill="#43B0E6" opacity="0.15"/>
+    <path d="M8 20c0-3 2-5 5-5h10c3 0 5 2 5 5" stroke="#43B0E6" stroke-width="2.5" stroke-linecap="round"/>
+    <circle cx="10" cy="23" r="3" fill="#43B0E6"/>
+    <circle cx="26" cy="23" r="3" fill="#43B0E6"/>
+    <path d="M6 16l2-4h16l2 4" stroke="#43B0E6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <!-- Separator -->
+  <line x1="44" y1="4" x2="44" y2="44" stroke="#0F172A" stroke-width="1.5" opacity="0.2"/>
+  <!-- MYLOC.DZ -->
+  <text x="54" y="28" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800" fill="#0F172A">MYLOC</text>
+  <text x="135" y="28" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800" fill="#43B0E6">.DZ</text>
+  <!-- CAR RENTAL -->
+  <text x="54" y="40" font-family="Inter, Arial, sans-serif" font-size="9" font-weight="600" fill="#0F172A" opacity="0.7" letter-spacing="1.5">CAR RENTAL</text>
+</svg>
