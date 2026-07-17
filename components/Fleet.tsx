@@ -217,17 +217,28 @@ export function Fleet() {
           ))}
         </div>
 
-        <div className="mt-12 flex gap-5 overflow-x-auto px-4 pb-8 pt-4 [-ms-overflow-style:none] [scrollbar-width:none] snap-x snap-mandatory sm:gap-6 sm:px-6 lg:px-8"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-        >
-          {filteredCars.map((car, index) => (
-            <div
-              key={car.id}
-              className="w-[78vw] shrink-0 snap-center sm:w-[52vw] md:w-[40vw] lg:w-[32vw] xl:w-[26vw]"
-            >
-              <CarCard car={car} index={index} />
-            </div>
-          ))}
+        <div className="relative mx-auto mt-4 w-full overflow-hidden sm:mt-6 lg:mt-8">
+          <motion.div
+            className="flex w-max gap-5 px-4 sm:gap-6"
+            animate={{ x: [0, -1920] }}
+            transition={{
+              x: {
+                repeat: Infinity,
+                repeatType: "loop",
+                duration: 30,
+                ease: "linear",
+              },
+            }}
+          >
+            {[...filteredCars, ...filteredCars].map((car, index) => (
+              <div
+                key={`${car.id}-${index}`}
+                className="w-[78vw] shrink-0 sm:w-[52vw] md:w-[40vw] lg:w-[32vw] xl:w-[26vw]"
+              >
+                <CarCard car={car} index={index} />
+              </div>
+            ))}
+          </motion.div>
         </div>
       </div>
     </section>
