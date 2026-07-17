@@ -45,6 +45,12 @@ export function Navbar() {
 
         <div className="hidden items-center gap-4 md:flex">
           <a
+            href="admin.html"
+            className="rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:border-brand hover:text-brand"
+          >
+            Admin
+          </a>
+          <a
             href="login.html"
             className="rounded-full bg-brand px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-hover"
           >
@@ -80,6 +86,13 @@ export function Navbar() {
               {link.label}
             </a>
           ))}
+          <a
+            href="admin.html"
+            onClick={() => setIsOpen(false)}
+            className="rounded-lg px-4 py-3 text-base font-medium text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-900"
+          >
+            Admin
+          </a>
           <a
             href="login.html"
             onClick={() => setIsOpen(false)}
