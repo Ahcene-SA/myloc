@@ -77,10 +77,66 @@ class CarController
         Response::success('Car marked as unavailable.');
     }
 
+    public function uploadImage(): void
+    {
+        if (empty($_FILES['image'])) {
+            Response::error('No image file provided.', 422);
+        }
+
+        $file = $_FILES['image'];
+
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            Response::error('Image upload failed.', 400);
+        }
+
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+        $mimeType = $finfo->file($file['tmp_name']);
+
+        if (!in_array($mimeType, $allowedTypes, true)) {
+            Response::error('Invalid image type. Allowed: jpeg, png, webp, gif.', 422);
+        }
+
+        $maxSize = 5 * 1024 * 1024; // 5 MB
+        if ($file['size'] > $maxSize) {
+            Response::error('Image too large. Maximum size is 5 MB.', 422);
+        }
+
+        $uploadDir = __DIR__ . '/../../public/images/cars';
+        if (!is_dir($uploadDir)) {
+            if (!mkdir($uploadDir, 0755, true) && !is_dir($uploadDir)) {
+                Response::error('Failed to create upload directory.', 500);
+            }
+        }
+
+        $extension = match ($mimeType) {
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/webp' => 'webp',
+            'image/gif' => 'gif',
+            default => 'png',
+        };
+
+        $filename = 'car-' . bin2hex(random_bytes(8)) . '.' . $extension;
+        $targetPath = $uploadDir . '/' . $filename;
+
+        if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
+            Response::error('Failed to save uploaded image.', 500);
+        }
+
+        $scheme = $_SERVER['REQUEST_SCHEME'] ?? 'http';
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $publicPath = dirname($_SERVER['SCRIPT_NAME']);
+        $publicPath = $publicPath === '/' ? '' : $publicPath;
+        $imageUrl = "{$scheme}://{$host}{$publicPath}/images/cars/{$filename}";
+
+        Response::success('Image uploaded.', ['image_url' => $imageUrl]);
+    }
+
     private function validateCarInput(array $input, bool $requireAll): array
     {
-        $fields = ['category', 'name', 'description', 'price_per_day', 'transmission', 'seats', 'year'];
-        $optional = ['image_url', 'status'];
+        $fields = ['name', 'price_per_day', 'transmission', 'seats', 'year'];
+        $optional = ['category', 'description', 'image_url', 'status'];
 
         if ($requireAll) {
             $missing = Validator::required($input, $fields);
@@ -93,10 +149,12 @@ class CarController
 
         if (array_key_exists('category', $input)) {
             $category = Validator::sanitizeString($input['category']);
-            if (!Validator::inArray($category, ['citadine', 'suv', 'berline'])) {
+            if ($category !== '' && !Validator::inArray($category, ['citadine', 'suv', 'berline'])) {
                 Response::error('Category must be citadine, suv, or berline.', 422);
             }
-            $data['category'] = $category;
+            if ($category !== '') {
+                $data['category'] = $category;
+            }
         }
 
         if (array_key_exists('name', $input)) {
@@ -121,8 +179,8 @@ class CarController
 
         if (array_key_exists('transmission', $input)) {
             $transmission = Validator::sanitizeString($input['transmission']);
-            if (!Validator::stringLength($transmission, 1, 50)) {
-                Response::error('Transmission must be between 1 and 50 characters.', 422);
+            if (!Validator::inArray($transmission, ['manuel', 'automatique'])) {
+                Response::error('Transmission must be manuel or automatique.', 422);
             }
             $data['transmission'] = $transmission;
         }

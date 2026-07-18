@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS cars (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    category ENUM('citadine', 'suv', 'berline') NOT NULL,
+    category ENUM('citadine', 'suv', 'berline') NOT NULL DEFAULT 'citadine',
     name VARCHAR(100) NOT NULL,
     description TEXT,
     price_per_day DECIMAL(10, 2) NOT NULL,

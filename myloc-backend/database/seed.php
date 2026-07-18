@@ -22,8 +22,8 @@ $dotenv->safeLoad();
 try {
     $db = (new Database())->getPdo();
 
-    $email = 'admin@admin';
-    $plainPassword = 'admin';
+    $email = 'admin@gmail.com';
+    $plainPassword = 'Adminalg123';
     $fullName = 'Administrator';
     $phone = '+213 000 00 00 00';
 

@@ -54,7 +54,7 @@ class Car
             VALUES (:category, :name, :description, :price_per_day, :transmission, :seats, :year, :image_url, :status)
         ");
         $stmt->execute([
-            ':category' => $data['category'],
+            ':category' => $data['category'] ?? 'citadine',
             ':name' => $data['name'],
             ':description' => $data['description'],
             ':price_per_day' => $data['price_per_day'],

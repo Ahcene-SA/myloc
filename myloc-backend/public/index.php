@@ -64,6 +64,7 @@ $router->get('/api/cars/{id}', fn(array $params) => $carController->show($params
 
 // Admin car routes
 $router->post('/api/cars', fn() => $carController->create(), 'admin');
+$router->post('/api/cars/upload', fn() => $carController->uploadImage(), 'admin');
 $router->put('/api/cars/{id}', fn(array $params) => $carController->update($params), 'admin');
 $router->delete('/api/cars/{id}', fn(array $params) => $carController->delete($params), 'admin');
 

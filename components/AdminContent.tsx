@@ -18,7 +18,18 @@ import {
   X,
   MessageSquare,
 } from "lucide-react";
-import { fetchCars, mapApiCarToCar, fetchClients, fetchAllReservations, updateReservationStatus, CarFromApi, deleteCar, ReservationFromApi } from "@/lib/api";
+import {
+  fetchCars,
+  mapApiCarToCar,
+  fetchClients,
+  fetchAllReservations,
+  updateReservationStatus,
+  CarFromApi,
+  deleteCar,
+  createCar,
+  uploadCarImage,
+  ReservationFromApi,
+} from "@/lib/api";
 
 export function AdminContent() {
   const { activeTab } = useAdmin();
@@ -220,6 +231,17 @@ function CarsView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [filter, setFilter] = useState("");
+  const [showForm, setShowForm] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [form, setForm] = useState({
+    name: "",
+    price_per_day: "",
+    transmission: "manuel",
+    seats: "",
+    year: new Date().getFullYear().toString(),
+  });
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
 
   const reloadCars = () => {
     setLoading(true);
@@ -247,6 +269,58 @@ function CarsView() {
     }
   };
 
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setPhotoFile(file);
+    if (file) {
+      setPreviewUrl(URL.createObjectURL(file));
+    } else {
+      setPreviewUrl(null);
+    }
+  };
+
+  const resetForm = () => {
+    setForm({
+      name: "",
+      price_per_day: "",
+      transmission: "manuel",
+      seats: "",
+      year: new Date().getFullYear().toString(),
+    });
+    setPhotoFile(null);
+    setPreviewUrl(null);
+    setShowForm(false);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError("");
+
+    try {
+      let imageUrl = "";
+      if (photoFile) {
+        imageUrl = await uploadCarImage(photoFile);
+      }
+
+      await createCar({
+        name: form.name,
+        price_per_day: parseFloat(form.price_per_day),
+        transmission: form.transmission,
+        seats: parseInt(form.seats, 10),
+        year: parseInt(form.year, 10),
+        image_url: imageUrl || undefined,
+      });
+
+      resetForm();
+      reloadCars();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Échec de l'ajout du véhicule.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const filteredCars = cars.filter((car) =>
     car.name.toLowerCase().includes(filter.toLowerCase())
   );
@@ -268,7 +342,7 @@ function CarsView() {
 
   return (
     <div>
-      <SectionHeader icon={Car} title="Cars" />
+      <SectionHeader icon={Car} title="Véhicules" />
 
       {error && (
         <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
@@ -287,11 +361,142 @@ function CarsView() {
             className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm outline-none focus:border-brand"
           />
         </div>
-        <button className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-5 py-3 text-sm font-bold text-white hover:bg-brand-hover">
+        <button
+          onClick={() => setShowForm(true)}
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-5 py-3 text-sm font-bold text-white hover:bg-brand-hover"
+        >
           <Plus className="h-4 w-4" />
           Ajouter un véhicule
         </button>
       </div>
+
+      {showForm && (
+        <div className="mb-8 rounded-3xl bg-white p-6 shadow-sm shadow-slate-200/50 sm:p-8">
+          <div className="mb-5 flex items-center justify-between">
+            <h3 className="text-xl font-bold text-slate-900">Nouveau véhicule</h3>
+            <button
+              onClick={() => setShowForm(false)}
+              className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="grid gap-5 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <label className="mb-1.5 block text-sm font-semibold text-slate-700">Photo du véhicule</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoChange}
+                className="block w-full text-sm text-slate-600 file:mr-4 file:rounded-xl file:border-0 file:bg-brand/10 file:px-4 file:py-2.5 file:text-sm file:font-bold file:text-brand hover:file:bg-brand/20"
+              />
+              {previewUrl && (
+                <div className="mt-3 h-40 overflow-hidden rounded-2xl bg-gradient-to-b from-slate-50 to-slate-200">
+                  <img
+                    src={previewUrl}
+                    alt="Aperçu"
+                    className="mx-auto h-full w-auto object-contain p-2"
+                  />
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-semibold text-slate-700">Nom</label>
+              <input
+                type="text"
+                required
+                value={form.name}
+                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                placeholder="Ex: Renault Clio"
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-brand"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-semibold text-slate-700">Prix par jour (DA)</label>
+              <input
+                type="number"
+                required
+                min={1}
+                step="0.01"
+                value={form.price_per_day}
+                onChange={(e) => setForm((f) => ({ ...f, price_per_day: e.target.value }))}
+                placeholder="Ex: 4500"
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-brand"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-semibold text-slate-700">Type de véhicule</label>
+              <select
+                required
+                value={form.transmission}
+                onChange={(e) => setForm((f) => ({ ...f, transmission: e.target.value }))}
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-brand"
+              >
+                <option value="manuel">Manuel</option>
+                <option value="automatique">Automatique</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-semibold text-slate-700">Places</label>
+              <input
+                type="text"
+                required
+                value={form.seats}
+                onChange={(e) => setForm((f) => ({ ...f, seats: e.target.value }))}
+                placeholder="Ex: 5"
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-brand"
+              />
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="mb-1.5 block text-sm font-semibold text-slate-700">Année</label>
+              <input
+                type="number"
+                required
+                min={1900}
+                max={2100}
+                value={form.year}
+                onChange={(e) => setForm((f) => ({ ...f, year: e.target.value }))}
+                placeholder="Ex: 2022"
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-brand sm:max-w-xs"
+              />
+            </div>
+
+            <div className="sm:col-span-2 flex flex-col gap-3 sm:flex-row">
+              <button
+                type="submit"
+                disabled={submitting}
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand px-6 py-3 text-sm font-bold text-white hover:bg-brand-hover disabled:opacity-60 sm:flex-none"
+              >
+                {submitting ? (
+                  <>
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                    Enregistrement...
+                  </>
+                ) : (
+                  <>
+                    <Check className="h-4 w-4" />
+                    Enregistrer
+                  </>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                disabled={submitting}
+                className="rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-60"
+              >
+                Annuler
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex h-64 items-center justify-center">
@@ -308,7 +513,7 @@ function CarsView() {
               >
                 <div className="relative h-40 overflow-hidden rounded-2xl bg-gradient-to-b from-slate-50 to-slate-200">
                   <img
-                    src={`./${mapped.image}`}
+                    src={mapped.image.startsWith("http") ? mapped.image : `./${mapped.image}`}
                     alt={car.name}
                     className="mx-auto h-full w-auto object-contain p-2"
                   />

@@ -199,6 +199,40 @@ export async function createCar(car: Partial<CarFromApi>): Promise<CarFromApi> {
   return request<CarFromApi>("POST", "/cars", car, true);
 }
 
+export async function uploadCarImage(file: File): Promise<string> {
+  const API_BASE = getApiBase();
+  const url = `${API_BASE}/api/cars/upload`;
+  const formData = new FormData();
+  formData.append("image", file);
+
+  const token = getToken();
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers,
+    body: formData,
+  });
+
+  const data = (await response.json().catch(() => ({
+    success: false,
+    error: "Réponse invalide du serveur.",
+  }))) as { success?: boolean; image_url?: string; error?: string };
+
+  if (!response.ok || data.success === false) {
+    throw new Error(data.error || `Erreur HTTP ${response.status}`);
+  }
+
+  if (!data.image_url) {
+    throw new Error("Aucune URL d'image reçue.");
+  }
+
+  return data.image_url;
+}
+
 export async function updateCar(id: number, car: Partial<CarFromApi>): Promise<CarFromApi> {
   return request<CarFromApi>("PUT", `/cars/${id}`, car, true);
 }
@@ -282,7 +316,11 @@ export function mapApiCarToCar(car: CarFromApi): {
     id: String(car.id),
     name: car.name,
     category: car.category,
-    image: car.image_url ? car.image_url.replace(/^\/?/, "") : "images/audi-png-auto-car-0.png",
+    image: car.image_url
+      ? car.image_url.startsWith("http")
+        ? car.image_url
+        : car.image_url.replace(/^\/?/, "")
+      : "images/audi-png-auto-car-0.png",
     price: typeof car.price_per_day === "string" ? parseFloat(car.price_per_day) : car.price_per_day,
     priceUnit: "jour",
     transmission: car.transmission,
