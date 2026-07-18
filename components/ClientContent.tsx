@@ -1,19 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useClient } from "./ClientContext";
-import { ClientTab } from "./ClientSidebar";
+import { fetchCars, mapApiCarToCar, createReservation, fetchMyReservations, CarFromApi } from "@/lib/api";
 import {
   User,
   Calendar,
   PlusCircle,
   CreditCard,
   Settings,
-  Home,
   Car,
   Clock,
-  Star,
   Mail,
   Phone,
   MapPin,
@@ -201,76 +199,182 @@ function ProfilView() {
   );
 }
 
+interface ReservationFromApi {
+  id: number;
+  car_name?: string;
+  start_date?: string;
+  end_date?: string;
+  status?: string;
+  total_price?: string | number;
+}
+
 function ReservationsView() {
+  const [reservations, setReservations] = useState<ReservationFromApi[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetchMyReservations()
+      .then((data) => setReservations(data as ReservationFromApi[]))
+      .catch((e) => setError(e instanceof Error ? e.message : "Impossible de charger les réservations."))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const statusLabel = (status?: string) => {
+    switch (status) {
+      case "confirmed":
+        return "Confirmée";
+      case "pending":
+        return "En attente";
+      case "cancelled":
+        return "Annulée";
+      default:
+        return status || "Inconnue";
+    }
+  };
+
+  const statusClass = (status?: string) => {
+    switch (status) {
+      case "confirmed":
+        return "bg-green-100 text-green-700";
+      case "pending":
+        return "bg-blue-100 text-blue-700";
+      case "cancelled":
+        return "bg-red-100 text-red-700";
+      default:
+        return "bg-slate-100 text-slate-600";
+    }
+  };
+
   return (
     <div>
       <SectionHeader icon={Calendar} title="Mes réservations" />
-      <div className="space-y-4">
-        {[1, 2, 3, 4].map((_, i) => (
-          <div
-            key={i}
-            className="rounded-3xl bg-white p-5 shadow-sm shadow-slate-200/50 sm:p-6"
-          >
-            <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-              <div className="flex items-center gap-4">
-                <div className="h-16 w-24 rounded-xl bg-slate-200" />
-                <div>
-                  <div className="text-lg font-bold text-slate-900">Audi A4</div>
-                  <div className="text-sm text-slate-500">Du 12 au 18 juillet 2026 · 6 jours</div>
+
+      {error && (
+        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="flex h-64 items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand/30 border-t-brand" />
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {reservations.map((res) => (
+            <div
+              key={res.id}
+              className="rounded-3xl bg-white p-5 shadow-sm shadow-slate-200/50 sm:p-6"
+            >
+              <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+                <div className="flex items-center gap-4">
+                  <div className="h-16 w-24 rounded-xl bg-slate-200" />
+                  <div>
+                    <div className="text-lg font-bold text-slate-900">{res.car_name || "Véhicule"}</div>
+                    <div className="text-sm text-slate-500">
+                      Du {res.start_date || "?"} au {res.end_date || "?"}
+                    </div>
+                  </div>
                 </div>
+                <span className={`rounded-full px-4 py-1.5 text-sm font-semibold ${statusClass(res.status)}`}>
+                  {statusLabel(res.status)}
+                </span>
               </div>
-              <span
-                className={`rounded-full px-4 py-1.5 text-sm font-semibold ${
-                  i === 0
-                    ? "bg-green-100 text-green-700"
-                    : i === 1
-                    ? "bg-blue-100 text-blue-700"
-                    : "bg-slate-100 text-slate-600"
-                }`}
-              >
-                {i === 0 ? "Active" : i === 1 ? "À venir" : "Terminée"}
-              </span>
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                <button className="rounded-xl bg-brand px-4 py-2 text-sm font-bold text-white hover:bg-brand-hover">
+                  Détails
+                </button>
+                <button className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50">
+                  Télécharger la facture
+                </button>
+              </div>
             </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <button className="rounded-xl bg-brand px-4 py-2 text-sm font-bold text-white hover:bg-brand-hover">
-                Détails
-              </button>
-              <button className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50">
-                Télécharger la facture
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
+
+      {!loading && reservations.length === 0 && (
+        <p className="mt-8 text-center text-slate-500">Aucune réservation pour le moment.</p>
+      )}
     </div>
   );
 }
 
-const cars = [
-  { id: "fiat-500", name: "Fiat 500", category: "citadine", price: 45, transmission: "Manuelle", seats: 4, year: 2025 },
-  { id: "renault-clio", name: "Renault Clio", category: "citadine", price: 50, transmission: "Automatique", seats: 5, year: 2024 },
-  { id: "citroen-c3", name: "Citroën C3", category: "citadine", price: 48, transmission: "Manuelle", seats: 5, year: 2024 },
-  { id: "opel-mokka", name: "Opel Mokka", category: "suv", price: 75, transmission: "Automatique", seats: 5, year: 2025 },
-  { id: "fiat-500x", name: "Fiat 500X", category: "suv", price: 72, transmission: "Automatique", seats: 5, year: 2024 },
-  { id: "renault-captur", name: "Renault Captur", category: "suv", price: 70, transmission: "Automatique", seats: 5, year: 2024 },
-  { id: "renault-talisman", name: "Renault Talisman", category: "berline", price: 85, transmission: "Automatique", seats: 5, year: 2024 },
-  { id: "peugeot-508", name: "Peugeot 508", category: "berline", price: 90, transmission: "Automatique", seats: 5, year: 2025 },
-  { id: "vw-passat", name: "Volkswagen Passat", category: "berline", price: 88, transmission: "Automatique", seats: 5, year: 2024 },
-];
-
 function ReserverView() {
+  const [cars, setCars] = useState<CarFromApi[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [nameFilter, setNameFilter] = useState("");
   const [priceFilter, setPriceFilter] = useState<"" | number>("");
+  const [selectedCar, setSelectedCar] = useState<CarFromApi | null>(null);
+  const [form, setForm] = useState({
+    start_date: "",
+    end_date: "",
+    full_name: "",
+    email: "",
+    phone: "",
+  });
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    fetchCars()
+      .then((data) => setCars(data.filter((c) => c.status === "available")))
+      .catch((e) => setError(e instanceof Error ? e.message : "Impossible de charger les véhicules."))
+      .finally(() => setLoading(false));
+  }, []);
 
   const filteredCars = cars.filter((car) => {
+    const mapped = mapApiCarToCar(car);
     const matchesName = car.name.toLowerCase().includes(nameFilter.toLowerCase());
-    const matchesPrice = priceFilter === "" || car.price <= Number(priceFilter);
+    const matchesPrice = priceFilter === "" || mapped.price <= Number(priceFilter);
     return matchesName && matchesPrice;
   });
+
+  const handleReserve = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedCar) return;
+    setError("");
+    setSuccess("");
+    setSubmitting(true);
+
+    try {
+      await createReservation({
+        car_id: selectedCar.id,
+        start_date: form.start_date,
+        end_date: form.end_date,
+        full_name: form.full_name,
+        email: form.email,
+        phone: form.phone,
+      });
+      setSuccess("Réservation créée avec succès !");
+      setSelectedCar(null);
+      setForm({ start_date: "", end_date: "", full_name: "", email: "", phone: "" });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Échec de la réservation.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const today = new Date().toISOString().split("T")[0];
 
   return (
     <div>
       <SectionHeader icon={PlusCircle} title="Réserver un véhicule" />
+
+      {error && (
+        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+          {error}
+        </div>
+      )}
+
+      {success && (
+        <div className="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-600">
+          {success}
+        </div>
+      )}
 
       {/* Filters */}
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -296,42 +400,139 @@ function ReserverView() {
         </div>
       </div>
 
-      {/* Car grid */}
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {filteredCars.map((car) => (
-          <div
-            key={car.id}
-            className="rounded-3xl bg-white p-5 shadow-sm shadow-slate-200/50 transition-shadow hover:shadow-md"
-          >
-            <div className="relative h-40 overflow-hidden rounded-2xl bg-gradient-to-b from-slate-50 to-slate-200">
-              <img
-                src="./images/audi-png-auto-car-0.png"
-                alt={car.name}
-                className="mx-auto h-full w-auto object-contain p-2"
-              />
-            </div>
-            <div className="mt-4">
-              <span className="inline-block rounded-full bg-brand/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-brand">
-                {car.category}
-              </span>
-              <h3 className="mt-2 text-xl font-bold text-slate-900">{car.name}</h3>
-              <div className="mt-1 text-2xl font-extrabold text-brand">{car.price}€</div>
-              <div className="text-xs text-slate-500">/{"jour"}</div>
-            </div>
-            <div className="mt-4 grid grid-cols-3 gap-2 rounded-2xl border border-slate-100 bg-slate-50 p-3">
-              <div className="text-center text-xs font-semibold text-slate-600">{car.transmission}</div>
-              <div className="text-center text-xs font-semibold text-slate-600">{car.seats} places</div>
-              <div className="text-center text-xs font-semibold text-slate-600">{car.year}</div>
-            </div>
-            <button className="mt-4 w-full rounded-xl bg-brand px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-brand-hover">
-              Réserver
-            </button>
-          </div>
-        ))}
-      </div>
+      {loading ? (
+        <div className="flex h-64 items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand/30 border-t-brand" />
+        </div>
+      ) : (
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {filteredCars.map((car) => {
+            const mapped = mapApiCarToCar(car);
+            return (
+              <div
+                key={car.id}
+                className="rounded-3xl bg-white p-5 shadow-sm shadow-slate-200/50 transition-shadow hover:shadow-md"
+              >
+                <div className="relative h-40 overflow-hidden rounded-2xl bg-gradient-to-b from-slate-50 to-slate-200">
+                  <img
+                    src={`./${mapped.image}`}
+                    alt={car.name}
+                    className="mx-auto h-full w-auto object-contain p-2"
+                  />
+                </div>
+                <div className="mt-4">
+                  <span className="inline-block rounded-full bg-brand/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-brand">
+                    {car.category}
+                  </span>
+                  <h3 className="mt-2 text-xl font-bold text-slate-900">{car.name}</h3>
+                  <div className="mt-1 text-2xl font-extrabold text-brand">{mapped.price}€</div>
+                  <div className="text-xs text-slate-500">/{"jour"}</div>
+                </div>
+                <div className="mt-4 grid grid-cols-3 gap-2 rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                  <div className="text-center text-xs font-semibold text-slate-600">{car.transmission}</div>
+                  <div className="text-center text-xs font-semibold text-slate-600">{car.seats} places</div>
+                  <div className="text-center text-xs font-semibold text-slate-600">{car.year}</div>
+                </div>
+                <button
+                  onClick={() => {
+                    setSelectedCar(car);
+                    setError("");
+                    setSuccess("");
+                  }}
+                  className="mt-4 w-full rounded-xl bg-brand px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-brand-hover"
+                >
+                  Réserver
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
-      {filteredCars.length === 0 && (
+      {!loading && filteredCars.length === 0 && (
         <p className="mt-8 text-center text-slate-500">Aucun véhicule ne correspond à votre recherche.</p>
+      )}
+
+      {selectedCar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl bg-white p-6 shadow-xl">
+            <h3 className="text-xl font-bold text-slate-900">
+              Réserver {selectedCar.name}
+            </h3>
+            <form className="mt-5 space-y-4" onSubmit={handleReserve}>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1.5 block text-sm font-semibold text-slate-700">Début</label>
+                  <input
+                    type="date"
+                    min={today}
+                    value={form.start_date}
+                    onChange={(e) => setForm({ ...form, start_date: e.target.value })}
+                    required
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-brand"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-sm font-semibold text-slate-700">Fin</label>
+                  <input
+                    type="date"
+                    min={form.start_date || today}
+                    value={form.end_date}
+                    onChange={(e) => setForm({ ...form, end_date: e.target.value })}
+                    required
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-brand"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-semibold text-slate-700">Nom complet</label>
+                <input
+                  type="text"
+                  value={form.full_name}
+                  onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+                  required
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-brand"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-semibold text-slate-700">Email</label>
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  required
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-brand"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-semibold text-slate-700">Téléphone</label>
+                <input
+                  type="tel"
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  required
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-brand"
+                />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedCar(null)}
+                  className="flex-1 rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="flex-1 rounded-xl bg-brand px-4 py-3 text-sm font-bold text-white hover:bg-brand-hover disabled:opacity-60"
+                >
+                  {submitting ? "Réservation..." : "Confirmer"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

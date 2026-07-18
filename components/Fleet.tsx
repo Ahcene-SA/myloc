@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { CarCard, type Car } from "./CarCard";
 import { cn } from "@/lib/utils";
+import { fetchCars, mapApiCarToCar } from "@/lib/api";
 
 const categories = [
   { id: "all", label: "Tous" },
@@ -12,7 +13,7 @@ const categories = [
   { id: "berline", label: "Berlines" },
 ];
 
-const cars: Car[] = [
+const fallbackCars: Car[] = [
   {
     id: "fiat-500",
     name: "Fiat 500",
@@ -172,11 +173,42 @@ const cars: Car[] = [
 
 export function Fleet() {
   const [activeCategory, setActiveCategory] = useState("all");
+  const [cars, setCars] = useState<Car[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const filteredCars =
-    activeCategory === "all"
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchCars()
+      .then((apiCars) => {
+        if (cancelled) return;
+        const mapped = apiCars
+          .filter((c) => c.status === "available")
+          .map(mapApiCarToCar);
+        setCars(mapped.length > 0 ? mapped : fallbackCars);
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        setError(e instanceof Error ? e.message : "Impossible de charger les véhicules.");
+        setCars(fallbackCars);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const filteredCars = useMemo(() => {
+    return activeCategory === "all"
       ? cars
       : cars.filter((car) => car.category === activeCategory);
+  }, [activeCategory, cars]);
+
+  const trackWidth = filteredCars.length * 320;
 
   return (
     <section id="vehicules" className="bg-slate-50 py-20 lg:py-28">
@@ -217,28 +249,40 @@ export function Fleet() {
           ))}
         </div>
 
+        {error && (
+          <p className="mt-4 text-center text-sm text-red-600">
+            {error}
+          </p>
+        )}
+
         <div className="relative mx-auto mt-4 w-full overflow-hidden sm:mt-6 lg:mt-8">
-          <motion.div
-            className="flex w-max gap-5 px-4 sm:gap-6"
-            animate={{ x: [0, -1920] }}
-            transition={{
-              x: {
-                repeat: Infinity,
-                repeatType: "loop",
-                duration: 30,
-                ease: "linear",
-              },
-            }}
-          >
-            {[...filteredCars, ...filteredCars].map((car, index) => (
-              <div
-                key={`${car.id}-${index}`}
-                className="w-[78vw] shrink-0 sm:w-[52vw] md:w-[40vw] lg:w-[32vw] xl:w-[26vw]"
-              >
-                <CarCard car={car} index={index} />
-              </div>
-            ))}
-          </motion.div>
+          {loading ? (
+            <div className="flex h-64 items-center justify-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand/30 border-t-brand" />
+            </div>
+          ) : (
+            <motion.div
+              className="flex w-max gap-5 px-4 sm:gap-6"
+              animate={{ x: [0, -trackWidth] }}
+              transition={{
+                x: {
+                  repeat: Infinity,
+                  repeatType: "loop",
+                  duration: Math.max(trackWidth / 80, 20),
+                  ease: "linear",
+                },
+              }}
+            >
+              {[...filteredCars, ...filteredCars].map((car, index) => (
+                <div
+                  key={`${car.id}-${index}`}
+                  className="w-[78vw] shrink-0 sm:w-[52vw] md:w-[40vw] lg:w-[32vw] xl:w-[26vw]"
+                >
+                  <CarCard car={car} index={index} />
+                </div>
+              ))}
+            </motion.div>
+          )}
         </div>
       </div>
     </section>

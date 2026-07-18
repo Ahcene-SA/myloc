@@ -4,39 +4,39 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Car } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Car, User, Phone } from "lucide-react";
 import { useAuth } from "@/components/AuthContext";
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { register } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    const result = await login(email, password);
+    const result = await register(fullName, email, password, phone);
     setLoading(false);
 
     if (!result.ok) {
-      setError(result.error || "Échec de la connexion.");
+      setError(result.error || "Échec de l'inscription.");
       return;
     }
 
-    // Static export: use a full page navigation so .html files resolve on any server.
     if (typeof window !== "undefined") {
-      window.location.href = result.role === "admin" ? "./admin.html" : "./client.html";
+      window.location.href = "./client.html";
     }
   };
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 p-4">
-      {/* Decorative blobs */}
       <div className="pointer-events-none absolute -top-24 -right-24 h-96 w-96 rounded-full bg-brand/10 blur-3xl" />
       <div className="pointer-events-none absolute bottom-0 left-1/4 h-[28rem] w-[28rem] rounded-full bg-slate-300/40 blur-3xl" />
 
@@ -46,7 +46,6 @@ export default function LoginPage() {
         transition={{ duration: 0.6, ease: "easeOut" }}
         className="relative z-10 w-full max-w-lg"
       >
-        {/* Logo / back link */}
         <div className="mb-10 text-center">
           <Link href="./" className="inline-flex items-center gap-2">
             <Image
@@ -66,10 +65,10 @@ export default function LoginPage() {
               <Car className="h-7 w-7" />
             </div>
             <h1 className="mt-4 text-3xl font-bold text-slate-900 sm:text-4xl">
-              Connexion
+              Inscription
             </h1>
             <p className="mt-2 text-base text-slate-500">
-              Connectez-vous pour accéder à votre compte MYLOC.DZ
+              Créez votre compte MYLOC.DZ pour réserver votre véhicule.
             </p>
           </div>
 
@@ -81,12 +80,36 @@ export default function LoginPage() {
 
           <form className="space-y-5" onSubmit={handleSubmit}>
             <div className="relative">
+              <User className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Nom complet"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                required
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3.5 pl-10 pr-4 text-base outline-none transition-colors focus:border-brand focus:bg-white"
+              />
+            </div>
+
+            <div className="relative">
               <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
               <input
                 type="email"
                 placeholder="Adresse email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3.5 pl-10 pr-4 text-base outline-none transition-colors focus:border-brand focus:bg-white"
+              />
+            </div>
+
+            <div className="relative">
+              <Phone className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+              <input
+                type="tel"
+                placeholder="Téléphone"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
                 required
                 className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3.5 pl-10 pr-4 text-base outline-none transition-colors focus:border-brand focus:bg-white"
               />
@@ -113,33 +136,20 @@ export default function LoginPage() {
               </button>
             </div>
 
-            <div className="flex items-center justify-between text-base">
-              <label className="flex items-center gap-2 text-slate-600">
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand"
-                />
-                Se souvenir de moi
-              </label>
-              <Link href="#" className="font-semibold text-brand hover:underline">
-                Mot de passe oublié ?
-              </Link>
-            </div>
-
             <button
               type="submit"
               disabled={loading}
               className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-6 py-4 text-lg font-bold text-white shadow-lg shadow-brand/25 transition-all hover:bg-brand-hover hover:shadow-brand/40 disabled:opacity-60"
             >
-              {loading ? "Connexion..." : "Se connecter"}
+              {loading ? "Inscription..." : "S'inscrire"}
               <ArrowRight className="h-5 w-5" />
             </button>
           </form>
 
           <p className="mt-6 text-center text-base text-slate-500">
-            Vous n’avez pas de compte ?{" "}
-            <Link href="./register.html" className="font-semibold text-brand hover:underline">
-              S’inscrire
+            Vous avez déjà un compte ?{" "}
+            <Link href="./login.html" className="font-semibold text-brand hover:underline">
+              Se connecter
             </Link>
           </p>
         </div>

@@ -1,22 +1,21 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAdmin } from "./AdminContext";
 import {
-  LayoutDashboard,
   Users,
   Car,
   Calendar,
   CreditCard,
   Shield,
   Edit3,
-  Save,
   Trash2,
   Plus,
   Search,
   MoreHorizontal,
 } from "lucide-react";
-import { AdminTab } from "./AdminSidebar";
+import { fetchCars, mapApiCarToCar, CarFromApi, deleteCar } from "@/lib/api";
 
 export function AdminContent() {
   const { activeTab } = useAdmin();
@@ -56,7 +55,7 @@ function DashboardView() {
           Bonjour, admin MYLOC.DZ 👋
         </h1>
         <p className="mt-2 text-lg text-slate-500">
-          Voici un aperçu global de l'activité.
+          Voici un aperçu global de l&apos;activité.
         </p>
       </header>
 
@@ -188,16 +187,65 @@ function ClientsView() {
 }
 
 function CarsView() {
-  const cars = [
-    { id: "V-001", name: "Fiat 500", category: "citadine", price: 45, transmission: "Manuelle", seats: 4, year: 2025, status: "disponible" },
-    { id: "V-002", name: "Renault Clio", category: "citadine", price: 50, transmission: "Automatique", seats: 5, year: 2024, status: "disponible" },
-    { id: "V-003", name: "Opel Mokka", category: "suv", price: 75, transmission: "Automatique", seats: 5, year: 2025, status: "loué" },
-    { id: "V-004", name: "Peugeot 508", category: "berline", price: 90, transmission: "Automatique", seats: 5, year: 2025, status: "maintenance" },
-  ];
+  const [cars, setCars] = useState<CarFromApi[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [filter, setFilter] = useState("");
+
+  const reloadCars = () => {
+    setLoading(true);
+    setError("");
+    fetchCars()
+      .then((data) => setCars(data))
+      .catch((e) => setError(e instanceof Error ? e.message : "Erreur de chargement."))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchCars()
+      .then((data) => setCars(data))
+      .catch((e) => setError(e instanceof Error ? e.message : "Erreur de chargement."))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Supprimer ce véhicule ?")) return;
+    try {
+      await deleteCar(id);
+      reloadCars();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Échec de la suppression.");
+    }
+  };
+
+  const filteredCars = cars.filter((car) =>
+    car.name.toLowerCase().includes(filter.toLowerCase())
+  );
+
+  const statusLabel = (status: string) => {
+    switch (status) {
+      case "available":
+        return "Disponible";
+      case "unavailable":
+        return "Indisponible";
+      case "rented":
+        return "Loué";
+      case "maintenance":
+        return "Maintenance";
+      default:
+        return status;
+    }
+  };
 
   return (
     <div>
       <SectionHeader icon={Car} title="Cars" />
+
+      {error && (
+        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+          {error}
+        </div>
+      )}
 
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative max-w-md">
@@ -205,6 +253,8 @@ function CarsView() {
           <input
             type="text"
             placeholder="Rechercher un véhicule..."
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
             className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm outline-none focus:border-brand"
           />
         </div>
@@ -214,54 +264,70 @@ function CarsView() {
         </button>
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {cars.map((car) => (
-          <div
-            key={car.id}
-            className="rounded-3xl bg-white p-5 shadow-sm shadow-slate-200/50 transition-shadow hover:shadow-md"
-          >
-            <div className="relative h-40 overflow-hidden rounded-2xl bg-gradient-to-b from-slate-50 to-slate-200">
-              <img
-                src="./images/audi-png-auto-car-0.png"
-                alt={car.name}
-                className="mx-auto h-full w-auto object-contain p-2"
-              />
-              <span
-                className={`absolute left-3 top-3 rounded-full px-3 py-1 text-xs font-bold uppercase ${
-                  car.status === "disponible"
-                    ? "bg-green-100 text-green-700"
-                    : car.status === "loué"
-                    ? "bg-orange-100 text-orange-700"
-                    : "bg-red-100 text-red-700"
-                }`}
+      {loading ? (
+        <div className="flex h-64 items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand/30 border-t-brand" />
+        </div>
+      ) : (
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {filteredCars.map((car) => {
+            const mapped = mapApiCarToCar(car);
+            return (
+              <div
+                key={car.id}
+                className="rounded-3xl bg-white p-5 shadow-sm shadow-slate-200/50 transition-shadow hover:shadow-md"
               >
-                {car.status}
-              </span>
-            </div>
-            <div className="mt-4">
-              <span className="inline-block rounded-full bg-brand/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-brand">
-                {car.category}
-              </span>
-              <h3 className="mt-2 text-xl font-bold text-slate-900">{car.name}</h3>
-              <div className="mt-1 text-2xl font-extrabold text-brand">{car.price}€</div>
-              <div className="text-xs text-slate-500">/{"jour"}</div>
-            </div>
-            <div className="mt-4 grid grid-cols-3 gap-2 rounded-2xl border border-slate-100 bg-slate-50 p-3">
-              <div className="text-center text-xs font-semibold text-slate-600">{car.transmission}</div>
-              <div className="text-center text-xs font-semibold text-slate-600">{car.seats} places</div>
-              <div className="text-center text-xs font-semibold text-slate-600">{car.year}</div>
-            </div>
-            <div className="mt-4 flex gap-2">
-              <button className="flex-1 rounded-xl bg-brand px-4 py-2 text-sm font-bold text-white hover:bg-brand-hover">
-                Modifier
-              </button>
-              <button className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50">
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+                <div className="relative h-40 overflow-hidden rounded-2xl bg-gradient-to-b from-slate-50 to-slate-200">
+                  <img
+                    src={`./${mapped.image}`}
+                    alt={car.name}
+                    className="mx-auto h-full w-auto object-contain p-2"
+                  />
+                  <span
+                    className={`absolute left-3 top-3 rounded-full px-3 py-1 text-xs font-bold uppercase ${
+                      car.status === "available"
+                        ? "bg-green-100 text-green-700"
+                        : car.status === "rented"
+                        ? "bg-orange-100 text-orange-700"
+                        : "bg-red-100 text-red-700"
+                    }`}
+                  >
+                    {statusLabel(car.status)}
+                  </span>
+                </div>
+                <div className="mt-4">
+                  <span className="inline-block rounded-full bg-brand/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-brand">
+                    {car.category}
+                  </span>
+                  <h3 className="mt-2 text-xl font-bold text-slate-900">{car.name}</h3>
+                  <div className="mt-1 text-2xl font-extrabold text-brand">{mapped.price}€</div>
+                  <div className="text-xs text-slate-500">/{"jour"}</div>
+                </div>
+                <div className="mt-4 grid grid-cols-3 gap-2 rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                  <div className="text-center text-xs font-semibold text-slate-600">{car.transmission}</div>
+                  <div className="text-center text-xs font-semibold text-slate-600">{car.seats} places</div>
+                  <div className="text-center text-xs font-semibold text-slate-600">{car.year}</div>
+                </div>
+                <div className="mt-4 flex gap-2">
+                  <button className="flex-1 rounded-xl bg-brand px-4 py-2 text-sm font-bold text-white hover:bg-brand-hover">
+                    Modifier
+                  </button>
+                  <button
+                    onClick={() => handleDelete(car.id)}
+                    className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600 hover:bg-red-50 hover:text-red-500"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {!loading && filteredCars.length === 0 && (
+        <p className="mt-8 text-center text-slate-500">Aucun véhicule trouvé.</p>
+      )}
     </div>
   );
 }
