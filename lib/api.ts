@@ -1,6 +1,30 @@
 "use client";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "http://localhost:8000";
+function getApiBase(): string {
+  if (typeof window === "undefined") {
+    return "http://localhost:8000";
+  }
+
+  // Allow overriding the API URL at runtime without rebuilding.
+  // Example: https://example.com/?apiUrl=https://api.example.com
+  const params = new URLSearchParams(window.location.search);
+  const queryUrl = params.get("apiUrl");
+  if (queryUrl) {
+    try {
+      const parsed = new URL(queryUrl);
+      return parsed.origin;
+    } catch {
+      // ignore invalid URL
+    }
+  }
+
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (envUrl) {
+    return envUrl.replace(/\/$/, "");
+  }
+
+  return "http://localhost:8000";
+}
 
 export interface ApiError {
   success: false;
@@ -55,6 +79,7 @@ async function request<T>(
   body?: unknown,
   auth = false
 ): Promise<T> {
+  const API_BASE = getApiBase();
   const url = `${API_BASE}/api${endpoint}`;
   const headers: Record<string, string> = {
     Accept: "application/json",
