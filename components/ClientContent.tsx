@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useClient } from "./ClientContext";
+import { useAuth } from "./AuthContext";
 import { fetchCars, mapApiCarToCar, createReservation, fetchMyReservations, CarFromApi } from "@/lib/api";
 import {
   User,
@@ -18,6 +20,7 @@ import {
   Shield,
   Edit3,
   Save,
+  Lock,
 } from "lucide-react";
 
 export function ClientContent() {
@@ -302,6 +305,7 @@ function ReservationsView() {
 }
 
 function ReserverView() {
+  const { user, isLoading: authLoading } = useAuth();
   const [cars, setCars] = useState<CarFromApi[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -309,12 +313,28 @@ function ReserverView() {
   const [nameFilter, setNameFilter] = useState("");
   const [priceFilter, setPriceFilter] = useState<"" | number>("");
   const [selectedCar, setSelectedCar] = useState<CarFromApi | null>(null);
-  const [form, setForm] = useState({
-    start_date: "",
-    end_date: "",
-    full_name: "",
-    email: "",
-    phone: "",
+  const [form, setForm] = useState(() => {
+    let full_name = "";
+    let email = "";
+    let phone = "";
+    if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem("myloc_user");
+        if (raw) {
+          const u = JSON.parse(raw) as { full_name?: string; email?: string; phone?: string };
+          full_name = u.full_name || "";
+          email = u.email || "";
+          phone = u.phone || "";
+        }
+      } catch {}
+    }
+    return {
+      start_date: "",
+      end_date: "",
+      full_name,
+      email,
+      phone,
+    };
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -373,6 +393,36 @@ function ReserverView() {
       {success && (
         <div className="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-600">
           {success}
+        </div>
+      )}
+
+      {!authLoading && !user && (
+        <div className="mb-6 rounded-2xl border border-orange-200 bg-orange-50 p-4">
+          <div className="flex items-start gap-3">
+            <Lock className="mt-0.5 h-5 w-5 shrink-0 text-orange-600" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-orange-800">
+                Connexion requise pour réserver
+              </p>
+              <p className="mt-1 text-sm text-orange-700">
+                Connectez-vous ou créez un compte pour accéder à la réservation de véhicules.
+              </p>
+              <div className="mt-3 flex gap-3">
+                <Link
+                  href="./login.html"
+                  className="rounded-xl bg-brand px-4 py-2 text-sm font-bold text-white hover:bg-brand-hover"
+                >
+                  Se connecter
+                </Link>
+                <Link
+                  href="./register.html"
+                  className="rounded-xl border border-orange-300 bg-white px-4 py-2 text-sm font-bold text-orange-700 hover:bg-orange-100"
+                >
+                  S&apos;inscrire
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -459,78 +509,109 @@ function ReserverView() {
             <h3 className="text-xl font-bold text-slate-900">
               Réserver {selectedCar.name}
             </h3>
-            <form className="mt-5 space-y-4" onSubmit={handleReserve}>
-              <div className="grid gap-4 sm:grid-cols-2">
+
+            {!authLoading && !user ? (
+              <div className="mt-5 rounded-2xl border border-orange-200 bg-orange-50 p-5">
+                <div className="flex items-start gap-3">
+                  <Lock className="mt-0.5 h-5 w-5 shrink-0 text-orange-600" />
+                  <div>
+                    <p className="text-sm font-semibold text-orange-800">
+                      Connexion requise
+                    </p>
+                    <p className="mt-1 text-sm text-orange-700">
+                      Veuillez vous connecter ou créer un compte pour finaliser votre réservation.
+                    </p>
+                    <div className="mt-4 flex gap-3">
+                      <Link
+                        href="./login.html"
+                        className="rounded-xl bg-brand px-4 py-2 text-sm font-bold text-white hover:bg-brand-hover"
+                      >
+                        Se connecter
+                      </Link>
+                      <Link
+                        href="./register.html"
+                        className="rounded-xl border border-orange-300 bg-white px-4 py-2 text-sm font-bold text-orange-700 hover:bg-orange-100"
+                      >
+                        S&apos;inscrire
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <form className="mt-5 space-y-4" onSubmit={handleReserve}>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1.5 block text-sm font-semibold text-slate-700">Début</label>
+                    <input
+                      type="date"
+                      min={today}
+                      value={form.start_date}
+                      onChange={(e) => setForm({ ...form, start_date: e.target.value })}
+                      required
+                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-brand"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-sm font-semibold text-slate-700">Fin</label>
+                    <input
+                      type="date"
+                      min={form.start_date || today}
+                      value={form.end_date}
+                      onChange={(e) => setForm({ ...form, end_date: e.target.value })}
+                      required
+                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-brand"
+                    />
+                  </div>
+                </div>
                 <div>
-                  <label className="mb-1.5 block text-sm font-semibold text-slate-700">Début</label>
+                  <label className="mb-1.5 block text-sm font-semibold text-slate-700">Nom complet</label>
                   <input
-                    type="date"
-                    min={today}
-                    value={form.start_date}
-                    onChange={(e) => setForm({ ...form, start_date: e.target.value })}
+                    type="text"
+                    value={form.full_name}
+                    onChange={(e) => setForm({ ...form, full_name: e.target.value })}
                     required
                     className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-brand"
                   />
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-sm font-semibold text-slate-700">Fin</label>
+                  <label className="mb-1.5 block text-sm font-semibold text-slate-700">Email</label>
                   <input
-                    type="date"
-                    min={form.start_date || today}
-                    value={form.end_date}
-                    onChange={(e) => setForm({ ...form, end_date: e.target.value })}
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
                     required
                     className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-brand"
                   />
                 </div>
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-semibold text-slate-700">Nom complet</label>
-                <input
-                  type="text"
-                  value={form.full_name}
-                  onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-                  required
-                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-brand"
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-semibold text-slate-700">Email</label>
-                <input
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  required
-                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-brand"
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-semibold text-slate-700">Téléphone</label>
-                <input
-                  type="tel"
-                  value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  required
-                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-brand"
-                />
-              </div>
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setSelectedCar(null)}
-                  className="flex-1 rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50"
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="flex-1 rounded-xl bg-brand px-4 py-3 text-sm font-bold text-white hover:bg-brand-hover disabled:opacity-60"
-                >
-                  {submitting ? "Réservation..." : "Confirmer"}
-                </button>
-              </div>
-            </form>
+                <div>
+                  <label className="mb-1.5 block text-sm font-semibold text-slate-700">Téléphone</label>
+                  <input
+                    type="tel"
+                    value={form.phone}
+                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    required
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-brand"
+                  />
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCar(null)}
+                    className="flex-1 rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="flex-1 rounded-xl bg-brand px-4 py-3 text-sm font-bold text-white hover:bg-brand-hover disabled:opacity-60"
+                  >
+                    {submitting ? "Réservation..." : "Confirmer"}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

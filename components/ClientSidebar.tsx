@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useClient } from "./ClientContext";
+import { useAuth } from "./AuthContext";
 import {
   User,
   Calendar,
@@ -37,6 +38,14 @@ const menuItems: { label: string; tab: ClientTab; icon: React.ElementType }[] = 
 export function ClientSidebar() {
   const { activeTab, setActiveTab } = useClient();
   const [isOpen, setIsOpen] = useState(false);
+  const { logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    if (typeof window !== "undefined") {
+      window.location.href = "./login.html";
+    }
+  };
 
   return (
     <>
@@ -105,7 +114,10 @@ export function ClientSidebar() {
 
           {/* Bottom actions */}
           <div className="border-t border-slate-100 p-4">
-            <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3.5 font-semibold text-red-500 transition-all hover:bg-red-50">
+            <button
+              onClick={handleLogout}
+              className="flex w-full items-center gap-3 rounded-xl px-4 py-3.5 font-semibold text-red-500 transition-all hover:bg-red-50"
+            >
               <LogOut className="h-5 w-5" />
               Se déconnecter
             </button>
