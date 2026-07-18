@@ -56,6 +56,7 @@ $router = new Router();
 $router->post('/api/auth/register', fn() => $authController->register());
 $router->post('/api/auth/login', fn() => $authController->login());
 $router->get('/api/auth/me', fn() => $authController->me());
+$router->get('/api/auth/clients', fn() => $authController->listClients(), 'admin');
 
 // Public car routes
 $router->get('/api/cars', fn() => $carController->index());

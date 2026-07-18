@@ -115,6 +115,13 @@ class AuthController
         Response::success('User profile.', ['user' => $profile]);
     }
 
+    public function listClients(): void
+    {
+        AuthMiddleware::requireAdmin();
+        $clients = $this->userModel->findByRole('client');
+        Response::success('Clients retrieved.', ['clients' => $clients]);
+    }
+
     private function getJsonInput(): array
     {
         $raw = file_get_contents('php://input');

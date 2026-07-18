@@ -63,4 +63,16 @@ class User
         $stmt->execute([':email' => $email]);
         return (bool) $stmt->fetch();
     }
+
+    public function findByRole(string $role): array
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT id, full_name, email, phone, role, created_at
+            FROM users
+            WHERE role = :role
+            ORDER BY created_at DESC
+        ");
+        $stmt->execute([':role' => $role]);
+        return $stmt->fetchAll();
+    }
 }

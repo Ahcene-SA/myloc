@@ -15,7 +15,7 @@ import {
   Search,
   MoreHorizontal,
 } from "lucide-react";
-import { fetchCars, mapApiCarToCar, CarFromApi, deleteCar } from "@/lib/api";
+import { fetchCars, mapApiCarToCar, fetchClients, CarFromApi, deleteCar } from "@/lib/api";
 
 export function AdminContent() {
   const { activeTab } = useAdmin();
@@ -103,17 +103,42 @@ function DashboardView() {
   );
 }
 
+interface ClientFromApi {
+  id: number;
+  full_name: string;
+  email: string;
+  phone: string;
+  created_at: string;
+}
+
 function ClientsView() {
-  const clients = [
-    { id: "C-001", name: "Ahmed Benali", email: "ahmed.b@myloc.dz", phone: "+213 550 12 34 56", status: "actif", reservations: 5 },
-    { id: "C-002", name: "Sara Khelil", email: "sara.k@myloc.dz", phone: "+213 661 78 90 12", status: "actif", reservations: 2 },
-    { id: "C-003", name: "Karim Taleb", email: "karim.t@myloc.dz", phone: "+213 779 45 67 89", status: "inactif", reservations: 0 },
-    { id: "C-004", name: "Lina Hadj", email: "lina.h@myloc.dz", phone: "+213 540 33 22 11", status: "actif", reservations: 8 },
-  ];
+  const [clients, setClients] = useState<ClientFromApi[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [filter, setFilter] = useState("");
+
+  useEffect(() => {
+    fetchClients()
+      .then((data) => setClients(data))
+      .catch((e) => setError(e instanceof Error ? e.message : "Impossible de charger les clients."))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filteredClients = clients.filter((client) =>
+    client.full_name.toLowerCase().includes(filter.toLowerCase()) ||
+    client.email.toLowerCase().includes(filter.toLowerCase()) ||
+    client.phone.toLowerCase().includes(filter.toLowerCase())
+  );
 
   return (
     <div>
       <SectionHeader icon={Users} title="Nos clients" />
+
+      {error && (
+        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+          {error}
+        </div>
+      )}
 
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative max-w-md">
@@ -121,6 +146,8 @@ function ClientsView() {
           <input
             type="text"
             placeholder="Rechercher un client..."
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
             className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm outline-none focus:border-brand"
           />
         </div>
@@ -130,58 +157,56 @@ function ClientsView() {
         </button>
       </div>
 
-      <div className="overflow-hidden rounded-3xl bg-white shadow-sm shadow-slate-200/50">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-slate-500">
-              <tr>
-                <th className="px-6 py-4 font-semibold">ID</th>
-                <th className="px-6 py-4 font-semibold">Nom</th>
-                <th className="px-6 py-4 font-semibold">Email</th>
-                <th className="px-6 py-4 font-semibold">Téléphone</th>
-                <th className="px-6 py-4 font-semibold">Réservations</th>
-                <th className="px-6 py-4 font-semibold">Statut</th>
-                <th className="px-6 py-4 font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {clients.map((client) => (
-                <tr key={client.id} className="hover:bg-slate-50">
-                  <td className="px-6 py-4 font-medium text-slate-900">{client.id}</td>
-                  <td className="px-6 py-4 font-semibold text-slate-900">{client.name}</td>
-                  <td className="px-6 py-4 text-slate-600">{client.email}</td>
-                  <td className="px-6 py-4 text-slate-600">{client.phone}</td>
-                  <td className="px-6 py-4 text-slate-600">{client.reservations}</td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                        client.status === "actif"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-slate-100 text-slate-600"
-                      }`}
-                    >
-                      {client.status === "actif" ? "Actif" : "Inactif"}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <button className="rounded-lg p-2 text-slate-500 hover:bg-brand/10 hover:text-brand">
-                        <Edit3 className="h-4 w-4" />
-                      </button>
-                      <button className="rounded-lg p-2 text-slate-500 hover:bg-red-50 hover:text-red-500">
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                      <button className="rounded-lg p-2 text-slate-500 hover:bg-slate-100">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {loading ? (
+        <div className="flex h-64 items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand/30 border-t-brand" />
         </div>
-      </div>
+      ) : (
+        <div className="overflow-hidden rounded-3xl bg-white shadow-sm shadow-slate-200/50">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-slate-50 text-slate-500">
+                <tr>
+                  <th className="px-6 py-4 font-semibold">ID</th>
+                  <th className="px-6 py-4 font-semibold">Nom</th>
+                  <th className="px-6 py-4 font-semibold">Email</th>
+                  <th className="px-6 py-4 font-semibold">Téléphone</th>
+                  <th className="px-6 py-4 font-semibold">Inscription</th>
+                  <th className="px-6 py-4 font-semibold">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredClients.map((client) => (
+                  <tr key={client.id} className="hover:bg-slate-50">
+                    <td className="px-6 py-4 font-medium text-slate-900">#{client.id}</td>
+                    <td className="px-6 py-4 font-semibold text-slate-900">{client.full_name}</td>
+                    <td className="px-6 py-4 text-slate-600">{client.email}</td>
+                    <td className="px-6 py-4 text-slate-600">{client.phone}</td>
+                    <td className="px-6 py-4 text-slate-600">{client.created_at ? new Date(client.created_at).toLocaleDateString('fr-FR') : '-'}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <button className="rounded-lg p-2 text-slate-500 hover:bg-brand/10 hover:text-brand">
+                          <Edit3 className="h-4 w-4" />
+                        </button>
+                        <button className="rounded-lg p-2 text-slate-500 hover:bg-red-50 hover:text-red-500">
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                        <button className="rounded-lg p-2 text-slate-500 hover:bg-slate-100">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {!loading && filteredClients.length === 0 && (
+        <p className="mt-8 text-center text-slate-500">Aucun client inscrit pour le moment.</p>
+      )}
     </div>
   );
 }

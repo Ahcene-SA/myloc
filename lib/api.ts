@@ -114,6 +114,24 @@ export async function fetchCurrentUser(): Promise<UserFromApi> {
   return request<UserFromApi>("GET", "/auth/me", undefined, true);
 }
 
+export interface ClientFromApi {
+  id: number;
+  full_name: string;
+  email: string;
+  phone: string;
+  created_at: string;
+}
+
+export async function fetchClients(): Promise<ClientFromApi[]> {
+  const res = await request<{ success: boolean; clients?: ClientFromApi[]; error?: string }>(
+    "GET",
+    "/auth/clients",
+    undefined,
+    true
+  );
+  return res.clients || [];
+}
+
 export async function fetchCars(): Promise<CarFromApi[]> {
   const res = await request<{ success: boolean; cars?: CarFromApi[]; error?: string }>(
     "GET",
