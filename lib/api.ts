@@ -52,11 +52,12 @@ export interface CarFromApi {
 }
 
 export interface UserFromApi {
-  user_id: number;
+  id: number;
+  full_name: string;
+  email: string;
+  phone: string;
   role: "admin" | "client";
-  full_name?: string;
-  email?: string;
-  phone?: string;
+  created_at?: string;
 }
 
 export interface LoginResponse {
@@ -136,7 +137,16 @@ export async function register(
 }
 
 export async function fetchCurrentUser(): Promise<UserFromApi> {
-  return request<UserFromApi>("GET", "/auth/me", undefined, true);
+  const res = await request<{ success: boolean; user?: UserFromApi; error?: string }>(
+    "GET",
+    "/auth/me",
+    undefined,
+    true
+  );
+  if (!res.user) {
+    throw new Error("Profil utilisateur introuvable.");
+  }
+  return res.user;
 }
 
 export interface ClientFromApi {

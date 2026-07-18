@@ -26,7 +26,15 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<UserFromApi | null>(null);
+  const [user, setUser] = useState<UserFromApi | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const raw = localStorage.getItem("myloc_user");
+      return raw ? (JSON.parse(raw) as UserFromApi) : null;
+    } catch {
+      return null;
+    }
+  });
   const [token, setToken] = useState<string | null>(() => {
     if (typeof window === "undefined") return null;
     return localStorage.getItem("myloc_token");
@@ -36,12 +44,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return !!localStorage.getItem("myloc_token");
   });
 
+  const persistUser = (u: UserFromApi | null) => {
+    setUser(u);
+    if (typeof window === "undefined") return;
+    if (u) {
+      localStorage.setItem("myloc_user", JSON.stringify(u));
+    } else {
+      localStorage.removeItem("myloc_user");
+    }
+  };
+
   useEffect(() => {
     if (!token) return;
     fetchCurrentUser()
-      .then((u) => setUser(u))
+      .then((u) => persistUser(u))
       .catch(() => {
         localStorage.removeItem("myloc_token");
+        localStorage.removeItem("myloc_user");
         setToken(null);
       })
       .finally(() => setIsLoading(false));
@@ -55,10 +74,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       localStorage.setItem("myloc_token", res.token);
       setToken(res.token);
-      setUser({
-        user_id: res.user_id || 0,
-        role: res.role || "client",
-      });
+      // Fetch full profile immediately so name/email/phone are available before navigation.
+      const profile = await fetchCurrentUser();
+      persistUser(profile);
       return { ok: true, role: res.role };
     } catch (e) {
       return { ok: false, error: e instanceof Error ? e.message : "Erreur de connexion." };
@@ -78,10 +96,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       localStorage.setItem("myloc_token", res.token);
       setToken(res.token);
-      setUser({
-        user_id: res.user_id || 0,
-        role: res.role || "client",
-      });
+      const profile = await fetchCurrentUser();
+      persistUser(profile);
       return { ok: true, role: res.role };
     } catch (e) {
       return { ok: false, error: e instanceof Error ? e.message : "Erreur d'inscription." };
@@ -91,6 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     if (typeof window !== "undefined") {
       localStorage.removeItem("myloc_token");
+      localStorage.removeItem("myloc_user");
     }
     setToken(null);
     setUser(null);
