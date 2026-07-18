@@ -1,0 +1,245 @@
+MYLOC.DZ - PROJECT SUMMARY
+============================
+Last updated: 2026-07-17
+Project path: C:\wamp64\www\myloc
+GitHub repository: https://github.com/Ahcene-SA/myloc
+Live site: https://ahcene-sa.github.io/myloc/
+
+TABLE OF CONTENTS
+-----------------
+1. Project Overview
+2. Technology Stack
+3. Project Structure
+4. Pages and Routes
+5. Components
+6. State Management
+7. Styling
+8. Build and Deployment
+9. Recent Changes and Features
+10. Known Issues
+11. Next Steps
+
+
+1. PROJECT OVERVIEW
+-------------------
+MYLOC.DZ is a car rental website for the Algerian market. It allows users to:
+- Browse the vehicle fleet (citadines, SUVs, berlines)
+- View car details, prices, and specifications
+- Access a client dashboard to manage reservations, profile, payments, and settings
+- Access an admin dashboard to manage clients and vehicles
+- Navigate through a modern, responsive, animated landing page
+
+The project is built as a static Next.js application and deployed to GitHub Pages.
+
+
+2. TECHNOLOGY STACK
+-------------------
+Core Framework:
+- Next.js 16.2.10 (React framework with App Router)
+- React 19.2.4
+- React DOM 19.2.4
+- TypeScript 5
+
+Styling:
+- Tailwind CSS 4 (utility-first CSS framework)
+- PostCSS with @tailwindcss/postcss
+
+Animation and 3D:
+- Framer Motion 12.42.2 (page transitions, car floating animation)
+- GSAP 3.15.0 with @gsap/react 2.1.2
+- Three.js 0.185.1
+- React Three Fiber 9.6.1
+- React Three Drei 10.7.7
+
+Icons and UI Helpers:
+- Lucide React 1.24.0 (icons)
+- clsx 2.1.1
+- tailwind-merge 3.6.0
+
+Build and Linting:
+- ESLint 9 with eslint-config-next 16.2.10
+- npm scripts: dev, build, start, lint
+
+
+3. PROJECT STRUCTURE
+--------------------
+C:\wamp64\www\myloc
+├── app/                          # Next.js App Router pages
+│   ├── admin/
+│   │   └── page.tsx              # Admin dashboard entry
+│   ├── client/
+│   │   └── page.tsx              # Client dashboard entry
+│   ├── login/
+│   │   └── page.tsx              # Login/sign-in page
+│   ├── globals.css               # Global styles and Tailwind theme config
+│   ├── layout.tsx                # Root layout with Inter font and metadata
+│   ├── page.tsx                  # Landing/home page
+│   └── favicon.ico
+├── components/                   # Reusable React components
+│   ├── About.tsx
+│   ├── AdminContent.tsx          # Admin dashboard views
+│   ├── AdminContext.tsx          # Admin tab state provider
+│   ├── AdminLayout.tsx           # Admin page layout wrapper
+│   ├── AdminSidebar.tsx          # Admin left navigation sidebar
+│   ├── CarCard.tsx               # 3D-style animated car card
+│   ├── ClientContent.tsx         # Client dashboard views
+│   ├── ClientContext.tsx         # Client tab state provider
+│   ├── ClientLayout.tsx          # Client page layout wrapper
+│   ├── ClientSidebar.tsx         # Client left navigation sidebar
+│   ├── Contact.tsx
+│   ├── Features.tsx
+│   ├── Fleet.tsx                 # Fleet section with auto-scrolling car cards
+│   ├── Footer.tsx
+│   ├── Hero.tsx                  # Landing hero section
+│   └── Navbar.tsx                # Top navigation with Admin and Log in links
+├── lib/
+│   └── utils.ts                  # cn() utility for Tailwind class merging
+├── public/                       # Static assets
+│   └── images/                   # Logo, car images, fleet images, etc.
+├── dist/                         # Build output (generated, ignored by git)
+├── disc/                         # Documentation and project files
+│   └── project-summary.txt       # This file
+├── .github/workflows/
+│   └── deploy.yml                # GitHub Actions deployment workflow
+├── next.config.ts                # Next.js config with export and basePath
+├── package.json
+├── package-lock.json
+├── tsconfig.json
+└── .gitignore
+
+
+4. PAGES AND ROUTES
+-------------------
+Route               | File                              | Description
+--------------------|-----------------------------------|----------------------------------------
+/                   | app/page.tsx                      | Landing page
+/login              | app/login/page.tsx                | Login/sign-in page
+/client             | app/client/page.tsx               | Client dashboard
+/admin              | app/admin/page.tsx                | Admin dashboard
+
+Local access (via WAMP):
+- http://localhost/myloc/
+- http://localhost/myloc/login.html
+- http://localhost/myloc/client.html
+- http://localhost/myloc/admin.html
+
+GitHub Pages access:
+- https://ahcene-sa.github.io/myloc/
+
+
+5. COMPONENTS
+-------------
+Landing Page Sections:
+- Navbar: Fixed top navigation with scroll links, Admin link, and Log in button.
+- Hero: Main banner/intro section.
+- Fleet: Auto-scrolling horizontal carousel of car cards.
+- Features: Selling points / advantages section.
+- About: Company information.
+- Contact: Contact form/information.
+- Footer: Site footer.
+
+CarCard:
+- Displays a vehicle with category, name, price, transmission, seats, and year.
+- Includes a 3D floating car image animation.
+- Has mouse-follow tilt effect using Framer Motion.
+
+Client Dashboard:
+- ClientLayout: Sidebar + main content wrapper.
+- ClientSidebar: Left navigation with tabs: Accueil, Mon profil, Mes réservations, Réserver, Paiements, Paramètres.
+- ClientContent: Switches between tab views with animated transitions.
+- AccueilView: Stats cards and latest reservations preview.
+- ProfilView: Editable profile form.
+- ReservationsView: Reservation history.
+- ReserverView: Searchable/filterable car catalog.
+- PaiementsView: Payment invoices.
+- ParametresView: Settings toggles.
+
+Admin Dashboard:
+- AdminLayout: Sidebar + main content wrapper.
+- AdminSidebar: Left navigation with tabs: Dashboard, Nos clients, Cars.
+- AdminContent: Switches between admin tab views.
+- DashboardView: Admin stats (clients, vehicles, reservations, revenue) + fleet health.
+- ClientsView: Searchable client table with status and actions.
+- CarsView: Vehicle cards with status badges and edit/delete actions.
+
+
+6. STATE MANAGEMENT
+-------------------
+The app uses React Context for simple tab navigation in the client and admin dashboards:
+- ClientContext: stores activeTab ("accueil" | "profil" | "reservations" | "reserver" | "paiements" | "parametres")
+- AdminContext: stores activeTab ("dashboard" | "clients" | "cars")
+
+There is no backend or persistent database yet. All data is hardcoded mock data inside components.
+
+
+7. STYLING
+----------
+- Tailwind CSS 4 with custom theme colors defined in app/globals.css.
+- Custom CSS variables:
+  --background: #f8fafc
+  --foreground: #0f172a
+  --brand: #43b0e6
+  --brand-dark: #0f172a
+  --brand-light: #f8fafc
+  --brand-gray: #e2e8f0
+  --brand-hover: #2b9ed6
+- Custom utilities for perspective, preserve-3d, backface-hidden.
+- Responsive design with sm:, md:, lg:, xl: breakpoints.
+- Reduced motion media query support.
+
+
+8. BUILD AND DEPLOYMENT
+-----------------------
+Build command:
+  npm run build
+
+Next.js config (next.config.ts):
+  output: "export"       # Static HTML export
+  distDir: "dist"        # Output folder
+  basePath: "/myloc"     # GitHub Pages subpath
+  images: { unoptimized: true }
+
+GitHub Actions workflow (.github/workflows/deploy.yml):
+- Triggers on push to main or manual dispatch.
+- Sets up Node 20.
+- Runs npm install --no-audit --no-fund.
+- Runs npm run build.
+- Uploads ./dist as a Pages artifact.
+- Deploys to GitHub Pages.
+
+The conflicting nextjs.yml starter workflow was removed because it expected output in ./out instead of ./dist.
+
+
+9. RECENT CHANGES AND FEATURES
+------------------------------
+- Created admin dashboard with sidebar tabs: Dashboard, Nos clients, Cars.
+- Added Admin link to the main Navbar (desktop and mobile).
+- Admin page is accessible directly without a separate admin sign-in.
+- Fleet section now has an auto-scrolling leftward animation for car cards.
+- Added responsive top margin to the fleet carousel.
+- Configured GitHub Pages deployment with GitHub Actions.
+- Removed ./dist from git tracking (built fresh by CI).
+- Repository is public and uses GitHub Actions as Pages source.
+
+
+10. KNOWN ISSUES
+----------------
+- The site uses mock/hardcoded data. No real backend or authentication exists.
+- The login page does not actually authenticate users; it links to client.html.
+- Admin access is not protected by any role-based authentication.
+- Custom domain was previously attempted with "myloc-dz" and caused a redirect issue; now the site uses the default GitHub Pages URL.
+
+
+11. NEXT STEPS (suggested)
+--------------------------
+- Add real authentication (e.g., NextAuth.js, Clerk, or a custom backend).
+- Connect to a backend API or database (Supabase, Firebase, PlanetScale, etc.).
+- Implement CRUD operations for clients and cars in the admin dashboard.
+- Add reservation creation and payment flow.
+- Add image upload/management for car photos.
+- Improve SEO and add metadata to each page.
+- Add loading states and error handling.
+
+
+END OF SUMMARY
+==============
