@@ -9,17 +9,19 @@ import {
   LayoutDashboard,
   Users,
   Car,
+  CalendarCheck,
   LogOut,
   Menu,
   X,
 } from "lucide-react";
 
-export type AdminTab = "dashboard" | "clients" | "cars";
+export type AdminTab = "dashboard" | "clients" | "cars" | "reservations";
 
 const menuItems: { label: string; tab: AdminTab; icon: React.ElementType }[] = [
   { label: "Dashboard", tab: "dashboard", icon: LayoutDashboard },
   { label: "Nos clients", tab: "clients", icon: Users },
-  { label: "Cars", tab: "cars", icon: Car },
+  { label: "Véhicules", tab: "cars", icon: Car },
+  { label: "Réservations", tab: "reservations", icon: CalendarCheck },
 ];
 
 export function AdminSidebar() {

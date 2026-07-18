@@ -14,8 +14,11 @@ import {
   Plus,
   Search,
   MoreHorizontal,
+  Check,
+  X,
+  MessageSquare,
 } from "lucide-react";
-import { fetchCars, mapApiCarToCar, fetchClients, CarFromApi, deleteCar } from "@/lib/api";
+import { fetchCars, mapApiCarToCar, fetchClients, fetchAllReservations, updateReservationStatus, CarFromApi, deleteCar, ReservationFromApi } from "@/lib/api";
 
 export function AdminContent() {
   const { activeTab } = useAdmin();
@@ -31,6 +34,7 @@ export function AdminContent() {
         {activeTab === "dashboard" && <DashboardView />}
         {activeTab === "clients" && <ClientsView />}
         {activeTab === "cars" && <CarsView />}
+        {activeTab === "reservations" && <ReservationsView />}
       </motion.div>
     </AnimatePresence>
   );
@@ -352,6 +356,200 @@ function CarsView() {
 
       {!loading && filteredCars.length === 0 && (
         <p className="mt-8 text-center text-slate-500">Aucun véhicule trouvé.</p>
+      )}
+    </div>
+  );
+}
+
+function ReservationsView() {
+  const [reservations, setReservations] = useState<ReservationFromApi[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [notes, setNotes] = useState<Record<number, string>>({});
+  const [updating, setUpdating] = useState<Record<number, boolean>>({});
+
+  function loadReservations() {
+    setLoading(true);
+    setError("");
+    fetchAllReservations()
+      .then((data) => {
+        setReservations(data);
+        const initialNotes: Record<number, string> = {};
+        data.forEach((r) => {
+          if (r.id) initialNotes[r.id] = r.admin_note || "";
+        });
+        setNotes(initialNotes);
+      })
+      .catch((e) => setError(e instanceof Error ? e.message : "Impossible de charger les réservations."))
+      .finally(() => setLoading(false));
+  }
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchAllReservations()
+      .then((data) => {
+        if (cancelled) return;
+        setReservations(data);
+        const initialNotes: Record<number, string> = {};
+        data.forEach((r) => {
+          if (r.id) initialNotes[r.id] = r.admin_note || "";
+        });
+        setNotes(initialNotes);
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        setError(e instanceof Error ? e.message : "Impossible de charger les réservations.");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleStatus = async (id: number, status: "confirmed" | "rejected" | "cancelled") => {
+    setUpdating((prev) => ({ ...prev, [id]: true }));
+    setError("");
+    try {
+      await updateReservationStatus(id, status, notes[id]);
+      loadReservations();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Erreur lors de la mise à jour.");
+    } finally {
+      setUpdating((prev) => ({ ...prev, [id]: false }));
+    }
+  };
+
+  const statusLabel = (status?: string) => {
+    switch (status) {
+      case "confirmed":
+        return "Confirmée";
+      case "rejected":
+        return "Refusée";
+      case "cancelled":
+        return "Annulée";
+      case "pending":
+        return "En attente";
+      default:
+        return status || "Inconnue";
+    }
+  };
+
+  const statusClass = (status?: string) => {
+    switch (status) {
+      case "confirmed":
+        return "bg-green-100 text-green-700";
+      case "rejected":
+        return "bg-red-100 text-red-700";
+      case "cancelled":
+        return "bg-slate-100 text-slate-600";
+      case "pending":
+        return "bg-blue-100 text-blue-700";
+      default:
+        return "bg-slate-100 text-slate-600";
+    }
+  };
+
+  return (
+    <div>
+      <SectionHeader icon={Calendar} title="Gestion des réservations" />
+
+      {error && (
+        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="flex h-64 items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand/30 border-t-brand" />
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {reservations.map((res) => (
+            <div
+              key={res.id}
+              className="rounded-3xl bg-white p-5 shadow-sm shadow-slate-200/50 sm:p-6"
+            >
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-lg font-bold text-slate-900">
+                      {res.car_name || "Véhicule"}
+                    </span>
+                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusClass(res.status)}`}>
+                      {statusLabel(res.status)}
+                    </span>
+                  </div>
+                  <div className="mt-1 text-sm text-slate-500">
+                    Du {res.start_date || "?"} au {res.end_date || "?"} ·{" "}
+                    {Number(res.total_price || 0).toFixed(2)} DA
+                  </div>
+                  <div className="mt-3 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
+                    <div>
+                      <span className="font-semibold">Client : {" "}</span>
+                      {res.user_full_name || res.full_name || "—"}
+                    </div>
+                    <div>
+                      <span className="font-semibold">Email : {" "}</span>
+                      {res.email || "—"}
+                    </div>
+                    <div>
+                      <span className="font-semibold">Téléphone : {" "}</span>
+                      {res.phone || "—"}
+                    </div>
+                    <div>
+                      <span className="font-semibold">Réservation #</span>
+                      {res.id}
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <label className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-slate-700">
+                      <MessageSquare className="h-4 w-4" /> Note admin
+                    </label>
+                    <textarea
+                      value={notes[res.id] || ""}
+                      onChange={(e) => setNotes((prev) => ({ ...prev, [res.id]: e.target.value }))}
+                      placeholder="Ajouter une note (raison du refus, détails, etc.)"
+                      rows={2}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none focus:border-brand"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => handleStatus(res.id, "confirmed")}
+                    disabled={updating[res.id] || res.status === "confirmed"}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-green-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-green-700 disabled:opacity-60"
+                  >
+                    <Check className="h-4 w-4" /> Confirmer
+                  </button>
+                  <button
+                    onClick={() => handleStatus(res.id, "rejected")}
+                    disabled={updating[res.id] || res.status === "rejected"}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-red-700 disabled:opacity-60"
+                  >
+                    <X className="h-4 w-4" /> Refuser
+                  </button>
+                  <button
+                    onClick={() => handleStatus(res.id, "cancelled")}
+                    disabled={updating[res.id] || res.status === "cancelled"}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-60"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {!loading && reservations.length === 0 && (
+        <p className="mt-8 text-center text-slate-500">Aucune réservation pour le moment.</p>
       )}
     </div>
   );

@@ -217,7 +217,8 @@ interface ReservationFromApi {
   car_name?: string;
   start_date?: string;
   end_date?: string;
-  status?: string;
+  status?: "pending" | "confirmed" | "rejected" | "cancelled";
+  admin_note?: string;
   total_price?: string | number;
 }
 
@@ -237,10 +238,12 @@ function ReservationsView() {
     switch (status) {
       case "confirmed":
         return "Confirmée";
-      case "pending":
-        return "En attente";
+      case "rejected":
+        return "Refusée";
       case "cancelled":
         return "Annulée";
+      case "pending":
+        return "En attente";
       default:
         return status || "Inconnue";
     }
@@ -250,10 +253,12 @@ function ReservationsView() {
     switch (status) {
       case "confirmed":
         return "bg-green-100 text-green-700";
+      case "rejected":
+        return "bg-red-100 text-red-700";
+      case "cancelled":
+        return "bg-slate-100 text-slate-600";
       case "pending":
         return "bg-blue-100 text-blue-700";
-      case "cancelled":
-        return "bg-red-100 text-red-700";
       default:
         return "bg-slate-100 text-slate-600";
     }
@@ -294,6 +299,13 @@ function ReservationsView() {
                   {statusLabel(res.status)}
                 </span>
               </div>
+              {res.admin_note && (
+                <div className="mt-3 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-800">
+                  <span className="font-semibold">Réponse de l’administrateur : {" "}</span>
+                  {res.admin_note}
+                </div>
+              )}
+
               <div className="mt-4 flex flex-wrap items-center gap-2">
                 <button className="rounded-xl bg-brand px-4 py-2 text-sm font-bold text-white hover:bg-brand-hover">
                   Détails

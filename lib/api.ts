@@ -216,18 +216,54 @@ export interface ReservationInput {
   phone: string;
 }
 
+export interface ReservationFromApi {
+  id: number;
+  user_id?: number;
+  user_full_name?: string;
+  car_id?: number;
+  car_name?: string;
+  car_category?: string;
+  start_date?: string;
+  end_date?: string;
+  full_name?: string;
+  email?: string;
+  phone?: string;
+  status?: "pending" | "confirmed" | "rejected" | "cancelled";
+  admin_note?: string;
+  total_price?: string | number;
+  created_at?: string;
+}
+
 export async function createReservation(input: ReservationInput): Promise<unknown> {
   return request<unknown>("POST", "/reservations", input, true);
 }
 
-export async function fetchMyReservations(): Promise<unknown[]> {
-  const res = await request<{ success: boolean; reservations?: unknown[]; error?: string }>(
+export async function fetchMyReservations(): Promise<ReservationFromApi[]> {
+  const res = await request<{ success: boolean; reservations?: ReservationFromApi[]; error?: string }>(
     "GET",
     "/reservations/me",
     undefined,
     true
   );
   return res.reservations || [];
+}
+
+export async function fetchAllReservations(): Promise<ReservationFromApi[]> {
+  const res = await request<{ success: boolean; reservations?: ReservationFromApi[]; error?: string }>(
+    "GET",
+    "/reservations",
+    undefined,
+    true
+  );
+  return res.reservations || [];
+}
+
+export async function updateReservationStatus(
+  id: number,
+  status: "pending" | "confirmed" | "rejected" | "cancelled",
+  adminNote?: string
+): Promise<unknown> {
+  return request<unknown>("PATCH", `/reservations/${id}/status`, { status, admin_note: adminNote }, true);
 }
 
 export function mapApiCarToCar(car: CarFromApi): {

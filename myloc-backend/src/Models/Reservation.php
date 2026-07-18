@@ -95,10 +95,20 @@ class Reservation
         return $row ?: null;
     }
 
-    public function updateStatus(int $id, string $status): bool
+    public function updateStatus(int $id, string $status, ?string $adminNote = null): bool
     {
-        $stmt = $this->pdo->prepare("UPDATE reservations SET status = :status WHERE id = :id");
-        $stmt->execute([':status' => $status, ':id' => $id]);
+        $sql = "UPDATE reservations SET status = :status";
+        $params = [':status' => $status, ':id' => $id];
+
+        if ($adminNote !== null) {
+            $sql .= ", admin_note = :admin_note";
+            $params[':admin_note'] = $adminNote;
+        }
+
+        $sql .= " WHERE id = :id";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
         return $stmt->rowCount() > 0;
     }
 }

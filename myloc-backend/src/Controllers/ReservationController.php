@@ -125,8 +125,8 @@ class ReservationController
         }
 
         $status = Validator::sanitizeString($input['status']);
-        if (!Validator::inArray($status, ['pending', 'confirmed', 'cancelled'])) {
-            Response::error('Status must be pending, confirmed, or cancelled.', 422);
+        if (!Validator::inArray($status, ['pending', 'confirmed', 'rejected', 'cancelled'])) {
+            Response::error('Status must be pending, confirmed, rejected, or cancelled.', 422);
         }
 
         $existing = $this->reservationModel->findById($id);
@@ -134,8 +134,10 @@ class ReservationController
             Response::error('Reservation not found.', 404);
         }
 
-        $this->reservationModel->updateStatus($id, $status);
-        Response::success('Reservation status updated.');
+        $adminNote = isset($input['admin_note']) ? Validator::sanitizeString($input['admin_note']) : null;
+
+        $this->reservationModel->updateStatus($id, $status, $adminNote);
+        Response::success('Reservation status updated.', ['admin_note' => $adminNote]);
     }
 
     private function getJsonInput(): array
