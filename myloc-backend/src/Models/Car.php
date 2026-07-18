@@ -56,7 +56,7 @@ class Car
         $stmt->execute([
             ':category' => $data['category'] ?? 'citadine',
             ':name' => $data['name'],
-            ':description' => $data['description'],
+            ':description' => $data['description'] ?? null,
             ':price_per_day' => $data['price_per_day'],
             ':transmission' => $data['transmission'],
             ':seats' => $data['seats'],
