@@ -5,7 +5,19 @@ function getApiBase(): string {
     return "http://localhost:8000";
   }
 
-  // Allow overriding the API URL at runtime without rebuilding.
+  // Runtime overrides (no rebuild needed).
+  if (typeof (window as unknown as Record<string, string>).MYLOC_API_URL === "string") {
+    return (window as unknown as Record<string, string>).MYLOC_API_URL.replace(/\/$/, "");
+  }
+
+  try {
+    const stored = localStorage.getItem("myloc_api_url");
+    if (stored) return stored.replace(/\/$/, "");
+  } catch {
+    // localStorage may be unavailable (private mode, file://, etc.)
+  }
+
+  // Allow overriding via query parameter.
   // Example: https://example.com/?apiUrl=https://api.example.com
   const params = new URLSearchParams(window.location.search);
   const queryUrl = params.get("apiUrl");
@@ -21,6 +33,15 @@ function getApiBase(): string {
   const envUrl = process.env.NEXT_PUBLIC_API_URL;
   if (envUrl) {
     return envUrl.replace(/\/$/, "");
+  }
+
+  // When served locally via WAMP (port 80), the backend lives under /myloc/myloc-backend.
+  // When served via the PHP built-in server, it usually runs on port 8000.
+  const { hostname, port } = window.location;
+  if (hostname === "localhost" || hostname === "127.0.0.1") {
+    if (port === "" || port === "80") {
+      return "http://localhost/myloc/myloc-backend";
+    }
   }
 
   return "http://localhost:8000";

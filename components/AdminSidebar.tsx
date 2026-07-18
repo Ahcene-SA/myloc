@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useAdmin } from "./AdminContext";
+import { useAuth } from "./AuthContext";
 import {
   LayoutDashboard,
   Users,
@@ -24,6 +25,14 @@ const menuItems: { label: string; tab: AdminTab; icon: React.ElementType }[] = [
 export function AdminSidebar() {
   const { activeTab, setActiveTab } = useAdmin();
   const [isOpen, setIsOpen] = useState(false);
+  const { logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    if (typeof window !== "undefined") {
+      window.location.href = "./login.html";
+    }
+  };
 
   return (
     <>
@@ -92,7 +101,10 @@ export function AdminSidebar() {
 
           {/* Bottom actions */}
           <div className="border-t border-slate-100 p-4">
-            <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3.5 font-semibold text-red-500 transition-all hover:bg-red-50">
+            <button
+              onClick={handleLogout}
+              className="flex w-full items-center gap-3 rounded-xl px-4 py-3.5 font-semibold text-red-500 transition-all hover:bg-red-50"
+            >
               <LogOut className="h-5 w-5" />
               Se déconnecter
             </button>

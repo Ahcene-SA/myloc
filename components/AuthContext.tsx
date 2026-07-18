@@ -75,9 +75,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem("myloc_token", res.token);
       setToken(res.token);
       // Fetch full profile immediately so name/email/phone are available before navigation.
-      const profile = await fetchCurrentUser();
-      persistUser(profile);
-      return { ok: true, role: res.role };
+      try {
+        const profile = await fetchCurrentUser();
+        persistUser(profile);
+        return { ok: true, role: res.role };
+      } catch (e) {
+        localStorage.removeItem("myloc_token");
+        localStorage.removeItem("myloc_user");
+        setToken(null);
+        return { ok: false, error: e instanceof Error ? e.message : "Impossible de charger le profil." };
+      }
     } catch (e) {
       return { ok: false, error: e instanceof Error ? e.message : "Erreur de connexion." };
     }
@@ -96,9 +103,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       localStorage.setItem("myloc_token", res.token);
       setToken(res.token);
-      const profile = await fetchCurrentUser();
-      persistUser(profile);
-      return { ok: true, role: res.role };
+      try {
+        const profile = await fetchCurrentUser();
+        persistUser(profile);
+        return { ok: true, role: res.role };
+      } catch (e) {
+        localStorage.removeItem("myloc_token");
+        localStorage.removeItem("myloc_user");
+        setToken(null);
+        return { ok: false, error: e instanceof Error ? e.message : "Impossible de charger le profil." };
+      }
     } catch (e) {
       return { ok: false, error: e instanceof Error ? e.message : "Erreur d'inscription." };
     }

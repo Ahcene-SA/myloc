@@ -1,0 +1,17 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Forward the Authorization header on Apache/mod_php so the PHP backend can read $_SERVER['HTTP_AUTHORIZATION'].
+    RewriteCond %{HTTP:Authorization} ^(.*)
+    RewriteRule .* - [e=HTTP_AUTHORIZATION:%1]
+
+    # Route every request to index.php so the custom router can handle the API paths.
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ index.php [QSA,L]
+</IfModule>
+
+# Allow Authorization header through if mod_rewrite is not available (some Apache builds).
+<IfModule mod_headers.c>
+    SetEnvIf Authorization .+ HTTP_AUTHORIZATION=$0
+</IfModule>
