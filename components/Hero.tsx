@@ -3,7 +3,8 @@
 import { useState, useRef } from "react";
 import Image from "next/image";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
-import { Shield, BadgeCheck, User, Mail, Lock, ArrowRight } from "lucide-react";
+import { BadgeCheck, User, Mail, Lock, ArrowRight, Phone } from "lucide-react";
+import { useAuth } from "./AuthContext";
 import { FloatingOrbs } from "./FloatingOrbs";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +16,13 @@ const stats = [
 ];
 
 export function Hero() {
+  const { register } = useAuth();
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
   const x = useMotionValue(0);
@@ -35,6 +43,21 @@ export function Hero() {
   const handleMouseLeave = () => {
     x.set(0);
     y.set(0);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    const result = await register(fullName, email, password, phone);
+    setLoading(false);
+    if (!result.ok) {
+      setError(result.error || "Échec de l'inscription.");
+      return;
+    }
+    if (typeof window !== "undefined") {
+      window.location.href = "./client.html";
+    }
   };
 
   return (
@@ -79,12 +102,21 @@ export function Hero() {
                 Créez votre compte
               </h3>
 
-              <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+              {error && (
+                <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+                  {error}
+                </div>
+              )}
+
+              <form className="space-y-4" onSubmit={handleSubmit}>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
                   <input
                     type="text"
                     placeholder="Nom complet"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required
                     className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm outline-none transition-colors focus:border-brand focus:bg-white"
                   />
                 </div>
@@ -93,6 +125,20 @@ export function Hero() {
                   <input
                     type="email"
                     placeholder="Adresse email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm outline-none transition-colors focus:border-brand focus:bg-white"
+                  />
+                </div>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="tel"
+                    placeholder="Téléphone"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    required
                     className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm outline-none transition-colors focus:border-brand focus:bg-white"
                   />
                 </div>
@@ -101,17 +147,22 @@ export function Hero() {
                   <input
                     type="password"
                     placeholder="Mot de passe"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength={8}
                     className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm outline-none transition-colors focus:border-brand focus:bg-white"
                   />
                 </div>
 
-                <a
-                  href="client.html"
-                  className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-6 py-3.5 text-base font-bold text-white shadow-lg shadow-brand/25 transition-all hover:bg-brand-hover hover:shadow-brand/40"
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-6 py-3.5 text-base font-bold text-white shadow-lg shadow-brand/25 transition-all hover:bg-brand-hover hover:shadow-brand/40 disabled:opacity-60"
                 >
-                  S’inscrire
+                  {loading ? "Inscription..." : "S’inscrire"}
                   <ArrowRight className="h-5 w-5" />
-                </a>
+                </button>
               </form>
 
               <p className="mt-4 text-center text-sm text-slate-500">

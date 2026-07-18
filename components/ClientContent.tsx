@@ -58,11 +58,14 @@ function SectionHeader({ icon: Icon, title }: { icon: React.ElementType; title: 
 
 function AccueilView() {
   const { setActiveTab } = useClient();
+  const { user } = useAuth();
+  const firstName = user?.full_name?.split(" ")[0] || "client";
+  const initial = (user?.full_name?.[0] || "C").toUpperCase();
   return (
     <div>
       <header className="mb-8">
         <h1 className="text-3xl font-bold text-slate-900 sm:text-4xl">
-          Bonjour, client MYLOC.DZ 👋
+          Bonjour, {firstName} 👋
         </h1>
         <p className="mt-2 text-lg text-slate-500">
           Voici un aperçu de votre espace personnel.
@@ -104,10 +107,10 @@ function AccueilView() {
           <div className="space-y-4">
             <div className="text-center">
               <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-slate-200 text-3xl font-bold text-slate-500">
-                C
+                {initial}
               </div>
-              <div className="mt-3 font-bold text-slate-900">Client MYLOC</div>
-              <div className="text-sm text-slate-500">client@myloc.dz</div>
+              <div className="mt-3 font-bold text-slate-900">{user?.full_name || "Client MYLOC"}</div>
+              <div className="text-sm text-slate-500">{user?.email || "client@myloc.dz"}</div>
             </div>
             <button
               onClick={() => setActiveTab("profil")}
@@ -123,6 +126,13 @@ function AccueilView() {
 }
 
 function ProfilView() {
+  const { user } = useAuth();
+  const initial = (user?.full_name?.[0] || "C").toUpperCase();
+  const firstName = user?.full_name?.split(" ")[0] || "";
+  const lastName = user?.full_name?.split(" ").slice(1).join(" ") || "";
+  const joined = user?.created_at
+    ? new Date(user.created_at).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
+    : "juillet 2026";
   return (
     <div className="mx-auto max-w-3xl">
       <SectionHeader icon={User} title="Mon profil" />
@@ -131,15 +141,15 @@ function ProfilView() {
         <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
           <div className="relative">
             <div className="flex h-28 w-28 items-center justify-center rounded-full bg-slate-200 text-4xl font-bold text-slate-500">
-              C
+              {initial}
             </div>
             <button className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full bg-brand text-white shadow-md">
               <Edit3 className="h-4 w-4" />
             </button>
           </div>
           <div className="flex-1 text-center sm:text-left">
-            <h3 className="text-2xl font-bold text-slate-900">Client MYLOC</h3>
-            <p className="mt-1 text-slate-500">Membre depuis juillet 2026</p>
+            <h3 className="text-2xl font-bold text-slate-900">{user?.full_name || "Client MYLOC"}</h3>
+            <p className="mt-1 text-slate-500">Membre depuis {joined}</p>
             <div className="mt-4 flex flex-wrap items-center justify-center gap-3 sm:justify-start">
               <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-3 py-1 text-sm font-semibold text-green-700">
                 <Shield className="h-4 w-4" /> Compte vérifié
@@ -150,8 +160,8 @@ function ProfilView() {
 
         <form className="mt-8 space-y-5" onSubmit={(e) => e.preventDefault()}>
           <div className="grid gap-5 sm:grid-cols-2">
-            <Field label="Prénom" defaultValue="Client" />
-            <Field label="Nom" defaultValue="MYLOC" />
+            <Field label="Prénom" defaultValue={firstName || "Client"} />
+            <Field label="Nom" defaultValue={lastName || "MYLOC"} />
           </div>
           <div className="grid gap-5 sm:grid-cols-2">
             <div>
@@ -160,7 +170,7 @@ function ProfilView() {
                 <Mail className="h-5 w-5 text-slate-400" />
                 <input
                   type="email"
-                  defaultValue="client@myloc.dz"
+                  defaultValue={user?.email || "client@myloc.dz"}
                   className="w-full bg-transparent text-sm outline-none"
                 />
               </div>
@@ -171,7 +181,7 @@ function ProfilView() {
                 <Phone className="h-5 w-5 text-slate-400" />
                 <input
                   type="tel"
-                  defaultValue="+213 555 00 00 00"
+                  defaultValue={user?.phone || "+213 555 00 00 00"}
                   className="w-full bg-transparent text-sm outline-none"
                 />
               </div>
