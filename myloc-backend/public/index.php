@@ -72,9 +72,5 @@ $router->get('/api/reservations/me', fn() => $reservationController->myReservati
 $router->get('/api/reservations', fn() => $reservationController->allReservations(), 'admin');
 $router->patch('/api/reservations/{id}/status', fn(array $params) => $reservationController->updateStatus($params), 'admin');
 
-// Map the generic role requirement to the actual middleware.
-// The Router itself does not enforce roles; we wrap the handlers below.
-// NOTE: The role argument above is stored but not used by the current Router dispatch.
-// Instead, each controller calls AuthMiddleware::requireClient/Admin directly.
-
+// The Router enforces the role argument above before invoking the handler.
 $router->dispatch();

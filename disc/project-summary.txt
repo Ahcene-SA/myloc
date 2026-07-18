@@ -1,6 +1,6 @@
 MYLOC.DZ - PROJECT SUMMARY
 ============================
-Last updated: 2026-07-17
+Last updated: 2026-07-18
 Project path: C:\wamp64\www\myloc
 GitHub repository: https://github.com/Ahcene-SA/myloc
 Live site: https://ahcene-sa.github.io/myloc/
@@ -29,7 +29,10 @@ MYLOC.DZ is a car rental website for the Algerian market. It allows users to:
 - Access an admin dashboard to manage clients and vehicles
 - Navigate through a modern, responsive, animated landing page
 
-The project is built as a static Next.js application and deployed to GitHub Pages.
+The project consists of:
+- A static Next.js frontend deployed to GitHub Pages.
+- A separate PHP + MySQL REST API backend in `myloc-backend/` that provides authentication,
+  car management, and reservation handling.
 
 
 2. TECHNOLOGY STACK
@@ -59,6 +62,13 @@ Icons and UI Helpers:
 Build and Linting:
 - ESLint 9 with eslint-config-next 16.2.10
 - npm scripts: dev, build, start, lint
+
+Backend Stack:
+- PHP 8.3+ with Composer
+- MySQL / MariaDB via PDO
+- vlucas/phpdotenv for configuration
+- firebase/php-jwt 7.1 for JWT tokens
+- Custom lightweight router (no PHP framework)
 
 
 3. PROJECT STRUCTURE
@@ -99,9 +109,20 @@ C:\wamp64\www\myloc
 ├── dist/                         # Build output (generated, ignored by git)
 ├── disc/                         # Documentation and project files
 │   └── project-summary.txt       # This file
+├── myloc-backend/                # PHP + MySQL REST API backend
+│   ├── public/index.php          # API entry point
+│   ├── src/                      # Controllers, Models, Middleware, Utils, Config
+│   ├── database/
+│   │   ├── migrations.sql        # Schema creation
+│   │   └── seed.php              # Admin seeder
+│   ├── composer.json
+│   ├── composer.lock
+│   ├── .env.example
+│   ├── .gitignore
+│   └── README.md
 ├── .github/workflows/
 │   └── deploy.yml                # GitHub Actions deployment workflow
-├── next.config.ts                # Next.js config with export and basePath
+├── next.config.ts                # Next.js config with export and assetPrefix
 ├── package.json
 ├── package-lock.json
 ├── tsconfig.json
@@ -125,6 +146,10 @@ Local access (via WAMP):
 
 GitHub Pages access:
 - https://ahcene-sa.github.io/myloc/
+
+Backend API (local development):
+- http://localhost:8000
+- API prefix: /api
 
 
 5. COMPONENTS
@@ -169,7 +194,7 @@ The app uses React Context for simple tab navigation in the client and admin das
 - ClientContext: stores activeTab ("accueil" | "profil" | "reservations" | "reserver" | "paiements" | "parametres")
 - AdminContext: stores activeTab ("dashboard" | "clients" | "cars")
 
-There is no backend or persistent database yet. All data is hardcoded mock data inside components.
+Backend integration is ready but the frontend still uses mock data. The Next.js components need to be wired to the PHP API endpoints to use real data.
 
 
 7. STYLING
@@ -196,7 +221,7 @@ Build command:
 Next.js config (next.config.ts):
   output: "export"       # Static HTML export
   distDir: "dist"        # Output folder
-  basePath: "/myloc"     # GitHub Pages subpath
+  assetPrefix: "."      # Relative paths for GitHub Pages subfolder
   images: { unoptimized: true }
 
 GitHub Actions workflow (.github/workflows/deploy.yml):
@@ -220,25 +245,32 @@ The conflicting nextjs.yml starter workflow was removed because it expected outp
 - Configured GitHub Pages deployment with GitHub Actions.
 - Removed ./dist from git tracking (built fresh by CI).
 - Repository is public and uses GitHub Actions as Pages source.
+- Added PHP + MySQL REST API backend in myloc-backend/.
+- Implemented backend auth (register, login, /me) with JWT and role checks.
+- Implemented backend car CRUD (admin) and public car listing.
+- Implemented backend reservations with overlap prevention and status management.
+- Added login rate limiting, password hashing, PDO prepared statements, and CORS.
+- Seeded admin account (admin@admin / admin) with hashed password.
 
 
 10. KNOWN ISSUES
 ----------------
-- The site uses mock/hardcoded data. No real backend or authentication exists.
-- The login page does not actually authenticate users; it links to client.html.
-- Admin access is not protected by any role-based authentication.
+- The frontend still uses mock/hardcoded data; it needs to be connected to the PHP API.
+- The login page does not actually authenticate against the backend; it links to client.html.
+- Admin dashboard on the frontend is not yet gated by backend authentication.
 - Custom domain was previously attempted with "myloc-dz" and caused a redirect issue; now the site uses the default GitHub Pages URL.
 
 
 11. NEXT STEPS (suggested)
 --------------------------
-- Add real authentication (e.g., NextAuth.js, Clerk, or a custom backend).
-- Connect to a backend API or database (Supabase, Firebase, PlanetScale, etc.).
-- Implement CRUD operations for clients and cars in the admin dashboard.
-- Add reservation creation and payment flow.
-- Add image upload/management for car photos.
+- Connect the Next.js frontend to the PHP backend (replace mock data with fetch calls).
+- Add real login/registration flow on the frontend using the backend auth endpoints.
+- Protect admin frontend routes with backend role checks.
+- Add image upload handling on the backend (store files and expose URLs).
+- Add payment integration or payment-status tracking.
 - Improve SEO and add metadata to each page.
-- Add loading states and error handling.
+- Add loading states and error handling on the frontend.
+- Serve the backend over HTTPS in production and change the seeded admin credentials.
 
 
 END OF SUMMARY

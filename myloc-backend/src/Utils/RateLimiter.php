@@ -24,7 +24,7 @@ class RateLimiter
         $pdo = $this->db->getPdo();
 
         $stmt = $pdo->prepare("
-            SELECT attempts, last_attempt
+            SELECT attempts, UNIX_TIMESTAMP(last_attempt) AS last_attempt_unix
             FROM login_attempts
             WHERE identifier = :identifier
         ");
@@ -35,7 +35,7 @@ class RateLimiter
             return true;
         }
 
-        $lastAttempt = strtotime($row['last_attempt']);
+        $lastAttempt = (int) $row['last_attempt_unix'];
         $attempts = (int) $row['attempts'];
 
         if ($attempts >= $this->maxAttempts && (time() - $lastAttempt) < $this->windowSeconds) {
@@ -47,6 +47,34 @@ class RateLimiter
         }
 
         return $attempts < $this->maxAttempts;
+    }
+
+    public function remainingLockoutSeconds(string $identifier): int
+    {
+        $pdo = $this->db->getPdo();
+
+        $stmt = $pdo->prepare("
+            SELECT attempts, UNIX_TIMESTAMP(last_attempt) AS last_attempt_unix
+            FROM login_attempts
+            WHERE identifier = :identifier
+        ");
+        $stmt->execute([':identifier' => $identifier]);
+        $row = $stmt->fetch();
+
+        if (!$row) {
+            return 0;
+        }
+
+        $lastAttempt = (int) $row['last_attempt_unix'];
+        $attempts = (int) $row['attempts'];
+
+        if ($attempts >= $this->maxAttempts) {
+            $elapsed = time() - $lastAttempt;
+            $remaining = $this->windowSeconds - $elapsed;
+            return max(0, $remaining);
+        }
+
+        return 0;
     }
 
     public function recordFailure(string $identifier): void
@@ -72,5 +100,10 @@ class RateLimiter
 
         $stmt = $pdo->prepare("DELETE FROM login_attempts WHERE identifier = :identifier");
         $stmt->execute([':identifier' => $identifier]);
+    }
+
+    public function getDatabasePdo(): \PDO
+    {
+        return $this->db->getPdo();
     }
 }

@@ -52,9 +52,8 @@ CREATE TABLE IF NOT EXISTS reservations (
 
 CREATE TABLE IF NOT EXISTS login_attempts (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    identifier VARCHAR(255) NOT NULL,
+    identifier VARCHAR(255) NOT NULL UNIQUE,
     attempts INT NOT NULL DEFAULT 0,
     last_attempt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_identifier (identifier),
     INDEX idx_last_attempt (last_attempt)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

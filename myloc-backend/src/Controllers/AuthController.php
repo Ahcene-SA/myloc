@@ -80,13 +80,15 @@ class AuthController
 
         $identifier = $email;
         if (!$this->rateLimiter->isAllowed($identifier)) {
-            Response::error('Too many failed login attempts. Please try again later.', 429);
+            $remaining = $this->rateLimiter->remainingLockoutSeconds($identifier);
+            Response::error("Too many failed login attempts. Please try again in {$remaining} seconds.", 429);
         }
 
         $user = $this->userModel->findByEmail($email);
         if (!$user || !password_verify($password, $user['password_hash'])) {
             $this->rateLimiter->recordFailure($identifier);
-            Response::error('Invalid email or password.', 401);
+            $remaining = $this->maxAttemptsRemaining($identifier);
+            Response::error("Invalid email or password. {$remaining} attempts remaining.", 401);
         }
 
         $this->rateLimiter->reset($identifier);
@@ -118,5 +120,24 @@ class AuthController
         $raw = file_get_contents('php://input');
         $data = json_decode($raw, true);
         return is_array($data) ? $data : [];
+    }
+
+    private function maxAttemptsRemaining(string $identifier): int
+    {
+        $pdo = $this->rateLimiter->getDatabasePdo();
+        $stmt = $pdo->prepare("
+            SELECT attempts
+            FROM login_attempts
+            WHERE identifier = :identifier
+        ");
+        $stmt->execute([':identifier' => $identifier]);
+        $row = $stmt->fetch();
+
+        if (!$row) {
+            return 5;
+        }
+
+        $max = (int) ($_ENV['RATE_LIMIT_MAX_ATTEMPTS'] ?? 5);
+        return max(0, $max - (int) $row['attempts']);
     }
 }
