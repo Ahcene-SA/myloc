@@ -35,13 +35,12 @@ function getApiBase(): string {
     return envUrl.replace(/\/$/, "");
   }
 
-  // When served locally via WAMP (port 80), the backend lives under /myloc/myloc-backend.
+  // WAMP fallback: when the frontend is served from anywhere under /myloc/ on localhost,
+  // the backend is reachable under /myloc/myloc-backend/public (default WAMP directory layout).
   // When served via the PHP built-in server, it usually runs on port 8000.
-  const { hostname, port } = window.location;
-  if (hostname === "localhost" || hostname === "127.0.0.1") {
-    if (port === "" || port === "80") {
-      return "http://localhost/myloc/myloc-backend";
-    }
+  const { hostname, port, pathname, protocol } = window.location;
+  if ((hostname === "localhost" || hostname === "127.0.0.1") && pathname.startsWith("/myloc/")) {
+    return `${protocol}//${hostname}${port ? `:${port}` : ""}/myloc/myloc-backend/public`;
   }
 
   return "http://localhost:8000";
