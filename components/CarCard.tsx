@@ -65,7 +65,7 @@ export function CarCard({ car, index = 0 }: CarCardProps) {
       transition={{ duration: 0.6, delay: index * 0.1, ease: "easeOut" }}
       style={{ rotateX, rotateY, transformPerspective: 1200 }}
       className={cn(
-        "group relative flex h-full flex-col overflow-hidden rounded-[2.5rem] border border-slate-200/60 bg-gradient-to-b from-white to-slate-100 p-6 shadow-xl shadow-slate-200/50 transition-shadow duration-300 hover:shadow-2xl hover:shadow-slate-300/60 sm:p-8",
+        "group relative flex flex-col overflow-hidden rounded-[2.5rem] border border-slate-200/60 bg-gradient-to-b from-white to-slate-100 p-6 shadow-xl shadow-slate-200/50 transition-shadow duration-300 hover:shadow-2xl hover:shadow-slate-300/60 sm:p-8",
         car.featured && "ring-2 ring-brand/20"
       )}
     >
@@ -84,7 +84,7 @@ export function CarCard({ car, index = 0 }: CarCardProps) {
       </div>
 
       {/* Floating 3D PNG car */}
-      <div className="relative z-10 flex flex-1 items-center justify-center py-6 [perspective:1000px]">
+      <div className="relative z-10 flex items-center justify-center h-36 py-3 [perspective:1000px]">
         <motion.div
           animate={{
             y: [0, -18, 0],
