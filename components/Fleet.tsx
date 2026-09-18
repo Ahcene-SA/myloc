@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
 import { CarCard, type Car } from "./CarCard";
 import { cn } from "@/lib/utils";
 import { fetchCars, mapApiCarToCar } from "@/lib/api";
@@ -208,8 +207,6 @@ export function Fleet() {
       : cars.filter((car) => car.category === activeCategory);
   }, [activeCategory, cars]);
 
-  const trackWidth = filteredCars.length * 320;
-
   return (
     <section id="vehicules" className="bg-slate-50 py-20 lg:py-28">
       <div className="mx-auto w-full">
@@ -255,33 +252,17 @@ export function Fleet() {
           </p>
         )}
 
-        <div className="relative mx-auto mt-4 w-full overflow-hidden sm:mt-6 lg:mt-8">
+        <div className="mx-auto mt-6 max-w-7xl px-4 sm:px-6 lg:mt-8 lg:px-8">
           {loading ? (
             <div className="flex h-64 items-center justify-center">
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand/30 border-t-brand" />
             </div>
           ) : (
-            <motion.div
-              className="flex w-max items-start gap-5 px-4 sm:gap-6"
-              animate={{ x: [0, -trackWidth] }}
-              transition={{
-                x: {
-                  repeat: Infinity,
-                  repeatType: "loop",
-                  duration: Math.max(trackWidth / 80, 20),
-                  ease: "linear",
-                },
-              }}
-            >
-              {[...filteredCars, ...filteredCars].map((car, index) => (
-                <div
-                  key={`${car.id}-${index}`}
-                  className="w-[78vw] shrink-0 sm:w-[52vw] md:w-[40vw] lg:w-[32vw] xl:w-[26vw]"
-                >
-                  <CarCard car={car} index={index} />
-                </div>
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {filteredCars.map((car, index) => (
+                <CarCard key={car.id} car={car} index={index} />
               ))}
-            </motion.div>
+            </div>
           )}
         </div>
       </div>
