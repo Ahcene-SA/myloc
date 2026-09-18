@@ -210,13 +210,7 @@ export function Fleet() {
   return (
     <section id="vehicules" className="bg-slate-50 py-20 lg:py-28">
       <div className="mx-auto w-full">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center"
-        >
+        <div className="text-center">
           <span className="inline-block rounded-full bg-brand/10 px-4 py-1.5 text-sm font-bold uppercase tracking-wider text-brand">
             Notre flotte
           </span>
@@ -227,7 +221,7 @@ export function Fleet() {
             Des citadines économiques aux SUV spacieux, trouvez le véhicule parfait
             pour votre prochain trajet.
           </p>
-        </motion.div>
+        </div>
 
         <div className="mt-10 flex flex-wrap items-center justify-center gap-2">
           {categories.map((cat) => (
