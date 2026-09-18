@@ -1,8 +1,7 @@
 "use client";
 
-import { useRef } from "react";
 import Image from "next/image";
-import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 import { Users, Calendar, Settings2, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -26,44 +25,12 @@ interface CarCardProps {
 }
 
 export function CarCard({ car, index = 0 }: CarCardProps) {
-  const cardRef = useRef<HTMLDivElement>(null);
-
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-
-  const rotateX = useSpring(useTransform(y, [-0.5, 0.5], [6, -6]), {
-    stiffness: 120,
-    damping: 20,
-  });
-  const rotateY = useSpring(useTransform(x, [-0.5, 0.5], [-6, 6]), {
-    stiffness: 120,
-    damping: 20,
-  });
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-    x.set((e.clientX - centerX) / rect.width);
-    y.set((e.clientY - centerY) / rect.height);
-  };
-
-  const handleMouseLeave = () => {
-    x.set(0);
-    y.set(0);
-  };
-
   return (
     <motion.div
-      ref={cardRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
       initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-50px" }}
       transition={{ duration: 0.6, delay: index * 0.1, ease: "easeOut" }}
-      style={{ rotateX, rotateY, transformPerspective: 1200 }}
       className={cn(
         "group relative flex flex-col overflow-hidden rounded-[2.5rem] border border-slate-200/60 bg-gradient-to-b from-white to-slate-100 p-4 shadow-xl shadow-slate-200/50 transition-shadow duration-300 hover:shadow-2xl hover:shadow-slate-300/60 sm:p-5",
         car.featured && "ring-2 ring-brand/20"
@@ -83,31 +50,17 @@ export function CarCard({ car, index = 0 }: CarCardProps) {
         </div>
       </div>
 
-      {/* Floating 3D PNG car */}
-      <div className="relative z-10 flex items-center justify-center h-24 py-2 [perspective:1000px]">
-        <motion.div
-          animate={{
-            y: [0, -18, 0],
-            rotateY: [-4, 4, -4],
-            rotateX: [2, -2, 2],
-          }}
-          transition={{
-            duration: 5 + index * 0.3,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-          style={{ transformStyle: "preserve-3d" }}
-          className="relative w-full"
-        >
+      {/* Car image */}
+      <div className="relative z-10 flex items-center justify-center h-24 py-2">
+        <div className="relative w-full">
           <Image
             src={car.image}
             alt={car.name}
             width={900}
             height={500}
             className="mx-auto h-auto w-[110%] max-w-none object-contain drop-shadow-[0_25px_50px_rgba(15,23,42,0.35)] transition-transform duration-500 group-hover:scale-105"
-            style={{ transform: "translateZ(40px)" }}
           />
-        </motion.div>
+        </div>
 
         {/* Floor reflection */}
         <div className="pointer-events-none absolute bottom-4 left-1/2 h-4 w-3/4 -translate-x-1/2 rounded-[100%] bg-slate-900/10 blur-xl" />
