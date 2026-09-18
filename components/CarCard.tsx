@@ -65,26 +65,26 @@ export function CarCard({ car, index = 0 }: CarCardProps) {
       transition={{ duration: 0.6, delay: index * 0.1, ease: "easeOut" }}
       style={{ rotateX, rotateY, transformPerspective: 1200 }}
       className={cn(
-        "group relative flex flex-col overflow-hidden rounded-[2.5rem] border border-slate-200/60 bg-gradient-to-b from-white to-slate-100 p-6 shadow-xl shadow-slate-200/50 transition-shadow duration-300 hover:shadow-2xl hover:shadow-slate-300/60 sm:p-8",
+        "group relative flex flex-col overflow-hidden rounded-[2.5rem] border border-slate-200/60 bg-gradient-to-b from-white to-slate-100 p-4 shadow-xl shadow-slate-200/50 transition-shadow duration-300 hover:shadow-2xl hover:shadow-slate-300/60 sm:p-5",
         car.featured && "ring-2 ring-brand/20"
       )}
     >
       {/* Top info */}
       <div className="relative z-20 flex items-start justify-between">
         <div>
-          <span className="inline-block rounded-full bg-brand/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-brand">
+          <span className="inline-block rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-brand">
             {car.category}
           </span>
-          <h3 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">{car.name}</h3>
+          <h3 className="mt-1 text-lg font-bold text-slate-900 sm:text-xl">{car.name}</h3>
         </div>
         <div className="text-right">
-          <div className="text-3xl font-extrabold text-brand sm:text-4xl">{car.price}€</div>
-          <div className="text-xs font-medium text-slate-500">/{car.priceUnit}</div>
+          <div className="text-2xl font-extrabold text-brand sm:text-3xl">{car.price}€</div>
+          <div className="text-[10px] font-medium text-slate-500">/{car.priceUnit}</div>
         </div>
       </div>
 
       {/* Floating 3D PNG car */}
-      <div className="relative z-10 flex items-center justify-center h-36 py-3 [perspective:1000px]">
+      <div className="relative z-10 flex items-center justify-center h-24 py-2 [perspective:1000px]">
         <motion.div
           animate={{
             y: [0, -18, 0],
@@ -114,8 +114,8 @@ export function CarCard({ car, index = 0 }: CarCardProps) {
       </div>
 
       {/* Bottom specs + CTA */}
-      <div className="relative z-20 mt-auto">
-        <div className="grid grid-cols-3 gap-2 rounded-2xl border border-slate-200/60 bg-white/80 p-3 backdrop-blur-sm">
+      <div className="relative z-20 mt-2">
+        <div className="grid grid-cols-3 gap-2 rounded-2xl border border-slate-200/60 bg-white/80 p-2 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-1 text-center">
             <Settings2 className="h-5 w-5 text-slate-400" />
             <span className="text-xs font-semibold text-slate-700">{car.transmission}</span>
@@ -132,7 +132,7 @@ export function CarCard({ car, index = 0 }: CarCardProps) {
 
         <a
           href="#"
-          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3.5 text-sm font-bold text-white transition-colors hover:bg-brand"
+          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-white transition-colors hover:bg-brand"
         >
           Créer un compte pour réserver
           <ArrowRight className="h-4 w-4" />

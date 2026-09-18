@@ -262,7 +262,7 @@ export function Fleet() {
             </div>
           ) : (
             <motion.div
-              className="flex w-max gap-5 px-4 sm:gap-6"
+              className="flex w-max items-start gap-5 px-4 sm:gap-6"
               animate={{ x: [0, -trackWidth] }}
               transition={{
                 x: {
