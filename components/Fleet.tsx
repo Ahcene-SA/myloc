@@ -270,7 +270,7 @@ export function Fleet() {
               {[...filteredCars, ...filteredCars].map((car, index) => (
                 <div
                   key={`${car.id}-${index}`}
-                  className="w-[78vw] shrink-0 sm:w-[52vw] md:w-[40vw] lg:w-[32vw] xl:w-[26vw]"
+                  className="w-[85vw] shrink-0 sm:w-[60vw] md:w-[45vw] lg:w-[36vw] xl:w-[30vw]"
                 >
                   <CarCard car={car} index={index} />
                 </div>
