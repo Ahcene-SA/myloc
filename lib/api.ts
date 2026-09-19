@@ -43,7 +43,7 @@ function getApiBase(): string {
     return `${protocol}//${hostname}${port ? `:${port}` : ""}/myloc/myloc-backend/public`;
   }
 
-  return "http://localhost:8000";
+  return "https://estate-currencies-shake-wonderful.trycloudflare.com";
 }
 
 export interface ApiError {
