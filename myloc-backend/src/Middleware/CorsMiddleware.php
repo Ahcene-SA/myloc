@@ -9,11 +9,13 @@ class CorsMiddleware
     public static function apply(): void
     {
         $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-        $allowed = self::getAllowedOrigins();
 
-        if ($origin !== '' && self::isAllowed($origin, $allowed)) {
+        // Allow all origins for demo purposes (GitHub Pages + Cloudflare tunnel).
+        if ($origin !== '') {
             header("Access-Control-Allow-Origin: {$origin}");
             header('Access-Control-Allow-Credentials: true');
+        } else {
+            header('Access-Control-Allow-Origin: *');
         }
 
         header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
@@ -24,27 +26,5 @@ class CorsMiddleware
             http_response_code(204);
             exit;
         }
-    }
-
-    private static function getAllowedOrigins(): array
-    {
-        $raw = $_ENV['ALLOWED_ORIGINS'] ?? '';
-        if ($raw === '') {
-            return [];
-        }
-        return array_map('trim', explode(',', $raw));
-    }
-
-    private static function isAllowed(string $origin, array $allowed): bool
-    {
-        foreach ($allowed as $value) {
-            if ($value === '*') {
-                return true;
-            }
-            if ($origin === $value) {
-                return true;
-            }
-        }
-        return false;
     }
 }
