@@ -21,6 +21,8 @@ import {
   Edit3,
   Save,
   Lock,
+  Settings2,
+  Users,
 } from "lucide-react";
 
 export function ClientContent() {
@@ -214,7 +216,9 @@ function ProfilView() {
 
 interface ReservationFromApi {
   id: number;
+  car_id?: number;
   car_name?: string;
+  car_category?: string;
   start_date?: string;
   end_date?: string;
   status?: "pending" | "confirmed" | "rejected" | "cancelled";
@@ -224,13 +228,16 @@ interface ReservationFromApi {
 
 function ReservationsView() {
   const [reservations, setReservations] = useState<ReservationFromApi[]>([]);
+  const [cars, setCars] = useState<CarFromApi[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetchMyReservations()
-      .then((data) => setReservations(data as ReservationFromApi[]))
-      .catch((e) => setError(e instanceof Error ? e.message : "Impossible de charger les réservations."))
+    Promise.all([
+      fetchMyReservations().then((data) => setReservations(data as ReservationFromApi[])),
+      fetchCars().then((data) => setCars(data)),
+    ])
+      .catch((e) => setError(e instanceof Error ? e.message : "Impossible de charger les données."))
       .finally(() => setLoading(false));
   }, []);
 
@@ -264,6 +271,8 @@ function ReservationsView() {
     }
   };
 
+  const findCar = (carId?: number) => cars.find((c) => c.id === carId);
+
   return (
     <div>
       <SectionHeader icon={Calendar} title="Mes réservations" />
@@ -279,43 +288,96 @@ function ReservationsView() {
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand/30 border-t-brand" />
         </div>
       ) : (
-        <div className="space-y-4">
-          {reservations.map((res) => (
-            <div
-              key={res.id}
-              className="rounded-3xl bg-white p-5 shadow-sm shadow-slate-200/50 sm:p-6"
-            >
-              <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-                <div className="flex items-center gap-4">
-                  <div className="h-16 w-24 rounded-xl bg-slate-200" />
+        <div className="space-y-6">
+          {reservations.map((res) => {
+            const car = findCar(res.car_id);
+            const mapped = car ? mapApiCarToCar(car) : null;
+            return (
+              <div
+                key={res.id}
+                className="group relative flex flex-col overflow-hidden rounded-[2.5rem] border border-slate-200/60 bg-gradient-to-b from-white to-slate-100 p-5 shadow-xl shadow-slate-200/50 transition-shadow duration-300 hover:shadow-2xl hover:shadow-slate-300/60 sm:p-6"
+              >
+                {/* Top row: car info + status */}
+                <div className="flex items-start justify-between">
                   <div>
-                    <div className="text-lg font-bold text-slate-900">{res.car_name || "Véhicule"}</div>
-                    <div className="text-sm text-slate-500">
-                      Du {res.start_date || "?"} au {res.end_date || "?"}
+                    <span className="inline-block rounded-full bg-brand/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-brand">
+                      {res.car_category || mapped?.category || "Véhicule"}
+                    </span>
+                    <h3 className="mt-1 text-xl font-bold text-slate-900 sm:text-2xl">
+                      {res.car_name || mapped?.name || "Véhicule"}
+                    </h3>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-3xl font-extrabold text-brand sm:text-4xl">
+                      {mapped?.price || res.total_price || "?"}€
                     </div>
+                    <div className="text-xs font-medium text-slate-500">/{mapped?.priceUnit || "jour"}</div>
                   </div>
                 </div>
-                <span className={`rounded-full px-4 py-1.5 text-sm font-semibold ${statusClass(res.status)}`}>
-                  {statusLabel(res.status)}
-                </span>
-              </div>
-              {res.admin_note && (
-                <div className="mt-3 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-800">
-                  <span className="font-semibold">Réponse de l’administrateur : {" "}</span>
-                  {res.admin_note}
-                </div>
-              )}
 
-              <div className="mt-4 flex flex-wrap items-center gap-2">
-                <button className="rounded-xl bg-brand px-4 py-2 text-sm font-bold text-white hover:bg-brand-hover">
-                  Détails
-                </button>
-                <button className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50">
-                  Télécharger la facture
-                </button>
+                {/* Car image */}
+                <div className="relative flex items-start justify-center h-auto -mt-2 -mb-2">
+                  <div className="relative w-full">
+                    {mapped?.image ? (
+                      <img
+                        src={mapped.image.startsWith("http") ? mapped.image : `./${mapped.image}`}
+                        alt={res.car_name || mapped.name}
+                        className="mx-auto h-auto max-h-60 w-full object-contain drop-shadow-[0_25px_50px_rgba(15,23,42,0.35)]"
+                      />
+                    ) : (
+                      <div className="mx-auto h-32 w-32 rounded-2xl bg-slate-200" />
+                    )}
+                  </div>
+                </div>
+
+                {/* Specs + dates + status */}
+                <div className="mt-2 space-y-3">
+                  <div className="grid grid-cols-3 gap-2 rounded-2xl border border-slate-200/60 bg-white/80 p-3 backdrop-blur-sm">
+                    <div className="flex flex-col items-center gap-1 text-center">
+                      <Settings2 className="h-5 w-5 text-slate-400" />
+                      <span className="text-xs font-semibold text-slate-700">{mapped?.transmission || "Auto"}</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-1 text-center">
+                      <Users className="h-5 w-5 text-slate-400" />
+                      <span className="text-xs font-semibold text-slate-700">{mapped?.seats || "5"} places</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-1 text-center">
+                      <Calendar className="h-5 w-5 text-slate-400" />
+                      <span className="text-xs font-semibold text-slate-700">{mapped?.year || "2024"}</span>
+                    </div>
+                  </div>
+
+                  {/* Dates + status */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-white/80 p-4">
+                    <div className="text-sm text-slate-600">
+                      <span className="font-semibold text-slate-900">Du {res.start_date || "?"}</span>
+                      {" "}au{" "}
+                      <span className="font-semibold text-slate-900">{res.end_date || "?"}</span>
+                    </div>
+                    <span className={`rounded-full px-4 py-1.5 text-sm font-semibold ${statusClass(res.status)}`}>
+                      {statusLabel(res.status)}
+                    </span>
+                  </div>
+                </div>
+
+                {res.admin_note && (
+                  <div className="mt-3 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-800">
+                    <span className="font-semibold">Réponse de l’administrateur : {" "}</span>
+                    {res.admin_note}
+                  </div>
+                )}
+
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <button className="rounded-xl bg-brand px-4 py-2 text-sm font-bold text-white hover:bg-brand-hover">
+                    Détails
+                  </button>
+                  <button className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50">
+                    Télécharger la facture
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
