@@ -51,7 +51,7 @@ export function CarCard({ car, index = 0 }: CarCardProps) {
       </div>
 
       {/* Car image */}
-      <div className="relative flex items-center justify-center h-44 py-1">
+      <div className="relative flex items-start justify-center h-auto -mt-2 -mb-2">
         <div className="relative w-full">
           <Image
             src={car.image}
@@ -61,9 +61,6 @@ export function CarCard({ car, index = 0 }: CarCardProps) {
             className="mx-auto h-auto w-full object-contain drop-shadow-[0_25px_50px_rgba(15,23,42,0.35)] transition-transform duration-500 group-hover:scale-105"
           />
         </div>
-
-        {/* Floor reflection */}
-        <div className="pointer-events-none absolute bottom-4 left-1/2 h-4 w-3/4 -translate-x-1/2 rounded-[100%] bg-slate-900/10 blur-xl" />
       </div>
 
       {/* Bottom specs + CTA */}
