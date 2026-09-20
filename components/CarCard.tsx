@@ -37,7 +37,7 @@ export function CarCard({ car, index = 0 }: CarCardProps) {
       )}
     >
       {/* Top info */}
-      <div className="relative z-20 flex items-start justify-between">
+      <div className="flex items-start justify-between">
         <div>
           <span className="inline-block rounded-full bg-brand/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-brand">
             {car.category}
@@ -51,14 +51,14 @@ export function CarCard({ car, index = 0 }: CarCardProps) {
       </div>
 
       {/* Car image */}
-      <div className="relative z-10 flex items-center justify-center h-32 py-3">
+      <div className="relative flex items-center justify-center h-44 py-1">
         <div className="relative w-full">
           <Image
             src={car.image}
             alt={car.name}
             width={900}
             height={500}
-            className="mx-auto h-auto w-[110%] max-w-none object-contain drop-shadow-[0_25px_50px_rgba(15,23,42,0.35)] transition-transform duration-500 group-hover:scale-105"
+            className="mx-auto h-auto w-full object-contain drop-shadow-[0_25px_50px_rgba(15,23,42,0.35)] transition-transform duration-500 group-hover:scale-105"
           />
         </div>
 
@@ -67,7 +67,7 @@ export function CarCard({ car, index = 0 }: CarCardProps) {
       </div>
 
       {/* Bottom specs + CTA */}
-      <div className="relative z-20 mt-2">
+      <div className="mt-2">
         <div className="grid grid-cols-3 gap-2 rounded-2xl border border-slate-200/60 bg-white/80 p-3 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-1 text-center">
             <Settings2 className="h-5 w-5 text-slate-400" />
