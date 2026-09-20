@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { CarCard, type Car } from "./CarCard";
 import { cn } from "@/lib/utils";
 import { fetchCars, mapApiCarToCar } from "@/lib/api";
@@ -208,7 +208,15 @@ export function Fleet() {
       : cars.filter((car) => car.category === activeCategory);
   }, [activeCategory, cars]);
 
-  const trackWidth = filteredCars.length * 320;
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const scroll = (direction: "left" | "right") => {
+    const container = scrollRef.current;
+    if (!container) return;
+    const cardWidth = container.clientWidth * 0.35; // approx one card + gap
+    const scrollAmount = direction === "left" ? -cardWidth : cardWidth;
+    container.scrollBy({ left: scrollAmount, behavior: "smooth" });
+  };
 
   return (
     <section id="vehicules" className="bg-slate-50 py-20 lg:py-28">
@@ -249,33 +257,43 @@ export function Fleet() {
           </p>
         )}
 
-        <div className="relative mx-auto mt-4 w-full overflow-hidden sm:mt-6 lg:mt-8">
+        <div className="relative mx-auto mt-4 w-full sm:mt-6 lg:mt-8">
           {loading ? (
             <div className="flex h-64 items-center justify-center">
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand/30 border-t-brand" />
             </div>
           ) : (
-            <motion.div
-              className="flex w-max items-start gap-5 px-4 sm:gap-6"
-              animate={{ x: [0, -trackWidth] }}
-              transition={{
-                x: {
-                  repeat: Infinity,
-                  repeatType: "loop",
-                  duration: Math.max(trackWidth / 80, 20),
-                  ease: "linear",
-                },
-              }}
-            >
-              {[...filteredCars, ...filteredCars].map((car, index) => (
-                <div
-                  key={`${car.id}-${index}`}
-                  className="w-[85vw] shrink-0 sm:w-[60vw] md:w-[45vw] lg:w-[36vw] xl:w-[30vw]"
-                >
-                  <CarCard car={car} index={index} />
-                </div>
-              ))}
-            </motion.div>
+            <>
+              <button
+                onClick={() => scroll("left")}
+                className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/90 p-2.5 text-slate-700 shadow-lg backdrop-blur-sm transition-all hover:bg-white hover:text-brand hover:shadow-xl active:scale-95 sm:left-4 sm:p-3"
+                aria-label="Défiler vers la gauche"
+              >
+                <ArrowLeft className="h-5 w-5 sm:h-6 sm:w-6" />
+              </button>
+              <button
+                onClick={() => scroll("right")}
+                className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/90 p-2.5 text-slate-700 shadow-lg backdrop-blur-sm transition-all hover:bg-white hover:text-brand hover:shadow-xl active:scale-95 sm:right-4 sm:p-3"
+                aria-label="Défiler vers la droite"
+              >
+                <ArrowRight className="h-5 w-5 sm:h-6 sm:w-6" />
+              </button>
+
+              <div
+                ref={scrollRef}
+                className="flex w-full items-start gap-5 overflow-x-auto px-4 py-2 sm:gap-6"
+                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+              >
+                {filteredCars.map((car, index) => (
+                  <div
+                    key={car.id}
+                    className="w-[85vw] shrink-0 sm:w-[60vw] md:w-[45vw] lg:w-[36vw] xl:w-[30vw]"
+                  >
+                    <CarCard car={car} index={index} />
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
       </div>
