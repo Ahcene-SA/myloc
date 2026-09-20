@@ -43,7 +43,7 @@ function getApiBase(): string {
     return `${protocol}//${hostname}${port ? `:${port}` : ""}/myloc/myloc-backend/public`;
   }
 
-  return "https://infrared-optimum-index-org.trycloudflare.com";
+  return "https://trends-dublin-pockets-held.trycloudflare.com";
 }
 
 export interface ApiError {

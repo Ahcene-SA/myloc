@@ -25,7 +25,7 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: 'window.MYLOC_API_URL = "https://infrared-optimum-index-org.trycloudflare.com";',
+            __html: 'window.MYLOC_API_URL = "https://trends-dublin-pockets-held.trycloudflare.com";',
           }}
         />
       </head>
