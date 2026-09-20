@@ -257,31 +257,24 @@ export function Fleet() {
           </p>
         )}
 
-        <div className="relative mx-auto mt-4 w-full sm:mt-6 lg:mt-8">
+        <div className="mx-auto mt-4 w-full sm:mt-6 lg:mt-8">
           {loading ? (
             <div className="flex h-64 items-center justify-center">
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand/30 border-t-brand" />
             </div>
           ) : (
-            <>
+            <div className="flex items-center gap-2 sm:gap-3">
               <button
                 onClick={() => scroll("left")}
-                className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/90 p-2.5 text-slate-700 shadow-lg backdrop-blur-sm transition-all hover:bg-white hover:text-brand hover:shadow-xl active:scale-95 sm:left-4 sm:p-3"
+                className="shrink-0 rounded-full bg-white p-2 text-slate-700 shadow-md transition-all hover:bg-slate-50 hover:text-brand active:scale-95 sm:p-3"
                 aria-label="Défiler vers la gauche"
               >
                 <ArrowLeft className="h-5 w-5 sm:h-6 sm:w-6" />
               </button>
-              <button
-                onClick={() => scroll("right")}
-                className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/90 p-2.5 text-slate-700 shadow-lg backdrop-blur-sm transition-all hover:bg-white hover:text-brand hover:shadow-xl active:scale-95 sm:right-4 sm:p-3"
-                aria-label="Défiler vers la droite"
-              >
-                <ArrowRight className="h-5 w-5 sm:h-6 sm:w-6" />
-              </button>
 
               <div
                 ref={scrollRef}
-                className="flex w-full items-start gap-5 overflow-x-auto px-4 py-2 sm:gap-6"
+                className="flex flex-1 items-start gap-5 overflow-x-auto py-2 sm:gap-6"
                 style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
               >
                 {filteredCars.map((car, index) => (
@@ -293,7 +286,15 @@ export function Fleet() {
                   </div>
                 ))}
               </div>
-            </>
+
+              <button
+                onClick={() => scroll("right")}
+                className="shrink-0 rounded-full bg-white p-2 text-slate-700 shadow-md transition-all hover:bg-slate-50 hover:text-brand active:scale-95 sm:p-3"
+                aria-label="Défiler vers la droite"
+              >
+                <ArrowRight className="h-5 w-5 sm:h-6 sm:w-6" />
+              </button>
+            </div>
           )}
         </div>
       </div>
