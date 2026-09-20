@@ -213,9 +213,12 @@ export function Fleet() {
   const scroll = (direction: "left" | "right") => {
     const container = scrollRef.current;
     if (!container) return;
-    const cardWidth = container.clientWidth * 0.35; // approx one card + gap
-    const scrollAmount = direction === "left" ? -cardWidth : cardWidth;
-    container.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    const firstCard = container.children[0] as HTMLElement | undefined;
+    if (!firstCard) return;
+    const cardWidth = firstCard.getBoundingClientRect().width;
+    const gap = parseFloat(getComputedStyle(container).gap) || 0;
+    const scrollAmount = cardWidth + gap;
+    container.scrollBy({ left: direction === "left" ? -scrollAmount : scrollAmount, behavior: "smooth" });
   };
 
   return (
