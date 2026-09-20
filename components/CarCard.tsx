@@ -58,7 +58,7 @@ export function CarCard({ car, index = 0 }: CarCardProps) {
             alt={car.name}
             width={900}
             height={500}
-            className="mx-auto h-auto w-full object-contain drop-shadow-[0_25px_50px_rgba(15,23,42,0.35)] transition-transform duration-500 group-hover:scale-105"
+            className="mx-auto h-auto max-h-32 w-full object-contain drop-shadow-[0_25px_50px_rgba(15,23,42,0.35)] transition-transform duration-500 group-hover:scale-105"
           />
         </div>
       </div>
