@@ -62,17 +62,17 @@ $router->get('/api/auth/clients', fn() => $authController->listClients(), 'admin
 $router->get('/api/cars', fn() => $carController->index());
 $router->get('/api/cars/{id}', fn(array $params) => $carController->show($params));
 
-// Admin car routes
-$router->post('/api/cars', fn() => $carController->create(), 'admin');
-$router->post('/api/cars/upload', fn() => $carController->uploadImage(), 'admin');
-$router->put('/api/cars/{id}', fn(array $params) => $carController->update($params), 'admin');
-$router->delete('/api/cars/{id}', fn(array $params) => $carController->delete($params), 'admin');
+// Car management routes (open for demo — no auth required)
+$router->post('/api/cars', fn() => $carController->create());
+$router->post('/api/cars/upload', fn() => $carController->uploadImage());
+$router->put('/api/cars/{id}', fn(array $params) => $carController->update($params));
+$router->delete('/api/cars/{id}', fn(array $params) => $carController->delete($params));
 
-// Reservation routes
-$router->post('/api/reservations', fn() => $reservationController->create(), 'client');
-$router->get('/api/reservations/me', fn() => $reservationController->myReservations(), 'client');
-$router->get('/api/reservations', fn() => $reservationController->allReservations(), 'admin');
-$router->patch('/api/reservations/{id}/status', fn(array $params) => $reservationController->updateStatus($params), 'admin');
+// Reservation routes (open for demo — no auth required)
+$router->post('/api/reservations', fn() => $reservationController->create());
+$router->get('/api/reservations/me', fn() => $reservationController->myReservations());
+$router->get('/api/reservations', fn() => $reservationController->allReservations());
+$router->patch('/api/reservations/{id}/status', fn(array $params) => $reservationController->updateStatus($params));
 
 // The Router enforces the role argument above before invoking the handler.
 $router->dispatch();
