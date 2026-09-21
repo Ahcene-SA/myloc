@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { CarCard, type Car } from "./CarCard";
 import { cn } from "@/lib/utils";
 import { fetchCars, mapApiCarToCar } from "@/lib/api";
@@ -130,22 +129,9 @@ export function Fleet() {
       : cars.filter((car) => car.category === activeCategory);
   }, [activeCategory, cars]);
 
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  const scroll = (direction: "left" | "right") => {
-    const container = scrollRef.current;
-    if (!container) return;
-    const firstCard = container.children[0] as HTMLElement | undefined;
-    if (!firstCard) return;
-    const cardWidth = firstCard.getBoundingClientRect().width;
-    const gap = parseFloat(getComputedStyle(container).gap) || 0;
-    const scrollAmount = cardWidth + gap;
-    container.scrollBy({ left: direction === "left" ? -scrollAmount : scrollAmount, behavior: "smooth" });
-  };
-
   return (
     <section id="vehicules" className="bg-slate-50 py-20 lg:py-28">
-      <div className="mx-auto w-full">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <span className="inline-block rounded-full bg-brand/10 px-4 py-1.5 text-sm font-bold uppercase tracking-wider text-brand">
             Notre flotte
@@ -182,46 +168,23 @@ export function Fleet() {
           </p>
         )}
 
-        <div className="mx-auto mt-4 w-full sm:mt-6 lg:mt-8">
+        <div className="mx-auto mt-10 w-full">
           {loading ? (
             <div className="flex h-64 items-center justify-center">
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand/30 border-t-brand" />
             </div>
           ) : (
-            <div className="flex items-center gap-2 sm:gap-3">
-              <button
-                onClick={() => scroll("left")}
-                className="shrink-0 rounded-full bg-white p-2 text-slate-700 shadow-md transition-all hover:bg-slate-50 hover:text-brand active:scale-95 sm:p-3"
-                aria-label="Défiler vers la gauche"
-              >
-                <ArrowLeft className="h-5 w-5 sm:h-6 sm:w-6" />
-              </button>
-
-              <div
-                ref={scrollRef}
-                className="flex flex-1 items-start gap-5 overflow-x-auto py-2 sm:gap-6"
-                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-              >
-                {filteredCars.map((car, index) => (
-                  <div
-                    key={car.id}
-                    className="w-[85vw] shrink-0 sm:w-[60vw] md:w-[45vw] lg:w-[36vw] xl:w-[30vw]"
-                  >
-                    <CarCard car={car} index={index} />
-                  </div>
-                ))}
-              </div>
-
-              <button
-                onClick={() => scroll("right")}
-                className="shrink-0 rounded-full bg-white p-2 text-slate-700 shadow-md transition-all hover:bg-slate-50 hover:text-brand active:scale-95 sm:p-3"
-                aria-label="Défiler vers la droite"
-              >
-                <ArrowRight className="h-5 w-5 sm:h-6 sm:w-6" />
-              </button>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {filteredCars.map((car, index) => (
+                <CarCard key={car.id} car={car} index={index} />
+              ))}
             </div>
           )}
         </div>
+
+        {!loading && filteredCars.length === 0 && (
+          <p className="mt-8 text-center text-slate-500">Aucun véhicule ne correspond à votre recherche.</p>
+        )}
       </div>
     </section>
   );

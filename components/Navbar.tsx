@@ -1,105 +1,192 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Menu, X } from "lucide-react";
+import { Menu, X, FileText, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const navLinks = [
+const mainLinks = [
   { href: "#accueil", label: "Accueil" },
-  { href: "#vehicules", label: "Véhicules" },
-  { href: "#avantages", label: "Avantages" },
-  { href: "#a-propos", label: "À propos" },
+  { href: "#vehicules", label: "Réserver" },
+  { href: "#avantages", label: "Comment ça marche" },
+  { href: "#a-propos", label: "À Propos" },
   { href: "#contact", label: "Contact" },
 ];
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 40);
+    handleScroll();
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const isTransparent = !scrolled;
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200/60">
-      <div className="mx-auto flex h-24 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <a href="#accueil" className="flex items-center gap-2">
+    <header
+      className={cn(
+        "fixed inset-x-0 top-0 z-50 transition-all duration-500",
+        isTransparent
+          ? "bg-transparent"
+          : "bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100"
+      )}
+    >
+      <div className="mx-auto flex h-16 md:h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        {/* Logo */}
+        <a href="#accueil" className="flex items-center flex-shrink-0 group">
           <Image
             src="images/logo.svg"
             alt="MYLOC.DZ Car Rental"
             width={220}
             height={60}
-            className="h-14 w-auto"
+            className={cn(
+              "h-12 md:h-16 w-auto transition-all duration-300",
+              isTransparent && "brightness-0 invert"
+            )}
             priority
           />
         </a>
 
         {/* Desktop Nav */}
-        <nav className="hidden items-center gap-1 rounded-full bg-slate-100/80 px-2 py-1 md:flex">
-          {navLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-white hover:text-slate-900"
-            >
-              {link.label}
-            </a>
-          ))}
-        </nav>
+        <div className="hidden lg:flex items-center gap-3">
+          {/* Main nav pill */}
+          <div
+            className={cn(
+              "flex items-center gap-0.5 px-1.5 py-1.5 rounded-full transition-all duration-300 border",
+              isTransparent
+                ? "bg-white/10 backdrop-blur-md border-white/20"
+                : "bg-gray-100 border-gray-200"
+            )}
+          >
+            {mainLinks.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                className={cn(
+                  "text-[11px] xl:text-xs font-semibold px-3.5 py-1.5 rounded-full whitespace-nowrap transition-all duration-200",
+                  isTransparent
+                    ? "text-white/75 hover:text-white hover:bg-white/15"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-white",
+                  link.href === "#vehicules" &&
+                    (isTransparent
+                      ? "bg-white/20 text-white shadow-sm"
+                      : "bg-white text-[#00bf63] shadow-sm")
+                )}
+              >
+                {link.label}
+              </a>
+            ))}
+          </div>
 
-        <div className="hidden items-center gap-4 md:flex">
-          <a
-            href="admin.html"
-            className="rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:border-brand hover:text-brand"
+          {/* Utility nav pill */}
+          <div
+            className={cn(
+              "flex items-center gap-0.5 px-1.5 py-1.5 rounded-full transition-all duration-300 border",
+              isTransparent
+                ? "bg-white/10 backdrop-blur-md border-white/20"
+                : "bg-gray-100 border-gray-200"
+            )}
           >
-            Admin
-          </a>
-          <a
-            href="client.html"
-            className="rounded-full bg-brand px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-hover"
-          >
-            Log in
-          </a>
+            <a
+              href="admin.html"
+              className={cn(
+                "flex items-center gap-1.5 text-[11px] xl:text-xs font-semibold px-3.5 py-1.5 rounded-full whitespace-nowrap transition-all duration-200",
+                isTransparent
+                  ? "text-white/75 hover:text-white hover:bg-white/15"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-white"
+              )}
+            >
+              <FileText className="w-3 h-3" />
+              Admin
+            </a>
+            <span
+              className={cn(
+                "w-px h-4 mx-0.5",
+                isTransparent ? "bg-white/20" : "bg-gray-300"
+              )}
+            />
+            <a
+              href="client.html"
+              className={cn(
+                "flex items-center gap-1.5 text-[11px] xl:text-xs font-semibold px-3.5 py-1.5 rounded-full whitespace-nowrap transition-all duration-200",
+                isTransparent
+                  ? "text-white/75 hover:text-white hover:bg-white/15"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-white"
+              )}
+            >
+              <User className="w-3 h-3" />
+              Mon espace
+            </a>
+          </div>
         </div>
 
         {/* Mobile Menu Button */}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-700 md:hidden"
+          className={cn(
+            "lg:hidden p-2.5 rounded-xl transition-colors",
+            isTransparent
+              ? "text-white hover:bg-white/10"
+              : "text-gray-700 hover:bg-gray-100"
+          )}
           aria-label={isOpen ? "Fermer le menu" : "Ouvrir le menu"}
         >
-          {isOpen ? <X size={20} /> : <Menu size={20} />}
+          {isOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
 
       {/* Mobile Nav */}
       <div
         className={cn(
-          "overflow-hidden border-b border-slate-200/60 bg-white transition-all duration-300 md:hidden",
-          isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+          "lg:hidden transition-all duration-300 overflow-hidden border-t border-gray-100 bg-white",
+          isOpen ? "max-h-[32rem] opacity-100" : "max-h-0 opacity-0"
         )}
       >
         <nav className="flex flex-col gap-1 px-4 py-4">
-          {navLinks.map((link) => (
+          {mainLinks.map((link) => (
             <a
               key={link.href}
               href={link.href}
               onClick={() => setIsOpen(false)}
-              className="rounded-lg px-4 py-3 text-base font-medium text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-900"
+              className={cn(
+                "flex items-center py-2.5 px-3 rounded-xl text-sm font-medium transition-colors",
+                link.href === "#vehicules"
+                  ? "text-[#00bf63] bg-[#00bf63]/5"
+                  : "text-gray-700 hover:text-[#00bf63] hover:bg-gray-50"
+              )}
             >
               {link.label}
             </a>
           ))}
-          <a
-            href="admin.html"
-            onClick={() => setIsOpen(false)}
-            className="rounded-lg px-4 py-3 text-base font-medium text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-900"
-          >
-            Admin
-          </a>
-          <a
-            href="client.html"
-            onClick={() => setIsOpen(false)}
-            className="mt-2 rounded-full bg-brand px-4 py-3 text-center text-base font-semibold text-white transition-colors hover:bg-brand-hover"
-          >
-            Log in
-          </a>
+          <div className="pt-3 border-t border-gray-100 flex flex-col gap-2">
+            <a
+              href="admin.html"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-2 text-sm font-semibold text-gray-700 py-2.5 px-3 rounded-xl hover:bg-gray-50"
+            >
+              <FileText className="w-4 h-4" />
+              Admin
+            </a>
+            <a
+              href="client.html"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-2 text-sm font-semibold text-gray-700 py-2.5 px-3 rounded-xl hover:bg-gray-50"
+            >
+              <User className="w-4 h-4" />
+              Mon Espace
+            </a>
+            <a
+              href="#vehicules"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center justify-center gap-2 text-sm font-bold text-white py-3 px-4 rounded-xl bg-[#00bf63] hover:opacity-90 transition-opacity"
+            >
+              Réserver maintenant →
+            </a>
+          </div>
         </nav>
       </div>
     </header>
