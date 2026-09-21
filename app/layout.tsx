@@ -23,11 +23,12 @@ export default function RootLayout({
   return (
     <html lang="fr" className={`${inter.variable} h-full antialiased`}>
       <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: 'window.MYLOC_API_URL = "https://trends-dublin-pockets-held.trycloudflare.com";',
-          }}
-        />
+        {
+          /* To point the frontend to your backend, set localStorage.myloc_api_url
+             in the browser console or pass ?apiUrl=YOUR_URL as a query param.
+             Example: localStorage.setItem("myloc_api_url", "https://abc.trycloudflare.com");
+             Previous runtime override (expired tunnel) removed. */
+        }
       </head>
       <body className="min-h-full flex flex-col font-sans">
         <AuthProvider>{children}</AuthProvider>

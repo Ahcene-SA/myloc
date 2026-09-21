@@ -240,6 +240,7 @@ function CarsView() {
     transmission: "manuel",
     seats: "",
     year: new Date().getFullYear().toString(),
+    category: "citadine",
   });
   const [photoFile, setPhotoFile] = useState<File | null>(null);
 
@@ -286,6 +287,7 @@ function CarsView() {
       transmission: "manuel",
       seats: "",
       year: new Date().getFullYear().toString(),
+      category: "citadine",
     });
     setPhotoFile(null);
     setPreviewUrl(null);
@@ -305,6 +307,7 @@ function CarsView() {
 
       await createCar({
         name: form.name,
+        category: form.category,
         price_per_day: parseFloat(form.price_per_day),
         transmission: form.transmission,
         seats: parseInt(form.seats, 10),
@@ -438,6 +441,20 @@ function CarsView() {
               >
                 <option value="manuel">Manuel</option>
                 <option value="automatique">Automatique</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-semibold text-slate-700">Catégorie</label>
+              <select
+                required
+                value={form.category}
+                onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-brand"
+              >
+                <option value="citadine">Citadine</option>
+                <option value="suv">SUV</option>
+                <option value="berline">Berline</option>
               </select>
             </div>
 

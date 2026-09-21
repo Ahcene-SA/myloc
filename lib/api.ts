@@ -43,7 +43,9 @@ function getApiBase(): string {
     return `${protocol}//${hostname}${port ? `:${port}` : ""}/myloc/myloc-backend/public`;
   }
 
-  return "https://trends-dublin-pockets-held.trycloudflare.com";
+  // No hardcoded tunnel URL here — set it via localStorage or query param.
+  // Example: localStorage.setItem("myloc_api_url", "https://abc.trycloudflare.com");
+  return "";
 }
 
 export interface ApiError {

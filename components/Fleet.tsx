@@ -106,8 +106,9 @@ export function Fleet() {
     fetchCars()
       .then((apiCars) => {
         if (cancelled) return;
-        // Force fallback cars for demo — replace with real API data when DB is updated.
-        setCars(fallbackCars);
+        const available = apiCars.filter((c) => c.status === "available");
+        const mapped = available.map(mapApiCarToCar);
+        setCars(mapped.length > 0 ? mapped : fallbackCars);
       })
       .catch((e) => {
         if (cancelled) return;
