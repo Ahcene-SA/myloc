@@ -530,7 +530,7 @@ function CarsView() {
               >
                 <div className="relative h-40 overflow-hidden rounded-2xl bg-gradient-to-b from-slate-50 to-slate-200">
                   <img
-                    src={mapped.image.startsWith("http") ? mapped.image : `./${mapped.image}`}
+                    src={mapped.image}
                     alt={car.name}
                     className="mx-auto h-full w-auto object-contain p-2"
                   />

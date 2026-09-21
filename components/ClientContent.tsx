@@ -320,7 +320,7 @@ function ReservationsView() {
                   <div className="relative w-full">
                     {mapped?.image ? (
                       <img
-                        src={mapped.image.startsWith("http") ? mapped.image : `./${mapped.image}`}
+                        src={mapped.image}
                         alt={res.car_name || mapped.name}
                         className="mx-auto h-auto max-h-60 w-full object-contain drop-shadow-[0_25px_50px_rgba(15,23,42,0.35)]"
                       />
@@ -549,7 +549,7 @@ function ReserverView() {
               >
                 <div className="relative h-40 overflow-hidden rounded-2xl bg-gradient-to-b from-slate-50 to-slate-200">
                   <img
-                    src={mapped.image.startsWith("http") ? mapped.image : `./${mapped.image}`}
+                    src={mapped.image}
                     alt={car.name}
                     className="mx-auto h-full w-auto object-contain p-2"
                   />

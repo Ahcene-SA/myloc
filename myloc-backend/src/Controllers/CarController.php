@@ -124,11 +124,8 @@ class CarController
             Response::error('Failed to save uploaded image.', 500);
         }
 
-        $scheme = $_SERVER['REQUEST_SCHEME'] ?? 'http';
-        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-        $publicPath = dirname($_SERVER['SCRIPT_NAME']);
-        $publicPath = $publicPath === '/' ? '' : $publicPath;
-        $imageUrl = "{$scheme}://{$host}{$publicPath}/images/cars/{$filename}";
+        // Return a relative path so the frontend can prepend its API base.
+        $imageUrl = "images/cars/{$filename}";
 
         Response::success('Image uploaded.', ['image_url' => $imageUrl]);
     }

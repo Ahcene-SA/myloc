@@ -1,6 +1,6 @@
 "use client";
 
-function getApiBase(): string {
+export function getApiBase(): string {
   if (typeof window === "undefined") {
     return "http://localhost:8000";
   }
@@ -312,6 +312,7 @@ export function mapApiCarToCar(car: CarFromApi): {
   year: number;
   status: string;
 } {
+  const base = getApiBase();
   return {
     id: String(car.id),
     name: car.name,
@@ -319,8 +320,8 @@ export function mapApiCarToCar(car: CarFromApi): {
     image: car.image_url
       ? car.image_url.startsWith("http")
         ? car.image_url
-        : car.image_url.replace(/^\/?/, "")
-      : "images/audi-png-auto-car-0.png",
+        : `${base}/${car.image_url.replace(/^\/?/, "")}`
+      : `${base}/images/audi-png-auto-car-0.png`,
     price: typeof car.price_per_day === "string" ? parseFloat(car.price_per_day) : car.price_per_day,
     priceUnit: "jour",
     transmission: car.transmission,
