@@ -74,7 +74,7 @@ export function Navbar() {
                   link.href === "#vehicules" &&
                     (isTransparent
                       ? "bg-white/20 text-white shadow-sm"
-                      : "bg-white text-[#00bf63] shadow-sm")
+                      : "bg-white text-[#43B0E6] shadow-sm")
                 )}
               >
                 {link.label}
@@ -155,8 +155,8 @@ export function Navbar() {
               className={cn(
                 "flex items-center py-2.5 px-3 rounded-xl text-sm font-medium transition-colors",
                 link.href === "#vehicules"
-                  ? "text-[#00bf63] bg-[#00bf63]/5"
-                  : "text-gray-700 hover:text-[#00bf63] hover:bg-gray-50"
+                  ? "text-[#43B0E6] bg-[#43B0E6]/5"
+                  : "text-gray-700 hover:text-[#43B0E6] hover:bg-gray-50"
               )}
             >
               {link.label}
@@ -182,7 +182,7 @@ export function Navbar() {
             <a
               href="#vehicules"
               onClick={() => setIsOpen(false)}
-              className="flex items-center justify-center gap-2 text-sm font-bold text-white py-3 px-4 rounded-xl bg-[#00bf63] hover:opacity-90 transition-opacity"
+              className="flex items-center justify-center gap-2 text-sm font-bold text-white py-3 px-4 rounded-xl bg-[#43B0E6] hover:opacity-90 transition-opacity"
             >
               Réserver maintenant →
             </a>

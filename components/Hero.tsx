@@ -48,7 +48,7 @@ export function Hero() {
   const [returnTime, setReturnTime] = useState("10:00");
 
   return (
-    <section id="accueil" className="bg-[#00bf63] p-3 sm:p-4 lg:p-2">
+    <section id="accueil" className="bg-[#43B0E6] p-3 sm:p-4 lg:p-2">
       {/* Main Hero Container */}
       <div className="rounded-[2rem] relative h-[min(calc(100svh-1.5rem),916px)] lg:h-[calc(100svh-3.5rem)] overflow-hidden">
         {/* Background Image */}
@@ -78,7 +78,7 @@ export function Hero() {
                 <div className="flex items-start gap-3 px-4 py-3 sm:px-6 sm:py-4 lg:flex-[2] min-w-0">
                   <MapPin
                     className="w-5 h-5 flex-shrink-0 mt-5"
-                    style={{ color: "#00bf63" }}
+                    style={{ color: "#43B0E6" }}
                   />
                   <div className="relative flex-1 min-w-0">
                     <p className="text-[11px] font-bold uppercase tracking-widest mb-1.5 text-gray-900">
@@ -104,7 +104,7 @@ export function Hero() {
                   >
                     <CalendarDays
                       className="w-5 h-5 flex-shrink-0 mt-0.5"
-                      style={{ color: "#00bf63" }}
+                      style={{ color: "#43B0E6" }}
                     />
                     <div className="flex-1 min-w-0">
                       <p className="text-[11px] font-bold text-gray-900 uppercase tracking-widest mb-1.5">
@@ -122,7 +122,7 @@ export function Hero() {
                   <div className="flex-1 flex items-start gap-2 px-4 py-3 lg:px-5 lg:py-4 lg:flex-1">
                     <Clock
                       className="w-5 h-5 flex-shrink-0 mt-0.5"
-                      style={{ color: "#00bf63" }}
+                      style={{ color: "#43B0E6" }}
                     />
                     <div className="flex-1">
                       <p className="text-[11px] font-bold text-gray-900 uppercase tracking-widest mb-2">
@@ -143,7 +143,7 @@ export function Hero() {
                   <div className="flex-1 flex items-start gap-2 px-4 py-3 lg:px-5 lg:py-4 lg:flex-1">
                     <Clock
                       className="w-5 h-5 flex-shrink-0 mt-0.5"
-                      style={{ color: "#00bf63" }}
+                      style={{ color: "#43B0E6" }}
                     />
                     <div className="flex-1">
                       <p className="text-[11px] font-bold text-gray-900 uppercase tracking-widest mb-2">
@@ -168,7 +168,7 @@ export function Hero() {
                   <a
                     href="#vehicules"
                     className="w-full lg:w-auto px-8 py-3 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90 whitespace-nowrap inline-flex items-center justify-center gap-2"
-                    style={{ backgroundColor: "#00bf63" }}
+                    style={{ backgroundColor: "#43B0E6" }}
                   >
                     Voir les véhicules
                     <ArrowRight className="w-4 h-4" />
@@ -188,7 +188,7 @@ export function Hero() {
                     className={cn(
                       "w-4 h-4 rounded border-2 flex items-center justify-center transition-all flex-shrink-0",
                       differentReturn
-                        ? "border-[#00bf63] bg-[#00bf63]"
+                        ? "border-[#43B0E6] bg-[#43B0E6]"
                         : "border-gray-300 bg-transparent"
                     )}
                   >
@@ -242,7 +242,7 @@ export function Hero() {
                   className="w-8 h-8 rounded-xl flex items-center justify-center mb-3 transition-all duration-500"
                   style={{
                     backgroundColor: feature.active
-                      ? "#00bf63"
+                      ? "#43B0E6"
                       : "rgba(255,255,255,0.18)",
                   }}
                 >
