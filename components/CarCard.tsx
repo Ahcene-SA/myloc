@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { motion } from "framer-motion";
 import { Users, Calendar, Settings2, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -53,11 +52,9 @@ export function CarCard({ car, index = 0 }: CarCardProps) {
       {/* Car image */}
       <div className="relative flex items-start justify-center h-auto -mt-2 -mb-2">
         <div className="relative w-full">
-          <Image
+          <img
             src={car.image}
             alt={car.name}
-            width={900}
-            height={500}
             className="mx-auto h-auto max-h-60 w-full object-contain drop-shadow-[0_25px_50px_rgba(15,23,42,0.35)] transition-transform duration-500 group-hover:scale-105"
           />
         </div>

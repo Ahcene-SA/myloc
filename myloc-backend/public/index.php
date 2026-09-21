@@ -2,6 +2,13 @@
 
 declare(strict_types=1);
 
+// Serve existing static files directly without bootstrapping the app.
+$uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+$staticPath = __DIR__ . $uri;
+if (file_exists($staticPath) && is_file($staticPath)) {
+    return false;
+}
+
 require __DIR__ . '/../vendor/autoload.php';
 
 use Dotenv\Dotenv;
