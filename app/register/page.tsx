@@ -17,7 +17,6 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
 
-  /*
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -31,15 +30,6 @@ export default function RegisterPage() {
       return;
     }
 
-    if (typeof window !== "undefined") {
-      window.location.href = "./client.html";
-    }
-  };
-  */
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    // Static mode: redirect to client page without registration
     if (typeof window !== "undefined") {
       window.location.href = "./client.html";
     }

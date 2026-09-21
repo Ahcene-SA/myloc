@@ -38,12 +38,12 @@ const menuItems: { label: string; tab: ClientTab; icon: React.ElementType }[] = 
 export function ClientSidebar() {
   const { activeTab, setActiveTab } = useClient();
   const [isOpen, setIsOpen] = useState(false);
-  // const { logout } = useAuth();
+  const { logout } = useAuth();
 
   const handleLogout = () => {
-    // Static mode: redirect to home instead of logging out
+    logout();
     if (typeof window !== "undefined") {
-      window.location.href = "./";
+      window.location.href = "./login.html";
     }
   };
 

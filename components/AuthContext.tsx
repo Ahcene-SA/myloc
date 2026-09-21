@@ -4,9 +4,10 @@ import {
   createContext,
   useContext,
   useState,
+  useEffect,
   ReactNode,
 } from "react";
-import { UserFromApi } from "@/lib/api";
+import { login as apiLogin, register as apiRegister, fetchCurrentUser, UserFromApi } from "@/lib/api";
 
 interface AuthContextValue {
   user: UserFromApi | null;
@@ -25,11 +26,6 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user] = useState<UserFromApi | null>(null);
-  const [token] = useState<string | null>(null);
-  const [isLoading] = useState(false);
-
-  /*
   const [user, setUser] = useState<UserFromApi | null>(() => {
     if (typeof window === "undefined") return null;
     try {
@@ -78,6 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       localStorage.setItem("myloc_token", res.token);
       setToken(res.token);
+      // Fetch full profile immediately so name/email/phone are available before navigation.
       try {
         const profile = await fetchCurrentUser();
         persistUser(profile);
@@ -128,21 +125,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     setToken(null);
     setUser(null);
-  };
-  */
-
-  const handleLogin = async () => {
-    // Static mode: bypass authentication
-    return { ok: true, role: "client" as const };
-  };
-
-  const handleRegister = async () => {
-    // Static mode: bypass registration
-    return { ok: true, role: "client" as const };
-  };
-
-  const logout = () => {
-    // Static mode: logout is a no-op
   };
 
   return (
