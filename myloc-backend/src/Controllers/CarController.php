@@ -80,13 +80,23 @@ class CarController
     public function uploadImage(): void
     {
         if (empty($_FILES['image'])) {
-            Response::error('No image file provided.', 422);
+            Response::error('No image file provided. FILES=' . json_encode($_FILES), 422);
         }
 
         $file = $_FILES['image'];
 
         if ($file['error'] !== UPLOAD_ERR_OK) {
-            Response::error('Image upload failed.', 400);
+            $errors = [
+                1 => 'File exceeds upload_max_filesize.',
+                2 => 'File exceeds MAX_FILE_SIZE.',
+                3 => 'File was only partially uploaded.',
+                4 => 'No file was uploaded.',
+                6 => 'Missing temporary folder.',
+                7 => 'Failed to write file to disk.',
+                8 => 'PHP extension stopped the upload.',
+            ];
+            $msg = $errors[$file['error']] ?? 'Unknown upload error.';
+            Response::error("Image upload failed: {$msg} (code {$file['error']})", 400);
         }
 
         $allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];

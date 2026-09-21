@@ -25,7 +25,7 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: 'window.MYLOC_API_URL = "https://colleagues-riders-tractor-withdrawal.trycloudflare.com";',
+            __html: 'window.MYLOC_API_URL = "https://significant-happiness-allowed-hereby.trycloudflare.com";',
           }}
         />
       </head>

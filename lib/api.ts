@@ -43,7 +43,7 @@ export function getApiBase(): string {
     return `${protocol}//${hostname}${port ? `:${port}` : ""}/myloc/myloc-backend/public`;
   }
 
-  return "https://colleagues-riders-tractor-withdrawal.trycloudflare.com";
+  return "https://significant-happiness-allowed-hereby.trycloudflare.com";
 }
 
 export interface ApiError {
