@@ -51,7 +51,7 @@ export function Navbar() {
             Admin
           </a>
           <a
-            href="login.html"
+            href="client.html"
             className="rounded-full bg-brand px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-hover"
           >
             Log in
@@ -94,7 +94,7 @@ export function Navbar() {
             Admin
           </a>
           <a
-            href="login.html"
+            href="client.html"
             onClick={() => setIsOpen(false)}
             className="mt-2 rounded-full bg-brand px-4 py-3 text-center text-base font-semibold text-white transition-colors hover:bg-brand-hover"
           >

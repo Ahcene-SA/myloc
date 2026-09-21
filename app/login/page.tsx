@@ -15,6 +15,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
 
+  /*
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -31,6 +32,15 @@ export default function LoginPage() {
     // Static export: use a full page navigation so .html files resolve on any server.
     if (typeof window !== "undefined") {
       window.location.href = result.role === "admin" ? "./admin.html" : "./client.html";
+    }
+  };
+  */
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    // Static mode: redirect to client page without auth
+    if (typeof window !== "undefined") {
+      window.location.href = "./client.html";
     }
   };
 
