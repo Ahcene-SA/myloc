@@ -130,7 +130,7 @@ export function Fleet() {
   }, [activeCategory, cars]);
 
   return (
-    <section id="vehicules" className="bg-slate-50 py-20 lg:py-28">
+    <section id="vehicules" className="mx-3 sm:mx-4 mt-6 bg-white rounded-[2.5rem] overflow-hidden shadow-2xl py-20 lg:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <span className="inline-block rounded-full bg-brand/10 px-4 py-1.5 text-sm font-bold uppercase tracking-wider text-brand">

@@ -13,7 +13,7 @@ const highlights = [
 
 export function About() {
   return (
-    <section id="a-propos" className="bg-slate-50 py-20 lg:py-28">
+    <section id="a-propos" className="mx-3 sm:mx-4 mt-6 bg-white rounded-[2.5rem] overflow-hidden shadow-2xl py-20 lg:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
           {/* Text */}
