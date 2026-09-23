@@ -100,6 +100,30 @@ body {
       transform: translateY(0) scale(1);
     }
   }
+
+  .jitter-reveal {
+    opacity: 0;
+    transform: translateY(12px) rotate(-2deg);
+    animation: jitter-reveal 0.45s ease-out forwards;
+  }
+
+  @keyframes jitter-reveal {
+    0% {
+      opacity: 0;
+      transform: translateY(12px) rotate(-2deg);
+    }
+    40% {
+      opacity: 1;
+      transform: translateY(-3px) rotate(1.5deg);
+    }
+    70% {
+      transform: translateY(2px) rotate(-0.5deg);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) rotate(0deg);
+    }
+  }
 }
 
 /* Reduced motion support */

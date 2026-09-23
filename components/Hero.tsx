@@ -145,18 +145,29 @@ export function Hero() {
         </div>
 
         {/* Title */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none -translate-y-6 sm:-translate-y-8">
           <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight flex">
             {"MYLOC".split("").map((letter, i) => (
               <span
                 key={i}
                 className="letter-reveal inline-block shimmer-text"
-                style={{ animationDelay: `${i * 0.12}s` }}
+                style={{ animationDelay: `${i * 0.2}s` }}
               >
                 {letter}
               </span>
             ))}
           </h1>
+          <p className="mt-3 sm:mt-4 text-lg sm:text-xl md:text-2xl font-bold tracking-tight flex">
+            {"et c'est parti !".split("").map((letter, i) => (
+              <span
+                key={i}
+                className="jitter-reveal inline-block text-white/90"
+                style={{ animationDelay: `${1.4 + i * 0.04}s` }}
+              >
+                {letter === " " ? " " : letter}
+              </span>
+            ))}
+          </p>
         </div>
 
         {/* ── Reservation Bar ── */}
