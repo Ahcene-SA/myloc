@@ -16,12 +16,34 @@ const mainLinks = [
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [activeSection, setActiveSection] = useState("accueil");
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 40);
     handleScroll();
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActiveSection(entry.target.id);
+          }
+        });
+      },
+      { rootMargin: "-50% 0px -50% 0px", threshold: 0 }
+    );
+
+    const sections = ["accueil", "vehicules", "avantages", "a-propos", "contact"];
+    sections.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
+
+    return () => observer.disconnect();
   }, []);
 
   const isTransparent = !scrolled;
@@ -62,20 +84,27 @@ export function Navbar() {
                 : "bg-gray-100 border-gray-200"
             )}
           >
-            {mainLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className={cn(
-                  "text-[11px] xl:text-xs font-semibold px-3.5 py-1.5 rounded-full whitespace-nowrap transition-all duration-200",
-                  isTransparent
-                    ? "text-white/75 hover:text-white hover:bg-white/15"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-white"
-                )}
-              >
-                {link.label}
-              </a>
-            ))}
+            {mainLinks.map((link) => {
+              const isActive = activeSection === link.href.slice(1);
+              return (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className={cn(
+                    "text-[11px] xl:text-xs font-semibold px-3.5 py-1.5 rounded-full whitespace-nowrap transition-all duration-200",
+                    isTransparent
+                      ? isActive
+                        ? "text-white bg-white/20 shadow-sm"
+                        : "text-white/75 hover:text-white hover:bg-white/15"
+                      : isActive
+                        ? "text-[#43B0E6] bg-white shadow-sm"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-white"
+                  )}
+                >
+                  {link.label}
+                </a>
+              );
+            })}
           </div>
 
           {/* Utility nav pill */}
@@ -143,16 +172,24 @@ export function Navbar() {
         )}
       >
         <nav className="flex flex-col gap-1 px-4 py-4">
-          {mainLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              onClick={() => setIsOpen(false)}
-              className="flex items-center py-2.5 px-3 rounded-xl text-sm font-medium text-gray-700 hover:text-[#43B0E6] hover:bg-gray-50 transition-colors"
-            >
-              {link.label}
-            </a>
-          ))}
+          {mainLinks.map((link) => {
+            const isActive = activeSection === link.href.slice(1);
+            return (
+              <a
+                key={link.href}
+                href={link.href}
+                onClick={() => setIsOpen(false)}
+                className={cn(
+                  "flex items-center py-2.5 px-3 rounded-xl text-sm font-medium transition-colors",
+                  isActive
+                    ? "text-[#43B0E6] bg-[#43B0E6]/5"
+                    : "text-gray-700 hover:text-[#43B0E6] hover:bg-gray-50"
+                )}
+              >
+                {link.label}
+              </a>
+            );
+          })}
           <div className="pt-3 border-t border-gray-100 flex flex-col gap-2">
             <a
               href="admin.html"
