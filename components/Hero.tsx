@@ -145,8 +145,8 @@ export function Hero() {
         </div>
 
         {/* Title */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none -translate-y-6 sm:-translate-y-8">
-          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight flex">
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none -translate-y-16 sm:-translate-y-20 md:-translate-y-24">
+          <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tight flex">
             {"MYLOC".split("").map((letter, i) => (
               <span
                 key={i}
@@ -157,7 +157,7 @@ export function Hero() {
               </span>
             ))}
           </h1>
-          <p className="mt-3 sm:mt-4 text-lg sm:text-xl md:text-2xl font-bold tracking-tight flex">
+          <p className="mt-3 sm:mt-4 text-xl sm:text-2xl md:text-3xl font-bold tracking-tight flex">
             {"et c'est parti !".split("").map((letter, i) => (
               <span
                 key={i}
