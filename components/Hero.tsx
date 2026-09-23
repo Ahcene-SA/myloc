@@ -145,10 +145,9 @@ export function Hero() {
         </div>
 
         {/* Title */}
-        <div className="absolute inset-0 flex flex-col justify-start px-6 sm:px-14 pt-[26%] sm:pt-12 lg:pt-32 pb-4 sm:pb-44 pointer-events-none">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-[1.1] max-w-2xl mt-[8%] sm:mt-0">
-            <span className="shimmer-text block mb-1">MYLOC,</span>
-            <span className="shimmer-text block">et c'est parti !</span>
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight shimmer-text">
+            MYLOC
           </h1>
         </div>
 
