@@ -58,87 +58,83 @@ const timeSlots = Array.from({ length: 33 }, (_, i) => {
 });
 
 export function Hero() {
+  /* ── scroll-to-top on mount ── */
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, []);
+
   const today = new Date().toISOString().split("T")[0];
 
-  // Pickup location
+  /* ── pickup location ── */
   const [pickupType, setPickupType] = useState<"agence" | "domicile">("agence");
-  const [pickupLocation, setPickupLocation] = useState("Aéroport Messali Hadj");
+  const [pickupAgency, setPickupAgency] = useState("Aéroport Messali Hadj");
   const [pickupAddress, setPickupAddress] = useState("");
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
 
-  // Return location
+  /* ── return location ── */
   const [differentReturn, setDifferentReturn] = useState(false);
   const [returnType, setReturnType] = useState<"agence" | "domicile">("agence");
-  const [returnLocation, setReturnLocation] = useState("Aéroport Messali Hadj");
+  const [returnAgency, setReturnAgency] = useState("Aéroport Messali Hadj");
   const [returnAddress, setReturnAddress] = useState("");
 
-  // Dates
-  const [pickupDate, setPickupDate] = useState("");
-  const [returnDate, setReturnDate] = useState("");
-  const [showDatePicker, setShowDatePicker] = useState(false);
-
-  // Times
+  /* ── date + heure départ ── */
+  const [departDate, setDepartDate] = useState("");
   const [departTime, setDepartTime] = useState("10:00");
-  const [returnTime, setReturnTime] = useState("10:00");
-  const [showDepartTime, setShowDepartTime] = useState(false);
-  const [showReturnTime, setShowReturnTime] = useState(false);
+  const [showDepartPicker, setShowDepartPicker] = useState(false);
 
-  // Refs for click-outside
+  /* ── date + heure retour ── */
+  const [retourDate, setRetourDate] = useState("");
+  const [retourTime, setRetourTime] = useState("10:00");
+  const [showRetourPicker, setShowRetourPicker] = useState(false);
+
+  /* refs for click-outside */
   const locationRef = useRef<HTMLDivElement>(null);
-  const dateRef = useRef<HTMLDivElement>(null);
-  const departTimeRef = useRef<HTMLDivElement>(null);
-  const returnTimeRef = useRef<HTMLDivElement>(null);
+  const departRef = useRef<HTMLDivElement>(null);
+  const retourRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
         locationRef.current &&
         !locationRef.current.contains(event.target as Node)
-      ) {
+      )
         setShowLocationDropdown(false);
-      }
       if (
-        dateRef.current &&
-        !dateRef.current.contains(event.target as Node)
-      ) {
-        setShowDatePicker(false);
-      }
+        departRef.current &&
+        !departRef.current.contains(event.target as Node)
+      )
+        setShowDepartPicker(false);
       if (
-        departTimeRef.current &&
-        !departTimeRef.current.contains(event.target as Node)
-      ) {
-        setShowDepartTime(false);
-      }
-      if (
-        returnTimeRef.current &&
-        !returnTimeRef.current.contains(event.target as Node)
-      ) {
-        setShowReturnTime(false);
-      }
+        retourRef.current &&
+        !retourRef.current.contains(event.target as Node)
+      )
+        setShowRetourPicker(false);
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const formatDate = (dateStr: string) => {
-    if (!dateStr) return "Choisir";
-    const d = new Date(dateStr + "T00:00:00");
-    return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" });
+  const fmtDate = (d: string) => {
+    if (!d) return "";
+    const date = new Date(d + "T00:00:00");
+    return date.toLocaleDateString("fr-FR", {
+      day: "2-digit",
+      month: "short",
+    });
   };
 
-  const handleLocationSelect = (type: "agence" | "domicile", agency?: string) => {
-    setPickupType(type);
-    if (type === "agence" && agency) {
-      setPickupLocation(agency);
-    }
-    setShowLocationDropdown(false);
+  const fmtDisplay = (date: string, time: string) => {
+    if (!date) return "Choisir";
+    return `${fmtDate(date)}, ${time}`;
   };
 
   return (
     <section id="accueil" className="bg-[#43B0E6] p-3 sm:p-4 lg:p-2">
-      {/* Main Hero Container */}
+      {/* ── Hero container ── */}
       <div className="rounded-[2rem] relative h-[min(calc(100svh-1.5rem),916px)] lg:h-[calc(100svh-3.5rem)] overflow-hidden">
-        {/* Background Image */}
+        {/* Background */}
         <div className="absolute inset-0 rounded-[2rem] overflow-hidden">
           <img
             src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1600&q=80"
@@ -156,15 +152,16 @@ export function Hero() {
           </h1>
         </div>
 
-        {/* Reservation Bar */}
-        <div className="absolute top-[44%] sm:top-auto sm:bottom-36 left-0 right-0 z-20 max-w-5xl mx-auto px-3 sm:px-6">
+        {/* ── Reservation Bar ── */}
+        <div className="absolute top-[44%] sm:top-auto sm:bottom-36 left-0 right-0 z-[60] max-w-5xl mx-auto px-3 sm:px-6">
           <div className="relative">
             <form
               className="bg-white rounded-2xl shadow-2xl border border-gray-100"
               onSubmit={(e) => e.preventDefault()}
             >
+              {/* Row: Location | Date+heure départ | Date+heure retour | Submit */}
               <div className="flex flex-col lg:flex-row divide-y lg:divide-y-0 lg:divide-x divide-gray-100">
-                {/* Location */}
+                {/* ── Location ── */}
                 <div
                   ref={locationRef}
                   className="relative flex items-start gap-3 px-4 py-3 sm:px-6 sm:py-4 lg:flex-[2] min-w-0"
@@ -186,7 +183,7 @@ export function Hero() {
                     >
                       <span className="font-semibold text-[15px] flex-1 text-left truncate text-gray-900">
                         {pickupType === "agence"
-                          ? pickupLocation
+                          ? pickupAgency
                           : "À domicile"}
                       </span>
                       <ChevronDown
@@ -197,15 +194,32 @@ export function Hero() {
                       />
                     </button>
 
-                    {/* Location Dropdown */}
+                    {/* Location Dropdown — 2 options only */}
                     {showLocationDropdown && (
-                      <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 z-30 overflow-hidden">
-                        <div className="p-2">
+                      <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 z-[100] overflow-hidden">
+                        <div className="p-2 space-y-1">
                           <button
                             type="button"
-                            onClick={() =>
-                              handleLocationSelect("domicile")
-                            }
+                            onClick={() => {
+                              setPickupType("agence");
+                              setShowLocationDropdown(false);
+                            }}
+                            className={cn(
+                              "w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm transition-colors",
+                              pickupType === "agence"
+                                ? "bg-[#43B0E6]/10 text-[#43B0E6] font-semibold"
+                                : "text-gray-700 hover:bg-gray-50"
+                            )}
+                          >
+                            <Building2 className="w-4 h-4" />
+                            En agence
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPickupType("domicile");
+                              setShowLocationDropdown(false);
+                            }}
                             className={cn(
                               "w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm transition-colors",
                               pickupType === "domicile"
@@ -216,37 +230,20 @@ export function Hero() {
                             <Home className="w-4 h-4" />
                             À domicile
                           </button>
-                          <div className="my-1 border-t border-gray-100" />
-                          {agencies.map((agency) => (
-                            <button
-                              key={agency}
-                              type="button"
-                              onClick={() =>
-                                handleLocationSelect("agence", agency)
-                              }
-                              className={cn(
-                                "w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm transition-colors",
-                                pickupType === "agence" &&
-                                  pickupLocation === agency
-                                  ? "bg-[#43B0E6]/10 text-[#43B0E6] font-semibold"
-                                  : "text-gray-700 hover:bg-gray-50"
-                              )}
-                            >
-                              <Building2 className="w-4 h-4" />
-                              {agency}
-                            </button>
-                          ))}
                         </div>
                       </div>
                     )}
                   </div>
                 </div>
 
-                {/* Dates */}
-                <div ref={dateRef} className="relative lg:flex-[1.3]">
+                {/* ── Date et heure de départ ── */}
+                <div
+                  ref={departRef}
+                  className="relative lg:flex-[1.3]"
+                >
                   <button
                     type="button"
-                    onClick={() => setShowDatePicker(!showDatePicker)}
+                    onClick={() => setShowDepartPicker(!showDepartPicker)}
                     className="flex items-start gap-3 px-4 py-3 sm:px-6 sm:py-4 w-full text-left hover:bg-gray-50 transition-colors"
                   >
                     <CalendarDays
@@ -255,111 +252,53 @@ export function Hero() {
                     />
                     <div className="flex-1 min-w-0">
                       <p className="text-[11px] font-bold text-gray-900 uppercase tracking-widest mb-1.5">
-                        Dates
+                        Date et heure de départ
                       </p>
                       <p
                         className={cn(
                           "font-semibold text-[15px]",
-                          pickupDate && returnDate
-                            ? "text-gray-900"
-                            : "text-gray-400"
+                          departDate ? "text-gray-900" : "text-gray-400"
                         )}
                       >
-                        {pickupDate && returnDate
-                          ? `${formatDate(pickupDate)} — ${formatDate(
-                              returnDate
-                            )}`
-                          : "Choisir"}
+                        {fmtDisplay(departDate, departTime)}
                       </p>
                     </div>
                   </button>
 
-                  {/* Date Picker Dropdown */}
-                  {showDatePicker && (
-                    <div className="absolute left-0 right-0 lg:right-auto lg:w-72 top-full mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 z-30 p-4">
+                  {/* Depart picker dropdown */}
+                  {showDepartPicker && (
+                    <div className="absolute left-0 right-0 lg:right-auto lg:w-80 top-full mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 z-[100] p-4">
                       <div className="space-y-3">
                         <div>
                           <label className="text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">
-                            Date de départ
+                            Date
                           </label>
                           <input
                             type="date"
                             min={today}
-                            value={pickupDate}
-                            onChange={(e) =>
-                              setPickupDate(e.target.value)
-                            }
+                            value={departDate}
+                            onChange={(e) => setDepartDate(e.target.value)}
                             className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#43B0E6]/30 focus:border-[#43B0E6]"
                           />
                         </div>
                         <div>
                           <label className="text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">
-                            Date de retour
+                            Heure
                           </label>
-                          <input
-                            type="date"
-                            min={pickupDate || today}
-                            value={returnDate}
-                            onChange={(e) =>
-                              setReturnDate(e.target.value)
-                            }
-                            className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#43B0E6]/30 focus:border-[#43B0E6]"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Times */}
-                <div className="flex divide-x divide-gray-100 lg:contents">
-                  {/* Depart Time */}
-                  <div
-                    ref={departTimeRef}
-                    className="relative flex-1 flex items-start gap-2 px-4 py-3 lg:px-5 lg:py-4 lg:flex-1"
-                  >
-                    <Clock
-                      className="w-5 h-5 flex-shrink-0 mt-0.5"
-                      style={{ color: "#43B0E6" }}
-                    />
-                    <div className="flex-1">
-                      <p className="text-[11px] font-bold text-gray-900 uppercase tracking-widest mb-2">
-                        Départ
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setShowDepartTime(!showDepartTime)
-                        }
-                        className="flex items-center gap-1.5 text-base font-semibold transition-colors text-gray-600 hover:text-gray-900"
-                      >
-                        <Clock className="w-4 h-4 text-gray-300" />
-                        {departTime}
-                        <ChevronDown
-                          className={cn(
-                            "w-3.5 h-3.5 text-gray-300 transition-transform",
-                            showDepartTime && "rotate-180"
-                          )}
-                        />
-                      </button>
-
-                      {/* Depart Time Dropdown */}
-                      {showDepartTime && (
-                        <div className="absolute left-0 right-0 lg:left-auto lg:right-0 top-full mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 z-30 max-h-48 overflow-y-auto">
-                          <div className="p-1">
+                          <div className="grid grid-cols-4 gap-1 max-h-36 overflow-y-auto">
                             {timeSlots.map((time) => (
                               <button
                                 key={time}
                                 type="button"
                                 onClick={() => {
                                   setDepartTime(time);
-                                  setShowDepartTime(false);
+                                  setShowDepartPicker(false);
                                 }}
                                 className={cn(
-                                  "w-full px-3 py-2 rounded-xl text-sm text-left transition-colors",
+                                  "px-2 py-1.5 rounded-lg text-xs font-medium transition-colors",
                                   departTime === time
-                                    ? "bg-[#43B0E6]/10 text-[#43B0E6] font-semibold"
-                                    : "text-gray-700 hover:bg-gray-50"
+                                    ? "bg-[#43B0E6] text-white"
+                                    : "bg-gray-50 text-gray-700 hover:bg-gray-100"
                                 )}
                               >
                                 {time}
@@ -367,57 +306,74 @@ export function Hero() {
                             ))}
                           </div>
                         </div>
-                      )}
+                      </div>
                     </div>
-                  </div>
+                  )}
+                </div>
 
-                  {/* Return Time */}
-                  <div
-                    ref={returnTimeRef}
-                    className="relative flex-1 flex items-start gap-2 px-4 py-3 lg:px-5 lg:py-4 lg:flex-1"
+                {/* ── Date et heure de retour ── */}
+                <div
+                  ref={retourRef}
+                  className="relative lg:flex-[1.3]"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setShowRetourPicker(!showRetourPicker)}
+                    className="flex items-start gap-3 px-4 py-3 sm:px-6 sm:py-4 w-full text-left hover:bg-gray-50 transition-colors"
                   >
-                    <Clock
+                    <CalendarDays
                       className="w-5 h-5 flex-shrink-0 mt-0.5"
                       style={{ color: "#43B0E6" }}
                     />
-                    <div className="flex-1">
-                      <p className="text-[11px] font-bold text-gray-900 uppercase tracking-widest mb-2">
-                        Retour
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[11px] font-bold text-gray-900 uppercase tracking-widest mb-1.5">
+                        Date et heure de retour
                       </p>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setShowReturnTime(!showReturnTime)
-                        }
-                        className="flex items-center gap-1.5 text-base font-semibold transition-colors text-gray-600 hover:text-gray-900"
+                      <p
+                        className={cn(
+                          "font-semibold text-[15px]",
+                          retourDate ? "text-gray-900" : "text-gray-400"
+                        )}
                       >
-                        <Clock className="w-4 h-4 text-gray-300" />
-                        {returnTime}
-                        <ChevronDown
-                          className={cn(
-                            "w-3.5 h-3.5 text-gray-300 transition-transform",
-                            showReturnTime && "rotate-180"
-                          )}
-                        />
-                      </button>
+                        {fmtDisplay(retourDate, retourTime)}
+                      </p>
+                    </div>
+                  </button>
 
-                      {/* Return Time Dropdown */}
-                      {showReturnTime && (
-                        <div className="absolute left-0 right-0 lg:left-auto lg:right-0 top-full mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 z-30 max-h-48 overflow-y-auto">
-                          <div className="p-1">
+                  {/* Retour picker dropdown */}
+                  {showRetourPicker && (
+                    <div className="absolute left-0 right-0 lg:right-auto lg:w-80 top-full mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 z-[100] p-4">
+                      <div className="space-y-3">
+                        <div>
+                          <label className="text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">
+                            Date
+                          </label>
+                          <input
+                            type="date"
+                            min={departDate || today}
+                            value={retourDate}
+                            onChange={(e) => setRetourDate(e.target.value)}
+                            className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#43B0E6]/30 focus:border-[#43B0E6]"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">
+                            Heure
+                          </label>
+                          <div className="grid grid-cols-4 gap-1 max-h-36 overflow-y-auto">
                             {timeSlots.map((time) => (
                               <button
                                 key={time}
                                 type="button"
                                 onClick={() => {
-                                  setReturnTime(time);
-                                  setShowReturnTime(false);
+                                  setRetourTime(time);
+                                  setShowRetourPicker(false);
                                 }}
                                 className={cn(
-                                  "w-full px-3 py-2 rounded-xl text-sm text-left transition-colors",
-                                  returnTime === time
-                                    ? "bg-[#43B0E6]/10 text-[#43B0E6] font-semibold"
-                                    : "text-gray-700 hover:bg-gray-50"
+                                  "px-2 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                                  retourTime === time
+                                    ? "bg-[#43B0E6] text-white"
+                                    : "bg-gray-50 text-gray-700 hover:bg-gray-100"
                                 )}
                               >
                                 {time}
@@ -425,9 +381,9 @@ export function Hero() {
                             ))}
                           </div>
                         </div>
-                      )}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* Submit */}
@@ -443,7 +399,39 @@ export function Hero() {
                 </div>
               </div>
 
-              {/* Different return location checkbox */}
+              {/* ── Pickup detail (agency select or address) ── */}
+              {pickupType === "agence" && (
+                <div className="border-t border-gray-100 px-4 py-2.5 sm:px-6 bg-gray-50/50 flex items-center gap-3">
+                  <Building2 className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                  <select
+                    value={pickupAgency}
+                    onChange={(e) => setPickupAgency(e.target.value)}
+                    className="flex-1 bg-transparent text-sm font-semibold text-gray-900 focus:outline-none cursor-pointer"
+                  >
+                    {agencies.map((a) => (
+                      <option key={a} value={a}>
+                        {a}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              {pickupType === "domicile" && (
+                <div className="border-t border-gray-100 px-4 py-3 sm:px-6 bg-gray-50/50">
+                  <p className="text-[11px] font-bold uppercase tracking-widest mb-1.5 text-gray-500">
+                    Adresse de retrait
+                  </p>
+                  <input
+                    type="text"
+                    placeholder="Saisissez votre adresse"
+                    value={pickupAddress}
+                    onChange={(e) => setPickupAddress(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-900 placeholder:font-normal placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#43B0E6]/30 focus:border-[#43B0E6]"
+                  />
+                </div>
+              )}
+
+              {/* ── Different return checkbox ── */}
               <div className="border-t border-gray-100 px-4 py-3 flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
                 <button
                   type="button"
@@ -479,14 +467,14 @@ export function Hero() {
                 </button>
               </div>
 
-              {/* Expanded return location */}
+              {/* ── Return location detail ── */}
               {differentReturn && (
                 <div className="border-t border-gray-100 px-4 py-3 sm:px-6 bg-gray-50/50">
                   <p className="text-[11px] font-bold uppercase tracking-widest mb-2 text-gray-500">
                     Lieu de retour
                   </p>
                   <div className="flex flex-col sm:flex-row gap-3">
-                    <div className="flex gap-2 mb-2 sm:mb-0">
+                    <div className="flex gap-2">
                       <button
                         type="button"
                         onClick={() => setReturnType("agence")}
@@ -516,10 +504,8 @@ export function Hero() {
                     </div>
                     {returnType === "agence" ? (
                       <select
-                        value={returnLocation}
-                        onChange={(e) =>
-                          setReturnLocation(e.target.value)
-                        }
+                        value={returnAgency}
+                        onChange={(e) => setReturnAgency(e.target.value)}
                         className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#43B0E6]/30 focus:border-[#43B0E6] bg-white"
                       >
                         {agencies.map((a) => (
@@ -533,29 +519,11 @@ export function Hero() {
                         type="text"
                         placeholder="Adresse de retour"
                         value={returnAddress}
-                        onChange={(e) =>
-                          setReturnAddress(e.target.value)
-                        }
+                        onChange={(e) => setReturnAddress(e.target.value)}
                         className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-900 placeholder:font-normal placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#43B0E6]/30 focus:border-[#43B0E6]"
                       />
                     )}
                   </div>
-                </div>
-              )}
-
-              {/* À domicile pickup address */}
-              {pickupType === "domicile" && (
-                <div className="border-t border-gray-100 px-4 py-3 sm:px-6 bg-gray-50/50">
-                  <p className="text-[11px] font-bold uppercase tracking-widest mb-1.5 text-gray-500">
-                    Adresse de retrait
-                  </p>
-                  <input
-                    type="text"
-                    placeholder="Saisissez votre adresse"
-                    value={pickupAddress}
-                    onChange={(e) => setPickupAddress(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-900 placeholder:font-normal placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#43B0E6]/30 focus:border-[#43B0E6]"
-                  />
                 </div>
               )}
             </form>
@@ -563,7 +531,7 @@ export function Hero() {
         </div>
       </div>
 
-      {/* Feature Cards */}
+      {/* ── Feature cards ── */}
       <div className="mx-3 sm:mx-4 mt-6 pb-3">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {features.map((feature) => {
