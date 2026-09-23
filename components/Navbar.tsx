@@ -7,9 +7,9 @@ import { cn } from "@/lib/utils";
 
 const mainLinks = [
   { href: "#accueil", label: "Accueil" },
-  { href: "#vehicules", label: "Réserver" },
-  { href: "#avantages", label: "Comment ça marche" },
-  { href: "#a-propos", label: "À Propos" },
+  { href: "#vehicules", label: "Nos véhicules" },
+  { href: "#avantages", label: "Pourquoi nous" },
+  { href: "#a-propos", label: "À propos" },
   { href: "#contact", label: "Contact" },
 ];
 
@@ -70,11 +70,7 @@ export function Navbar() {
                   "text-[11px] xl:text-xs font-semibold px-3.5 py-1.5 rounded-full whitespace-nowrap transition-all duration-200",
                   isTransparent
                     ? "text-white/75 hover:text-white hover:bg-white/15"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-white",
-                  link.href === "#vehicules" &&
-                    (isTransparent
-                      ? "bg-white/20 text-white shadow-sm"
-                      : "bg-white text-[#43B0E6] shadow-sm")
+                    : "text-gray-600 hover:text-gray-900 hover:bg-white"
                 )}
               >
                 {link.label}
@@ -152,12 +148,7 @@ export function Navbar() {
               key={link.href}
               href={link.href}
               onClick={() => setIsOpen(false)}
-              className={cn(
-                "flex items-center py-2.5 px-3 rounded-xl text-sm font-medium transition-colors",
-                link.href === "#vehicules"
-                  ? "text-[#43B0E6] bg-[#43B0E6]/5"
-                  : "text-gray-700 hover:text-[#43B0E6] hover:bg-gray-50"
-              )}
+              className="flex items-center py-2.5 px-3 rounded-xl text-sm font-medium text-gray-700 hover:text-[#43B0E6] hover:bg-gray-50 transition-colors"
             >
               {link.label}
             </a>
