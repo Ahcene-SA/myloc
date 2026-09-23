@@ -133,7 +133,7 @@ export function Hero() {
   return (
     <section id="accueil" className="bg-[#43B0E6] p-3 sm:p-4 lg:p-2">
       {/* ── Hero container ── */}
-      <div className="rounded-[2rem] relative h-[min(calc(100svh-1.5rem),916px)] lg:h-[calc(100svh-3.5rem)] overflow-hidden">
+      <div className="rounded-[2rem] relative h-[min(calc(100svh-1.5rem),916px)] lg:h-[calc(100svh-3.5rem)]">
         {/* Background */}
         <div className="absolute inset-0 rounded-[2rem] overflow-hidden">
           <img
@@ -399,23 +399,7 @@ export function Hero() {
                 </div>
               </div>
 
-              {/* ── Pickup detail (agency select or address) ── */}
-              {pickupType === "agence" && (
-                <div className="border-t border-gray-100 px-4 py-2.5 sm:px-6 bg-gray-50/50 flex items-center gap-3">
-                  <Building2 className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                  <select
-                    value={pickupAgency}
-                    onChange={(e) => setPickupAgency(e.target.value)}
-                    className="flex-1 bg-transparent text-sm font-semibold text-gray-900 focus:outline-none cursor-pointer"
-                  >
-                    {agencies.map((a) => (
-                      <option key={a} value={a}>
-                        {a}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
+              {/* ── Pickup detail (address for domicile) ── */}
               {pickupType === "domicile" && (
                 <div className="border-t border-gray-100 px-4 py-3 sm:px-6 bg-gray-50/50">
                   <p className="text-[11px] font-bold uppercase tracking-widest mb-1.5 text-gray-500">
