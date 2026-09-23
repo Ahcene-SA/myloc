@@ -555,16 +555,42 @@ function formatReservationDateTime(date: string, time: string): string {
   });
 }
 
+// Static post shown when the backend is unreachable or has no cars,
+// so the reservation procedure can always be prototyped.
+const DEMO_FLEET: CarFromApi[] = [
+  {
+    id: -1,
+    category: "Citadine",
+    name: "Renault Clio 5",
+    description:
+      "Citadine économique et agile, parfaite pour la ville et les trajets quotidiens. Climatisation, Bluetooth et faible consommation.",
+    price_per_day: "35",
+    transmission: "Manuelle",
+    seats: 5,
+    year: 2024,
+    image_url: "images/clio5-alpino.png",
+    status: "available",
+  },
+];
+
+function mapCarForView(car: CarFromApi) {
+  const mapped = mapApiCarToCar(car);
+  if (car.id < 0 && car.image_url) {
+    return { ...mapped, image: car.image_url };
+  }
+  return mapped;
+}
+
 function ReserverView() {
   const [cars, setCars] = useState<CarFromApi[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [nameFilter, setNameFilter] = useState("");
   const [priceFilter, setPriceFilter] = useState<"" | number>("");
   const [selectedCar, setSelectedCar] = useState<CarFromApi | null>(null);
   const [step, setStep] = useState(1);
   const [stepError, setStepError] = useState("");
   const [sent, setSent] = useState(false);
+  const [demoMode, setDemoMode] = useState(false);
   const [form, setForm] = useState<ReservationFormState>(() => {
     let full_name = "";
     let email = "";
@@ -600,8 +626,19 @@ function ReserverView() {
 
   useEffect(() => {
     fetchCars()
-      .then((data) => setCars(data.filter((c) => c.status === "available")))
-      .catch((e) => setError(e instanceof Error ? e.message : "Impossible de charger les véhicules."))
+      .then((data) => {
+        const available = data.filter((c) => c.status === "available");
+        if (available.length > 0) {
+          setCars(available);
+        } else {
+          setCars(DEMO_FLEET);
+          setDemoMode(true);
+        }
+      })
+      .catch(() => {
+        setCars(DEMO_FLEET);
+        setDemoMode(true);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -609,14 +646,14 @@ function ReserverView() {
     setForm((f) => ({ ...f, ...patch }));
 
   const filteredCars = cars.filter((car) => {
-    const mapped = mapApiCarToCar(car);
+    const mapped = mapCarForView(car);
     const matchesName = car.name.toLowerCase().includes(nameFilter.toLowerCase());
     const matchesPrice = priceFilter === "" || mapped.price <= Number(priceFilter);
     return matchesName && matchesPrice;
   });
 
   // Pricing of the static reservation, computed from the selected car.
-  const mapped = selectedCar ? mapApiCarToCar(selectedCar) : null;
+  const mapped = selectedCar ? mapCarForView(selectedCar) : null;
   const pickupDateTime = form.pickup_date
     ? new Date(`${form.pickup_date}T${form.pickup_time || "09:00"}`)
     : null;
@@ -1237,9 +1274,13 @@ function ReserverView() {
     <div>
       <SectionHeader icon={PlusCircle} title="Réserver un véhicule" />
 
-      {error && (
-        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
-          {error}
+      {demoMode && (
+        <div className="mb-4 flex items-center gap-2 rounded-xl border border-brand/20 bg-brand/5 px-4 py-3 text-sm text-slate-600">
+          <Info className="h-5 w-5 shrink-0 text-brand" />
+          <span>
+            Mode démonstration : ce véhicule d&apos;exemple vous permet de tester la procédure de
+            réservation sans connexion au serveur.
+          </span>
         </div>
       )}
 
@@ -1274,7 +1315,7 @@ function ReserverView() {
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {filteredCars.map((car) => {
-            const mapped = mapApiCarToCar(car);
+            const mapped = mapCarForView(car);
             return (
               <div
                 key={car.id}
