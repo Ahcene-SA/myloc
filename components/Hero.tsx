@@ -145,7 +145,7 @@ export function Hero() {
         </div>
 
         {/* Title */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none -translate-y-16 sm:-translate-y-20 md:-translate-y-24">
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none -translate-y-16 sm:-translate-y-20 md:-translate-y-24 hero-title-wrapper">
           <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tight flex shimmer-text">
             {"MYLOC".split("").map((letter, i) => (
               <span
@@ -162,7 +162,7 @@ export function Hero() {
               <span
                 key={i}
                 className="jitter-reveal inline-block text-white/90"
-                style={{ animationDelay: `${1.4 + i * 0.04}s` }}
+                style={{ animationDelay: `${1.9 + i * 0.04}s` }}
               >
                 {letter === " " ? " " : letter}
               </span>
