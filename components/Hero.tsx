@@ -146,11 +146,11 @@ export function Hero() {
 
         {/* Title */}
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none -translate-y-16 sm:-translate-y-20 md:-translate-y-24">
-          <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tight flex">
+          <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tight flex shimmer-text">
             {"MYLOC".split("").map((letter, i) => (
               <span
                 key={i}
-                className="letter-reveal inline-block shimmer-text"
+                className="letter-reveal inline-block"
                 style={{ animationDelay: `${i * 0.2}s` }}
               >
                 {letter}

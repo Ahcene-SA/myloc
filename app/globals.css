@@ -66,26 +66,26 @@ body {
     background: linear-gradient(
       90deg,
       #ffffff 0%,
-      #ffffff 25%,
-      #43B0E6 45%,
-      #43B0E6 55%,
-      #ffffff 75%,
+      #ffffff 20%,
+      #43B0E6 40%,
+      #43B0E6 60%,
+      #ffffff 80%,
       #ffffff 100%
     );
-    background-size: 200% 100%;
+    background-size: 250% 100%;
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
-    animation: shimmer 3s linear infinite;
-    filter: drop-shadow(0 0 18px rgba(67, 176, 230, 0.35));
+    animation: shimmer 2.5s linear infinite;
+    filter: drop-shadow(0 0 24px rgba(67, 176, 230, 0.45));
   }
 
   @keyframes shimmer {
     0% {
-      background-position: 200% 0;
+      background-position: 100% 0;
     }
     100% {
-      background-position: -200% 0;
+      background-position: -150% 0;
     }
   }
 
