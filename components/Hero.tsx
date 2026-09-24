@@ -145,7 +145,7 @@ export function Hero() {
         </div>
 
         {/* Title */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none -translate-y-16 sm:-translate-y-20 md:-translate-y-24 hero-title-wrapper">
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none -translate-y-32 sm:-translate-y-20 md:-translate-y-24 hero-title-wrapper">
           <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tight flex shimmer-text">
             {"MYLOC".split("").map((letter, i) => (
               <span
