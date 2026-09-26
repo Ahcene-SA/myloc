@@ -87,6 +87,18 @@ DB_NAME=$(env_get DB_NAME); DB_USER=$(env_get DB_USER); DB_PASS=$(env_get DB_PAS
 
 # 5. Base de données
 say "Création de la base de données"
+# Accès root à MySQL : sans mot de passe (installation Homebrew neuve) ou avec celui que tu as défini.
+if ! mysql -u root -e "SELECT 1" >/dev/null 2>&1; then
+  for attempt in 1 2 3; do
+    read -r -s -p "Mot de passe ROOT de MySQL (celui de tes autres projets) : " MYSQL_ROOT_PW; echo
+    if MYSQL_PWD="$MYSQL_ROOT_PW" mysql -u root -e "SELECT 1" >/dev/null 2>&1; then
+      export MYSQL_PWD="$MYSQL_ROOT_PW"; break
+    fi
+    echo "Refusé, réessaie."
+    [ "$attempt" = 3 ] && { echo "Impossible de se connecter à MySQL en root. Demande de l'aide à Claude."; exit 1; }
+  done
+fi
+ok "Connecté à MySQL"
 mysql -u root <<SQL
 CREATE DATABASE IF NOT EXISTS ${DB_NAME} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER IF NOT EXISTS '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASS}';
@@ -100,6 +112,7 @@ ok "Tables créées"
 
 # 6. Admin + flotte de démo
 say "Création du compte admin et de la flotte de démo"
+unset MYSQL_PWD
 php database/seed.php
 
 # 7. Front : pointer vers l'API locale
