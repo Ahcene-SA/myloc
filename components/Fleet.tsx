@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { CalendarCheck2, X } from "lucide-react";
 import { CarCard, type Car } from "./CarCard";
 import { cn } from "@/lib/utils";
-import { fetchCars, mapApiCarToCar } from "@/lib/api";
+import { fetchAvailableCars, fetchCars, mapApiCarToCar, type AvailableCar } from "@/lib/api";
+import { AVAILABILITY_EVENT, saveBookingIntent, type AvailabilitySearch } from "@/lib/booking";
+import { pageUrl } from "@/lib/routes";
 import { FILTER_EVENT, categoryInfo } from "@/lib/site";
 import { BlueBar, PalmShadow } from "./Brand";
 
@@ -92,6 +95,11 @@ export function Fleet() {
   const [activeCategory, setActiveCategory] = useState("all");
   const [cars, setCars] = useState<Car[]>([]);
   const [loading, setLoading] = useState(true);
+  // Recherche par dates depuis l'accueil
+  const [search, setSearch] = useState<AvailabilitySearch | null>(null);
+  const [free, setFree] = useState<AvailableCar[] | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -128,31 +136,86 @@ export function Fleet() {
     return () => window.removeEventListener(FILTER_EVENT, onFilter);
   }, []);
 
+  // Recherche de disponibilités envoyée par le Hero
+  useEffect(() => {
+    const onSearch = (e: Event) => {
+      const q = (e as CustomEvent<AvailabilitySearch>).detail;
+      setSearch(q);
+      setSearching(true);
+      setSearchError("");
+      setActiveCategory(q.category in categoryInfo ? q.category : "all");
+      fetchAvailableCars(q.start, q.end)
+        .then((list) => setFree(list))
+        .catch((err) => {
+          setFree(null);
+          setSearchError(err instanceof Error ? err.message : "Impossible de vérifier les disponibilités.");
+        })
+        .finally(() => setSearching(false));
+    };
+    window.addEventListener(AVAILABILITY_EVENT, onSearch);
+    return () => window.removeEventListener(AVAILABILITY_EVENT, onSearch);
+  }, []);
+
+  const clearSearch = () => {
+    setSearch(null);
+    setFree(null);
+    setSearchError("");
+  };
+
+  const quotes = useMemo(() => {
+    const m = new Map<string, AvailableCar>();
+    free?.forEach((c) => m.set(String(c.id), c));
+    return m;
+  }, [free]);
+
+  const shortDate = (d: string) => new Date(`${d}T00:00:00`).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+  const quoteLabel = search ? `Du ${shortDate(search.start)} au ${shortDate(search.end)}` : "";
+
+  const book = (carId: string) => {
+    if (!search) return;
+    saveBookingIntent({
+      carId: Number(carId),
+      start: search.start,
+      end: search.end,
+      pickupPlace: search.pickupPlace,
+      pickupAddress: search.pickupAddress,
+      returnPlace: search.returnPlace,
+      returnAddress: search.returnAddress,
+    });
+    window.location.assign(pageUrl("client"));
+  };
+
+  // Pendant une recherche par dates : uniquement les véhicules libres
+  const pool = useMemo(
+    () => (search && free ? free.map((c) => ({ ...mapApiCarToCar(c) })) : cars),
+    [search, free, cars]
+  );
+
   const counts = useMemo(() => {
-    const out: Record<string, number> = { all: cars.length };
-    cars.forEach((c) => {
+    const out: Record<string, number> = { all: pool.length };
+    pool.forEach((c) => {
       const k = c.category?.toLowerCase();
       out[k] = (out[k] ?? 0) + 1;
     });
     return out;
-  }, [cars]);
+  }, [pool]);
 
   // Onglets : uniquement les catégories présentes dans la flotte.
   const categories = useMemo(
     () => [
       { id: "all", label: "Tous" },
       ...Object.entries(categoryInfo)
-        .filter(([id]) => (counts[id] ?? 0) > 0)
+        .filter(([id]) => (counts[id] ?? 0) > 0 || id === activeCategory)
         .map(([id, c]) => ({ id, label: c.plural })),
     ],
-    [counts]
+    [counts, activeCategory]
   );
 
   const active = categoryInfo[activeCategory];
 
   const filteredCars = useMemo(
-    () => (activeCategory === "all" ? cars : cars.filter((car) => car.category?.toLowerCase() === activeCategory)),
-    [activeCategory, cars]
+    () => (activeCategory === "all" ? pool : pool.filter((car) => car.category?.toLowerCase() === activeCategory)),
+    [activeCategory, pool]
   );
 
   return (
@@ -172,6 +235,33 @@ export function Fleet() {
             {active ? active.tagline : "Citadines, compactes et SUV récents, entretenus avant chaque location"}
           </p>
         </div>
+
+        {search && (
+          <div className="mx-auto mt-10 flex max-w-3xl flex-col items-center justify-between gap-3 rounded-3xl border-2 border-sky bg-sky-soft/60 px-5 py-4 text-navy sm:flex-row">
+            <p className="flex items-center gap-3 text-sm font-semibold">
+              <CalendarCheck2 className="h-5 w-5 flex-shrink-0 text-sky-text" />
+              <span>
+                <strong className="font-extrabold">{quoteLabel}</strong>
+                {searching
+                  ? " · recherche des véhicules libres…"
+                  : searchError
+                    ? ` · ${searchError}`
+                    : free
+                      ? ` · ${free.length} véhicule${free.length > 1 ? "s" : ""} libre${free.length > 1 ? "s" : ""}${
+                          cars.length > free.length ? `, ${cars.length - free.length} déjà pris` : ""
+                        }`
+                      : ""}
+              </span>
+            </p>
+            <button
+              type="button"
+              onClick={clearSearch}
+              className="inline-flex h-9 flex-shrink-0 items-center gap-1.5 rounded-full bg-white px-4 text-xs font-bold uppercase tracking-wide text-navy hover:bg-navy hover:text-white"
+            >
+              <X className="h-3.5 w-3.5" /> Toute la flotte
+            </button>
+          </div>
+        )}
 
         <div
           className="no-scrollbar -mx-4 mt-10 flex gap-2.5 overflow-x-auto px-4 sm:mx-0 sm:justify-center sm:px-0"
@@ -199,7 +289,7 @@ export function Fleet() {
         </div>
 
         <div className="mt-12">
-          {loading ? (
+          {loading || searching ? (
             <div className="flex h-72 items-center justify-center" role="status" aria-label="Chargement des véhicules">
               <div className="h-9 w-9 animate-spin rounded-full border-4 border-line border-t-sky" />
             </div>
@@ -207,12 +297,25 @@ export function Fleet() {
             <div className="no-scrollbar -mx-4 flex snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-6 sm:overflow-visible sm:px-0 lg:grid-cols-3 xl:grid-cols-4">
               {filteredCars.map((car, index) => (
                 <div key={car.id} className="w-[80%] flex-shrink-0 snap-start sm:w-auto">
-                  <CarCard car={car} index={index} />
+                  <CarCard
+                    car={car}
+                    index={index}
+                    quote={
+                      search && quotes.has(car.id)
+                        ? { days: quotes.get(car.id)!.days, total: Number(quotes.get(car.id)!.total_price), label: quoteLabel }
+                        : undefined
+                    }
+                    onBook={() => book(car.id)}
+                  />
                 </div>
               ))}
             </div>
           ) : (
-            <p className="py-16 text-center font-semibold text-muted">Aucun véhicule dans cette catégorie pour le moment.</p>
+            <p className="py-16 text-center font-semibold text-muted">
+              {search && free
+                ? "Aucun véhicule libre dans cette catégorie sur ces dates. Essayez d'autres dates ou une autre catégorie."
+                : "Aucun véhicule dans cette catégorie pour le moment."}
+            </p>
           )}
         </div>
       </div>

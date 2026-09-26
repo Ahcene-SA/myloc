@@ -1,6 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import type { PointerEvent, ReactNode } from "react";
 import { BadgeEuro, Timer, Headphones, Sparkles, Gauge, CalendarX2 } from "lucide-react";
 import { BrandHeading, PalmShadow, Sky } from "./Brand";
 
@@ -13,6 +14,38 @@ const features = [
   { icon: CalendarX2, title: "Annulation flexible", desc: "Modifiez ou annulez votre réservation gratuitement jusqu’à 24h avant le départ." },
 ];
 
+/** Carte qui s'incline légèrement vers la souris (effet 3D). */
+function Tilt({ children, className, delay }: { children: ReactNode; className: string; delay: number }) {
+  const mx = useMotionValue(0);
+  const my = useMotionValue(0);
+  const rx = useSpring(useTransform(my, [-0.5, 0.5], [7, -7]), { stiffness: 200, damping: 20 });
+  const ry = useSpring(useTransform(mx, [-0.5, 0.5], [-7, 7]), { stiffness: 200, damping: 20 });
+  const onMove = (e: PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== "mouse") return;
+    const r = e.currentTarget.getBoundingClientRect();
+    mx.set((e.clientX - r.left) / r.width - 0.5);
+    my.set((e.clientY - r.top) / r.height - 0.5);
+  };
+  const reset = () => {
+    mx.set(0);
+    my.set(0);
+  };
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.5, delay }}
+      onPointerMove={onMove}
+      onPointerLeave={reset}
+      style={{ rotateX: rx, rotateY: ry, transformPerspective: 800 }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 export function Features() {
   return (
     <section id="avantages" className="bg-brand-mist relative overflow-hidden py-20 lg:py-28">
@@ -24,12 +57,9 @@ export function Features() {
 
         <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
           {features.map(({ icon: Icon, title, desc }, i) => (
-            <motion.div
+            <Tilt
               key={title}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-40px" }}
-              transition={{ duration: 0.5, delay: (i % 3) * 0.08 }}
+              delay={(i % 3) * 0.08}
               className="group flex flex-col gap-4 rounded-3xl border border-line bg-white p-7 transition-colors hover:border-sky/60"
             >
               <span className="flex h-13 w-13 items-center justify-center rounded-2xl bg-sky-soft text-sky-text transition-colors group-hover:bg-sky group-hover:text-navy">
@@ -37,7 +67,7 @@ export function Features() {
               </span>
               <h3 className="text-base font-extrabold uppercase tracking-[0.06em] text-navy">{title}</h3>
               <p className="text-[15px] leading-relaxed text-ink-soft">{desc}</p>
-            </motion.div>
+            </Tilt>
           ))}
         </div>
       </div>

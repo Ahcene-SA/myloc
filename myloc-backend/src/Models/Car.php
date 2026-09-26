@@ -90,6 +90,31 @@ class Car
         return $stmt->rowCount() > 0;
     }
 
+    /** Véhicules en ligne et libres sur la période [start, end[ (le jour du retour reste libre). */
+    public function findFreeBetween(string $start, string $end, ?string $category = null): array
+    {
+        $sql = "
+            SELECT c.* FROM cars c
+            WHERE c.status = 'available'
+              AND NOT EXISTS (
+                  SELECT 1 FROM reservations r
+                  WHERE r.car_id = c.id
+                    AND r.status IN ('pending', 'confirmed')
+                    AND r.start_date < :end_date
+                    AND r.end_date > :start_date
+              )
+        ";
+        $params = [':start_date' => $start, ':end_date' => $end];
+        if ($category !== null && $category !== '') {
+            $sql .= " AND c.category = :category";
+            $params[':category'] = $category;
+        }
+        $sql .= " ORDER BY c.price_per_day ASC";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
     /** Toute la flotte (y compris retirée du site), pour l'administration. */
     public function findAll(): array
     {

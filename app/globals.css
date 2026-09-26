@@ -134,6 +134,81 @@ body {
     }
   }
 
+  /* « mobilité » : dégradé bleu avec un reflet qui passe */
+  .text-sky-shimmer {
+    background: linear-gradient(100deg, #2e93cc 0%, #5dbdea 35%, #d9f1ff 50%, #5dbdea 65%, #2e93cc 100%);
+    background-size: 250% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: shimmer 5s ease-in-out 1.6s infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: 100% 0;
+    }
+    45%,
+    100% {
+      background-position: -50% 0;
+    }
+  }
+
+  /* Palmiers qui bougent doucement avec le vent */
+  .palm-sway {
+    transform-origin: 0 0;
+    animation: sway 7s ease-in-out infinite;
+  }
+  .palm-sway-slow {
+    transform-origin: 100% 0;
+    animation: sway 11s ease-in-out infinite reverse;
+  }
+
+  @keyframes sway {
+    0%,
+    100% {
+      rotate: 0deg;
+    }
+    50% {
+      rotate: 2.5deg;
+    }
+  }
+
+  /* Arc lumineux qui tourne autour du grand cercle */
+  .orbit {
+    animation: orbit 14s linear infinite;
+  }
+
+  @keyframes orbit {
+    to {
+      rotate: 360deg;
+    }
+  }
+
+  /* Reflet qui traverse un bouton */
+  .shine {
+    position: relative;
+    overflow: hidden;
+  }
+  .shine::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.28) 50%, transparent 70%);
+    translate: -120% 0;
+    animation: shine 4.5s ease-in-out 2.5s infinite;
+  }
+
+  @keyframes shine {
+    0% {
+      translate: -120% 0;
+    }
+    30%,
+    100% {
+      translate: 120% 0;
+    }
+  }
+
   .drive-in {
     opacity: 0;
     animation: drive-in 1.1s cubic-bezier(0.22, 1, 0.36, 1) forwards;

@@ -23,6 +23,9 @@ export interface Car {
 interface CarCardProps {
   car: Car;
   index?: number;
+  /** Prix total pour les dates recherchées sur l'accueil */
+  quote?: { days: number; total: number; label: string };
+  onBook?: () => void;
 }
 
 /** « Jetour X70+ » → marque « JETOUR », modèle « X70+ » (affichés comme sur les posts). */
@@ -31,7 +34,7 @@ function splitName(name: string) {
   return { brand, model: rest.join(" ") };
 }
 
-export function CarCard({ car, index = 0 }: CarCardProps) {
+export function CarCard({ car, index = 0, quote, onBook }: CarCardProps) {
   const cat = categoryInfo[car.category?.toLowerCase()];
   const { brand, model } = splitName(car.name);
 
@@ -85,25 +88,63 @@ export function CarCard({ car, index = 0 }: CarCardProps) {
           ))}
         </ul>
 
-        <div className="mt-5 flex items-end justify-between gap-3">
-          <p className="leading-none">
-            <span className="block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">À partir de</span>
-            <span className="mt-1.5 block text-[28px] font-extrabold text-navy">
-              {car.price} {site.currency}
-              <span className="ml-1 text-xs font-semibold text-muted">/ {car.priceUnit}</span>
-            </span>
-          </p>
-          <a
-            href={whatsappLink(`Bonjour MYLOC.DZ, je suis intéressé(e) par la ${car.name}. Est-elle disponible ?`)}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={`Réserver la ${car.name} sur WhatsApp`}
-            className="flex h-12 items-center gap-2 rounded-full bg-sky px-4 text-sm font-bold text-navy transition-colors hover:bg-sky-mid hover:text-white"
-          >
-            <WhatsAppIcon className="h-4 w-4" />
-            Réserver
-          </a>
-        </div>
+        {quote ? (
+          <div className="mt-5 flex flex-col gap-3">
+            <div className="flex items-end justify-between gap-3 rounded-2xl bg-sky-soft/70 px-4 py-3">
+              <p className="leading-none">
+                <span className="block text-[11px] font-bold uppercase tracking-[0.14em] text-sky-text">
+                  Total · {quote.days} jour{quote.days > 1 ? "s" : ""}
+                </span>
+                <span className="mt-1.5 block text-[26px] font-extrabold text-navy">
+                  {quote.total.toLocaleString("fr-FR")} {site.currency}
+                </span>
+              </p>
+              <span className="text-right text-[11px] font-semibold leading-tight text-muted">
+                {quote.label}
+                <br />
+                {car.price} {site.currency}/jour
+              </span>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={onBook}
+                className="flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-navy px-4 text-sm font-bold text-white transition-colors hover:bg-navy-soft"
+              >
+                Réserver ces dates
+              </button>
+              <a
+                href={whatsappLink(`Bonjour MYLOC.DZ, je souhaite réserver la ${car.name} ${quote.label.toLowerCase()} (${quote.days} jours).`)}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Demander la ${car.name} sur WhatsApp`}
+                className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-sky text-navy transition-colors hover:bg-sky-mid hover:text-white"
+              >
+                <WhatsAppIcon className="h-5 w-5" />
+              </a>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-5 flex items-end justify-between gap-3">
+            <p className="leading-none">
+              <span className="block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">À partir de</span>
+              <span className="mt-1.5 block text-[28px] font-extrabold text-navy">
+                {car.price} {site.currency}
+                <span className="ml-1 text-xs font-semibold text-muted">/ {car.priceUnit}</span>
+              </span>
+            </p>
+            <a
+              href={whatsappLink(`Bonjour MYLOC.DZ, je suis intéressé(e) par la ${car.name}. Est-elle disponible ?`)}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Réserver la ${car.name} sur WhatsApp`}
+              className="flex h-12 items-center gap-2 rounded-full bg-sky px-4 text-sm font-bold text-navy transition-colors hover:bg-sky-mid hover:text-white"
+            >
+              <WhatsAppIcon className="h-4 w-4" />
+              Réserver
+            </a>
+          </div>
+        )}
       </div>
     </motion.article>
   );

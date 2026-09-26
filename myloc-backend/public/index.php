@@ -73,6 +73,7 @@ $router->post('/api/admin/reservations', fn() => $reservationController->adminCr
 
 // Public car routes
 $router->get('/api/cars', fn() => $carController->index());
+$router->get('/api/cars/available', fn() => $carController->availableForDates());
 $router->get('/api/cars/{id}', fn(array $params) => $carController->show($params));
 $router->get('/api/cars/{id}/booked', fn(array $params) => $reservationController->bookedDates($params));
 

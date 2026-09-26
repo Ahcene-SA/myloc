@@ -197,6 +197,18 @@ export async function fetchCars(): Promise<CarFromApi[]> {
   return res.cars || [];
 }
 
+export interface AvailableCar extends CarFromApi {
+  days: number;
+  total_price: number;
+}
+
+/** Véhicules libres entre deux dates (le jour du retour reste libre), avec le prix total. */
+export async function fetchAvailableCars(start: string, end: string, category = "all"): Promise<AvailableCar[]> {
+  const q = new URLSearchParams({ start, end, category });
+  const res = await request<{ success: boolean; cars?: AvailableCar[] }>("GET", `/cars/available?${q}`);
+  return res.cars || [];
+}
+
 /** Administration : toute la flotte, y compris les véhicules retirés du site. */
 export async function fetchAllCars(): Promise<CarFromApi[]> {
   const res = await request<{ success: boolean; cars?: CarFromApi[] }>("GET", "/admin/cars", undefined, true);

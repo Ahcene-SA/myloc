@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from "react";
 import type { ClientTab } from "./ClientSidebar";
 import { fetchCars, fetchMyReservations, type CarFromApi, type ReservationFromApi } from "@/lib/api";
+import { takeBookingIntent, type BookingIntent } from "@/lib/booking";
 
 interface ClientContextValue {
   activeTab: ClientTab;
@@ -10,6 +11,8 @@ interface ClientContextValue {
   /** Voiture présélectionnée quand on passe d'un écran à « Réserver ». */
   preselectedCarId: number | null;
   goReserve: (carId?: number) => void;
+  /** Dates et lieux choisis sur l'accueil avant la connexion */
+  bookingPrefill: BookingIntent | null;
 
   cars: CarFromApi[];
   reservations: ReservationFromApi[];
@@ -23,8 +26,10 @@ interface ClientContextValue {
 const ClientContext = createContext<ClientContextValue | undefined>(undefined);
 
 export function ClientProvider({ children }: { children: ReactNode }) {
-  const [activeTab, setActiveTabState] = useState<ClientTab>("accueil");
-  const [preselectedCarId, setPreselectedCarId] = useState<number | null>(null);
+  // Le fournisseur n'est rendu que côté navigateur (voir ClientLayout) : lecture directe possible.
+  const [bookingPrefill, setBookingPrefill] = useState<BookingIntent | null>(() => takeBookingIntent());
+  const [activeTab, setActiveTabState] = useState<ClientTab>(bookingPrefill ? "reserver" : "accueil");
+  const [preselectedCarId, setPreselectedCarId] = useState<number | null>(bookingPrefill?.carId ?? null);
   const [cars, setCars] = useState<CarFromApi[]>([]);
   const [reservations, setReservations] = useState<ReservationFromApi[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,11 +68,13 @@ export function ClientProvider({ children }: { children: ReactNode }) {
   const setActiveTab = (tab: ClientTab) => {
     setActiveTabState(tab);
     if (tab !== "reserver") setPreselectedCarId(null);
+    setBookingPrefill(null);
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const goReserve = (carId?: number) => {
     setPreselectedCarId(carId ?? null);
+    setBookingPrefill(null);
     setActiveTabState("reserver");
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -83,7 +90,7 @@ export function ClientProvider({ children }: { children: ReactNode }) {
 
   return (
     <ClientContext.Provider
-      value={{ activeTab, setActiveTab, preselectedCarId, goReserve, cars, reservations, loading, error, refresh, upsertReservation }}
+      value={{ activeTab, setActiveTab, preselectedCarId, goReserve, bookingPrefill, cars, reservations, loading, error, refresh, upsertReservation }}
     >
       {children}
     </ClientContext.Provider>

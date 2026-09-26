@@ -1,3 +1,6 @@
+"use client";
+
+import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 import { AlgiersSkyline, BrandHeading, Sky, SkyCircle } from "./Brand";
 import { site } from "@/lib/site";
@@ -27,13 +30,16 @@ export function About() {
               notre priorité
             </p>
             <span className="mt-4 block h-[3px] w-14 rounded-full bg-sky" />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="images/cars/jetour-x70-plus.png"
-              alt="Jetour X70 Plus"
-              loading="lazy"
-              className="car-reflect absolute bottom-[12%] left-1/2 w-[82%] -translate-x-1/2"
-            />
+            <motion.div
+              className="absolute bottom-[12%] left-[9%] w-[82%]"
+              initial={{ x: "70%", opacity: 0 }}
+              whileInView={{ x: 0, opacity: 1 }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: 1.3, ease: [0.16, 1, 0.3, 1] }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="images/cars/jetour-x70-plus.png" alt="Jetour X70 Plus" loading="lazy" className="car-reflect w-full" />
+            </motion.div>
           </div>
         </div>
 

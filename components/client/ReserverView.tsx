@@ -77,7 +77,7 @@ function transmissionLabel(t?: string) {
 
 export function ReserverView() {
   const { user } = useAuth();
-  const { cars, loading, error, refresh, preselectedCarId, upsertReservation, setActiveTab } = useClient();
+  const { cars, loading, error, refresh, preselectedCarId, bookingPrefill, upsertReservation, setActiveTab } = useClient();
 
   const [step, setStep] = useState(preselectedCarId ? 2 : 1);
   const [carId, setCarId] = useState<number | null>(preselectedCarId);
@@ -88,14 +88,14 @@ export function ReserverView() {
   const [done, setDone] = useState<ReservationFromApi | null>(null);
 
   const [form, setForm] = useState<FormState>(() => ({
-    pickupPlace: site.agencies[0],
-    pickupAddress: "",
-    pickupDate: "",
+    pickupPlace: bookingPrefill?.pickupPlace || site.agencies[0],
+    pickupAddress: bookingPrefill?.pickupAddress || "",
+    pickupDate: bookingPrefill?.start || "",
     pickupTime: "10:00",
-    differentReturn: false,
-    returnPlace: site.agencies[0],
-    returnAddress: "",
-    returnDate: "",
+    differentReturn: !!bookingPrefill?.returnPlace && bookingPrefill.returnPlace !== bookingPrefill.pickupPlace,
+    returnPlace: bookingPrefill?.returnPlace || site.agencies[0],
+    returnAddress: bookingPrefill?.returnAddress || "",
+    returnDate: bookingPrefill?.end || "",
     returnTime: "10:00",
     fullName: user?.full_name || "",
     email: user?.email || "",

@@ -2,6 +2,8 @@ import { Navbar } from "@/components/Navbar";
 import { Hero } from "@/components/Hero";
 import { AgenciesBand } from "@/components/AgenciesBand";
 import { Fleet } from "@/components/Fleet";
+import { StatsBand } from "@/components/StatsBand";
+import { Showroom } from "@/components/Showroom";
 import { Features } from "@/components/Features";
 import { Steps } from "@/components/Steps";
 import { About } from "@/components/About";
@@ -16,7 +18,9 @@ export default function Home() {
       <main className="flex-1 bg-white">
         <Hero />
         <AgenciesBand />
+        <Showroom />
         <Fleet />
+        <StatsBand />
         <Features />
         <Steps />
         <About />

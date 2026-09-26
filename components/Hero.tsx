@@ -1,12 +1,40 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
+import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { ArrowDown, Search, Check } from "lucide-react";
-import { AlgiersSkyline, BlueBar, PalmShadow, Sky, SkyCircle } from "./Brand";
+import { AlgiersSkyline, BlueBar, PalmShadow } from "./Brand";
 import { WhatsAppIcon } from "./FloatingWhatsApp";
+import { HeroCars } from "./HeroCars";
 import { FILTER_EVENT, categoryInfo, site, whatsappLink } from "@/lib/site";
+import { AVAILABILITY_EVENT, type AvailabilitySearch } from "@/lib/booking";
 
 const HOME = "__domicile__";
+/** Libellé attendu par le formulaire de réservation de l'espace client */
+const HOME_LABEL = "Livraison à domicile";
+
+const ease = [0.22, 1, 0.36, 1] as const;
+
+/** Titre révélé mot par mot, chaque mot glisse hors d'un masque. */
+function RevealWords({ text, className, delay = 0, reduce }: { text: string; className?: string; delay?: number; reduce: boolean }) {
+  return (
+    <>
+      {text.split(" ").map((w, i) => (
+        <span key={i} className="inline-block overflow-hidden pb-[0.08em] align-bottom">
+          <motion.span
+            className={`inline-block ${className ?? ""}`}
+            initial={reduce ? false : { y: "110%" }}
+            animate={{ y: 0 }}
+            transition={{ duration: 0.9, delay: delay + i * 0.08, ease }}
+          >
+            {w}
+            {"\u00a0"}
+          </motion.span>
+        </span>
+      ))}
+    </>
+  );
+}
 
 const categories = [
   { id: "all", label: "Toutes" },
@@ -34,11 +62,38 @@ export function Hero() {
   const [departDate, setDepartDate] = useState("");
   const [retourDate, setRetourDate] = useState("");
   const [category, setCategory] = useState("all");
+  const [formError, setFormError] = useState("");
+
+  const reduce = !!useReducedMotion();
+  const sectionRef = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({ target: sectionRef, offset: ["start start", "end start"] });
+  const palmY = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : 220]);
+  const palmRotate = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : 8]);
+  const skylineY = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : 90]);
+  const textY = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : 120]);
+  const textOpacity = useTransform(scrollYProgress, [0, 0.7], [1, reduce ? 1 : 0.15]);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    window.dispatchEvent(new CustomEvent(FILTER_EVENT, { detail: category }));
-    document.getElementById("vehicules")?.scrollIntoView({ behavior: "smooth" });
+    setFormError("");
+    if (departDate || retourDate) {
+      if (!departDate || !retourDate) return setFormError("Choisissez une date de départ et une date de retour.");
+      if (retourDate <= departDate) return setFormError("La date de retour doit être après la date de départ.");
+      const toLabel = (p: string) => (p === HOME ? HOME_LABEL : p);
+      const detail: AvailabilitySearch = {
+        start: departDate,
+        end: retourDate,
+        category,
+        pickupPlace: toLabel(pickup),
+        pickupAddress: pickup === HOME ? pickupAddress : "",
+        returnPlace: toLabel(differentReturn ? returnPlace : pickup === HOME ? site.agencies[0] : pickup),
+        returnAddress: differentReturn && returnPlace === HOME ? returnAddress : "",
+      };
+      window.dispatchEvent(new CustomEvent(AVAILABILITY_EVENT, { detail }));
+    } else {
+      window.dispatchEvent(new CustomEvent(FILTER_EVENT, { detail: category }));
+    }
+    document.getElementById("vehicules")?.scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
   };
 
   // Message WhatsApp pré-rempli avec la recherche du visiteur
@@ -54,26 +109,42 @@ export function Hero() {
     .join("\n");
 
   return (
-    <section id="accueil" className="bg-brand-mist relative overflow-hidden pt-24 lg:pt-28">
-      <PalmShadow className="-left-24 -top-10 w-[420px] opacity-25 sm:w-[560px]" />
-      <PalmShadow flip className="-right-32 top-40 hidden w-[480px] opacity-15 lg:block" />
-      <AlgiersSkyline className="inset-x-0 bottom-0 h-40 w-full text-navy opacity-[0.035] lg:h-56" />
+    <section ref={sectionRef} id="accueil" className="bg-brand-mist relative overflow-hidden pt-24 lg:pt-28">
+      <motion.div aria-hidden="true" className="pointer-events-none absolute inset-0" style={{ y: palmY, rotate: palmRotate }}>
+        <motion.div
+          className="absolute inset-0"
+          initial={reduce ? false : { opacity: 0, x: -40 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 1.6, ease }}
+        >
+          <PalmShadow className="palm-sway -left-24 -top-10 w-[420px] opacity-25 sm:w-[560px]" />
+          <PalmShadow flip className="palm-sway-slow -right-32 top-40 hidden w-[480px] opacity-15 lg:block" />
+        </motion.div>
+      </motion.div>
+      <motion.div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-40 lg:h-56" style={{ y: skylineY }}>
+        <AlgiersSkyline className="inset-0 h-full w-full text-navy opacity-[0.05]" />
+      </motion.div>
 
       <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 sm:px-6 lg:grid-cols-[1fr_1.05fr] lg:gap-6 lg:px-8">
         {/* ── Texte ── */}
-        <div className="relative z-10 flex flex-col gap-6 pt-6 lg:pt-10">
+        <motion.div className="relative z-10 flex flex-col gap-6 pt-6 lg:pt-10" style={{ y: textY, opacity: textOpacity }}>
           <span className="fade-up kicker text-navy/80" style={{ animationDelay: "0.05s" }}>
             Location de véhicules en <strong className="font-extrabold text-navy">Algérie</strong>
           </span>
-          <h1
-            className="fade-up text-[42px] font-extrabold uppercase leading-[1] tracking-[-0.015em] text-navy sm:text-6xl lg:text-[68px]"
-            style={{ animationDelay: "0.15s" }}
-          >
-            Votre <Sky>mobilité</Sky>,
+          <h1 className="text-[42px] font-extrabold uppercase leading-[1] tracking-[-0.015em] text-navy sm:text-6xl lg:text-[68px]">
+            <RevealWords text="Votre" reduce={reduce} delay={0.1} />
+            <RevealWords text="mobilité," className="text-sky-shimmer" reduce={reduce} delay={0.18} />
             <br />
-            notre priorité
+            <RevealWords text="notre priorité" reduce={reduce} delay={0.32} />
           </h1>
-          <BlueBar className="fade-up w-16" />
+          <motion.span
+            className="block origin-left"
+            initial={reduce ? false : { scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={{ duration: 0.8, delay: 0.6, ease }}
+          >
+            <BlueBar className="w-16" />
+          </motion.span>
           <p
             className="fade-up max-w-lg text-[15px] font-semibold uppercase leading-relaxed tracking-[0.06em] text-ink-soft sm:text-base"
             style={{ animationDelay: "0.25s" }}
@@ -110,41 +181,18 @@ export function Hero() {
               </li>
             ))}
           </ul>
-        </div>
+        </motion.div>
 
         {/* ── Groupe de voitures, comme sur les posts ── */}
-        <div className="relative h-[280px] sm:h-[380px] lg:h-[500px]">
-          <SkyCircle className="left-1/2 top-1/2 h-[300px] w-[300px] -translate-x-1/2 -translate-y-1/2 sm:h-[440px] sm:w-[440px] lg:h-[540px] lg:w-[540px]" />
-          <div className="absolute inset-x-0 bottom-10 flex items-end justify-center sm:bottom-14">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="images/cars/renault-captur.png"
-              alt="Renault Captur"
-              className="car-reflect drive-in relative z-0 -mr-[14%] w-[42%] max-w-[300px]"
-              style={{ animationDelay: "0.45s" }}
-            />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="images/cars/jetour-x70-plus.png"
-              alt="Jetour X70 Plus"
-              className="car-reflect drive-in relative z-10 w-[56%] max-w-[400px]"
-              style={{ animationDelay: "0.25s" }}
-              fetchPriority="high"
-            />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="images/cars/clio5-alpino.png"
-              alt="Renault Clio 5 Alpino"
-              className="car-reflect drive-in relative z-20 -ml-[16%] w-[42%] max-w-[300px]"
-              style={{ animationDelay: "0.6s" }}
-            />
-          </div>
-        </div>
+        <HeroCars scrollYProgress={scrollYProgress} reduce={reduce} />
       </div>
 
       {/* ── Recherche ── */}
       <div className="relative z-20 mx-auto max-w-7xl px-4 pb-14 pt-6 sm:px-6 lg:px-8 lg:pb-20">
-        <form
+        <motion.form
+          initial={reduce ? false : { opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.9, delay: 0.9, ease }}
           onSubmit={handleSubmit}
           aria-label="Rechercher un véhicule"
           className="rounded-3xl border border-line bg-white p-2 shadow-[0_30px_60px_-30px_rgba(15,27,45,0.3)] lg:p-3"
@@ -204,12 +252,17 @@ export function Hero() {
 
             <button
               type="submit"
-              className="m-1 mt-2 flex h-14 items-center justify-center gap-2.5 rounded-2xl bg-navy px-8 text-[15px] font-bold text-white transition-colors hover:bg-navy-soft lg:m-0 lg:ml-2 lg:h-auto lg:self-stretch"
+              className="shine m-1 mt-2 flex h-14 items-center justify-center gap-2.5 rounded-2xl bg-navy px-8 text-[15px] font-bold text-white transition-colors hover:bg-navy-soft lg:m-0 lg:ml-2 lg:h-auto lg:self-stretch"
             >
               <Search className="h-[18px] w-[18px]" />
-              Rechercher
+              {departDate && retourDate ? "Voir les dispos" : "Rechercher"}
             </button>
           </div>
+          {formError && (
+            <p role="alert" className="mx-3 mb-1 mt-2 rounded-2xl bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700">
+              {formError}
+            </p>
+          )}
 
           <div className="flex flex-col gap-3 border-t border-line px-5 pb-2 pt-3 sm:flex-row sm:items-center lg:mt-2 lg:px-6">
             <label className="flex cursor-pointer items-center gap-2.5 text-sm font-semibold text-muted">
@@ -256,7 +309,7 @@ export function Hero() {
               Envoyer ma demande sur WhatsApp
             </a>
           </div>
-        </form>
+        </motion.form>
       </div>
     </section>
   );

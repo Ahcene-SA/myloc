@@ -25,6 +25,39 @@ class CarController
         Response::success('Cars retrieved.', ['cars' => $cars]);
     }
 
+    /** Public : véhicules libres entre deux dates, avec le prix total. */
+    public function availableForDates(): void
+    {
+        $start = (string) ($_GET['start'] ?? '');
+        $end = (string) ($_GET['end'] ?? '');
+        $category = isset($_GET['category']) && $_GET['category'] !== 'all' ? (string) $_GET['category'] : null;
+        if (!Validator::date($start) || !Validator::date($end)) {
+            Response::error('Choisissez une date de départ et une date de retour.', 422);
+        }
+        $s = \DateTimeImmutable::createFromFormat('!Y-m-d', $start);
+        $e = \DateTimeImmutable::createFromFormat('!Y-m-d', $end);
+        if ($s < new \DateTimeImmutable('today')) {
+            Response::error('La date de départ ne peut pas être dans le passé.', 422);
+        }
+        if ($e <= $s) {
+            Response::error('La date de retour doit être après la date de départ.', 422);
+        }
+        if ($category !== null && !in_array($category, ['citadine', 'compacte', 'suv', 'berline'], true)) {
+            Response::error('Catégorie invalide.', 422);
+        }
+        $days = (int) $s->diff($e)->days;
+        if ($days > 90) {
+            Response::error('Pour plus de 90 jours, contactez-nous directement.', 422);
+        }
+        $cars = array_map(function (array $car) use ($days) {
+            $car['days'] = $days;
+            $car['total_price'] = round((float) $car['price_per_day'] * $days, 2);
+            return $car;
+        }, $this->carModel->findFreeBetween($start, $end, $category));
+
+        Response::success('Disponibilités calculées.', ['cars' => $cars, 'days' => $days]);
+    }
+
     /** Administration : toute la flotte, y compris les véhicules retirés du site. */
     public function adminIndex(): void
     {
