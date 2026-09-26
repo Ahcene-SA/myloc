@@ -16,8 +16,8 @@ export function FloatingWhatsApp() {
       href={site.whatsappHref}
       target="_blank"
       rel="noopener noreferrer"
-      className="fixed bottom-5 right-5 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-olive text-white shadow-[0_12px_30px_-8px_rgba(37,96,63,0.6)] ring-4 ring-cream transition-transform hover:scale-110"
-      aria-label="Contactez-nous sur WhatsApp"
+      className="fixed bottom-5 right-5 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-whatsapp text-white shadow-[0_12px_30px_-8px_rgba(21,128,61,0.55)] ring-4 ring-white transition-transform hover:scale-110"
+      aria-label="Infos et réservation sur WhatsApp"
     >
       <WhatsAppIcon className="h-7 w-7" />
     </a>

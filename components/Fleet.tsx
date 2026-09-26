@@ -4,21 +4,15 @@ import { useEffect, useMemo, useState } from "react";
 import { CarCard, type Car } from "./CarCard";
 import { cn } from "@/lib/utils";
 import { fetchCars, mapApiCarToCar } from "@/lib/api";
-import { FILTER_EVENT } from "@/lib/site";
-
-const categories = [
-  { id: "all", label: "Tous" },
-  { id: "citadine", label: "Citadines" },
-  { id: "suv", label: "SUV" },
-  { id: "berline", label: "Berlines" },
-];
+import { FILTER_EVENT, categoryInfo } from "@/lib/site";
+import { BlueBar, PalmShadow } from "./Brand";
 
 const fallbackCars: Car[] = [
   {
     id: "clio5-alpino",
     name: "Clio 5 Alpino",
     category: "citadine",
-    image: "images/clio5-alpino.png",
+    image: "images/cars/clio5-alpino.png",
     price: 55,
     priceUnit: "jour",
     transmission: "Automatique",
@@ -29,7 +23,7 @@ const fallbackCars: Car[] = [
     id: "clio5-techno",
     name: "Clio 5 Techno",
     category: "citadine",
-    image: "images/clio5-techno.png",
+    image: "images/cars/clio5-techno.png",
     price: 52,
     priceUnit: "jour",
     transmission: "Automatique",
@@ -40,7 +34,7 @@ const fallbackCars: Car[] = [
     id: "citroen-c3",
     name: "Citroën C3",
     category: "citadine",
-    image: "images/citroen-c3.png",
+    image: "images/cars/citroen-c3.png",
     price: 48,
     priceUnit: "jour",
     transmission: "Manuelle",
@@ -50,8 +44,8 @@ const fallbackCars: Car[] = [
   {
     id: "opel-astra",
     name: "Opel Astra",
-    category: "berline",
-    image: "images/opel-astra.png",
+    category: "compacte",
+    image: "images/cars/opel-astra.png",
     price: 75,
     priceUnit: "jour",
     transmission: "Automatique",
@@ -62,7 +56,7 @@ const fallbackCars: Car[] = [
     id: "opel-mocca",
     name: "Opel Mokka",
     category: "suv",
-    image: "images/opel-mocca.png",
+    image: "images/cars/opel-mokka.png",
     price: 80,
     priceUnit: "jour",
     transmission: "Automatique",
@@ -73,7 +67,7 @@ const fallbackCars: Car[] = [
     id: "renault-captur",
     name: "Renault Captur",
     category: "suv",
-    image: "images/renault-captur.png",
+    image: "images/cars/renault-captur.png",
     price: 72,
     priceUnit: "jour",
     transmission: "Automatique",
@@ -84,7 +78,7 @@ const fallbackCars: Car[] = [
     id: "jetour-x70+",
     name: "Jetour X70+",
     category: "suv",
-    image: "images/jetour-x70+.png",
+    image: "images/cars/jetour-x70-plus.png",
     price: 95,
     priceUnit: "jour",
     transmission: "Automatique",
@@ -128,7 +122,7 @@ export function Fleet() {
   useEffect(() => {
     const onFilter = (e: Event) => {
       const cat = (e as CustomEvent<string>).detail;
-      if (categories.some((c) => c.id === cat)) setActiveCategory(cat);
+      if (cat === "all" || cat in categoryInfo) setActiveCategory(cat);
     };
     window.addEventListener(FILTER_EVENT, onFilter);
     return () => window.removeEventListener(FILTER_EVENT, onFilter);
@@ -143,52 +137,71 @@ export function Fleet() {
     return out;
   }, [cars]);
 
+  // Onglets : uniquement les catégories présentes dans la flotte.
+  const categories = useMemo(
+    () => [
+      { id: "all", label: "Tous" },
+      ...Object.entries(categoryInfo)
+        .filter(([id]) => (counts[id] ?? 0) > 0)
+        .map(([id, c]) => ({ id, label: c.plural })),
+    ],
+    [counts]
+  );
+
+  const active = categoryInfo[activeCategory];
+
   const filteredCars = useMemo(
     () => (activeCategory === "all" ? cars : cars.filter((car) => car.category?.toLowerCase() === activeCategory)),
     [activeCategory, cars]
   );
 
   return (
-    <section id="vehicules" className="py-20 lg:py-28">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-          <div className="flex flex-col gap-3.5">
-            <span className="eyebrow text-terra">Notre flotte</span>
-            <h2 className="font-display text-[40px] font-semibold leading-none tracking-[-0.03em] text-ink sm:text-5xl lg:text-[64px]">
-              Une voiture pour
-              <br />
-              <span className="font-normal italic">chaque route.</span>
-            </h2>
-          </div>
+    <section id="vehicules" className="relative overflow-hidden bg-white py-20 lg:py-28">
+      <PalmShadow flip className="-right-40 -top-20 w-[520px] opacity-[0.12]" />
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <span className="kicker text-navy/80">Notre sélection de</span>
+          <h2
+            key={activeCategory}
+            className="fade-up text-sky-gradient text-5xl font-extrabold uppercase leading-none tracking-[-0.01em] sm:text-6xl lg:text-[84px]"
+          >
+            {active ? active.plural : "Véhicules"}
+          </h2>
+          <BlueBar />
+          <p className="max-w-md text-sm font-semibold uppercase tracking-[0.08em] text-ink-soft sm:text-[15px]">
+            {active ? active.tagline : "Citadines, compactes et SUV récents, entretenus avant chaque location"}
+          </p>
+        </div>
 
-          <div className="no-scrollbar -mx-4 flex gap-2.5 overflow-x-auto px-4 sm:mx-0 sm:px-0" role="group" aria-label="Filtrer par catégorie">
-            {categories.map((cat) => {
-              const active = activeCategory === cat.id;
-              return (
-                <button
-                  key={cat.id}
-                  type="button"
-                  onClick={() => setActiveCategory(cat.id)}
-                  aria-pressed={active}
-                  className={cn(
-                    "flex h-12 flex-shrink-0 items-center gap-2 rounded-full border-[1.5px] px-5 text-[15px] font-bold transition-colors",
-                    active ? "border-ink bg-ink text-sand" : "border-sand-line text-ink hover:border-ink"
-                  )}
-                >
-                  {cat.label}
-                  <span className={cn("text-xs font-extrabold", active ? "text-terra-light" : "text-muted")}>
-                    {counts[cat.id] ?? 0}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+        <div
+          className="no-scrollbar -mx-4 mt-10 flex gap-2.5 overflow-x-auto px-4 sm:mx-0 sm:justify-center sm:px-0"
+          role="group"
+          aria-label="Filtrer par catégorie"
+        >
+          {categories.map((cat) => {
+            const isActive = activeCategory === cat.id;
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => setActiveCategory(cat.id)}
+                aria-pressed={isActive}
+                className={cn(
+                  "flex h-11 flex-shrink-0 items-center gap-2 rounded-full border-2 px-5 text-[13px] font-bold uppercase tracking-[0.1em] transition-colors",
+                  isActive ? "border-navy bg-navy text-white" : "border-line text-navy hover:border-navy"
+                )}
+              >
+                {cat.label}
+                <span className={cn("text-[11px]", isActive ? "text-sky" : "text-muted")}>{counts[cat.id] ?? 0}</span>
+              </button>
+            );
+          })}
         </div>
 
         <div className="mt-12">
           {loading ? (
             <div className="flex h-72 items-center justify-center" role="status" aria-label="Chargement des véhicules">
-              <div className="h-9 w-9 animate-spin rounded-full border-4 border-sand-deep border-t-terra" />
+              <div className="h-9 w-9 animate-spin rounded-full border-4 border-line border-t-sky" />
             </div>
           ) : filteredCars.length > 0 ? (
             <div className="no-scrollbar -mx-4 flex snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-6 sm:overflow-visible sm:px-0 lg:grid-cols-3 xl:grid-cols-4">
@@ -199,7 +212,7 @@ export function Fleet() {
               ))}
             </div>
           ) : (
-            <p className="py-16 text-center text-muted">Aucun véhicule dans cette catégorie pour le moment.</p>
+            <p className="py-16 text-center font-semibold text-muted">Aucun véhicule dans cette catégorie pour le moment.</p>
           )}
         </div>
       </div>

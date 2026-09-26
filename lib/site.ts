@@ -10,6 +10,7 @@ export const site = {
   email: "contact@myloc.dz",
   address: "Alger, Algérie",
   instagram: "https://instagram.com/myloc.dz",
+  instagramHandle: "@myloc.dz",
   currency: "€",
   agencies: [
     "Aéroport Messali Hadj",
@@ -24,5 +25,18 @@ export const site = {
   ],
 } as const;
 
+/** Catégories et accroches reprises des posts Instagram. */
+export const categoryInfo: Record<string, { label: string; plural: string; tagline: string }> = {
+  citadine: { label: "Citadine", plural: "Citadines", tagline: "Agiles, économiques et parfaites pour la ville" },
+  compacte: { label: "Compacte", plural: "Compactes", tagline: "Polyvalentes, confortables et élégantes au quotidien" },
+  suv: { label: "SUV", plural: "SUV", tagline: "Spacieux, puissants et prêts pour toutes les routes" },
+  berline: { label: "Berline", plural: "Berlines", tagline: "Confort et élégance pour vos longs trajets" },
+};
+
 /** Événement envoyé par le formulaire du Hero pour filtrer la flotte. */
 export const FILTER_EVENT = "myloc:filter-category";
+
+/** Lien WhatsApp avec un message pré-rempli. */
+export function whatsappLink(message?: string) {
+  return message ? `${site.whatsappHref}?text=${encodeURIComponent(message)}` : site.whatsappHref;
+}

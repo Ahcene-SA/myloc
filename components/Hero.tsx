@@ -1,25 +1,27 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { ArrowRight, Search, Star } from "lucide-react";
-import { Zellige } from "./Zellige";
+import { ArrowDown, Search, Check } from "lucide-react";
+import { AlgiersSkyline, BlueBar, PalmShadow, Sky, SkyCircle } from "./Brand";
 import { WhatsAppIcon } from "./FloatingWhatsApp";
-import { FILTER_EVENT, site } from "@/lib/site";
+import { FILTER_EVENT, categoryInfo, site, whatsappLink } from "@/lib/site";
 
 const HOME = "__domicile__";
 
 const categories = [
   { id: "all", label: "Toutes" },
-  { id: "citadine", label: "Citadine" },
-  { id: "suv", label: "SUV" },
-  { id: "berline", label: "Berline" },
+  ...Object.entries(categoryInfo).map(([id, c]) => ({ id, label: c.label })),
 ];
 
-const trust = ["5 points de retrait", "Assistance 24/7", "Annulation gratuite 24h avant"];
+const trust = ["Assistance 24/7", "Prix clairs, sans surprise", "Annulation gratuite 24h avant"];
 
-const fieldLabel = "text-[11px] font-extrabold uppercase tracking-[0.18em] text-muted";
-const fieldInput =
-  "w-full appearance-none bg-transparent p-0 text-base font-semibold text-ink outline-none placeholder:text-muted/70";
+const fieldLabel = "text-[11px] font-bold uppercase tracking-[0.2em] text-muted";
+const fieldInput = "w-full appearance-none bg-transparent p-0 text-[15px] font-bold text-navy outline-none placeholder:text-muted/70";
+
+function formatDate(d: string) {
+  if (!d) return "";
+  return new Date(d + "T00:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
+}
 
 export function Hero() {
   const today = new Date().toISOString().split("T")[0];
@@ -39,106 +41,116 @@ export function Hero() {
     document.getElementById("vehicules")?.scrollIntoView({ behavior: "smooth" });
   };
 
-  return (
-    <section id="accueil" className="relative overflow-hidden pt-24 lg:pt-28">
-      <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[1fr_minmax(0,500px)] lg:gap-16 lg:px-8">
-        {/* ── Texte ── */}
-        <div className="relative z-10 flex flex-col gap-6 pt-4 lg:gap-7 lg:pt-12">
-          <div className="fade-up flex items-center gap-3" style={{ animationDelay: "0.05s" }}>
-            <span lang="ar" dir="rtl" className="font-arabic text-xl font-bold text-terra lg:text-2xl">
-              يلا نمشيو
-            </span>
-            <span className="h-[1.5px] w-10 bg-terra" />
-            <span className="eyebrow text-muted">Et c&apos;est parti&nbsp;!</span>
-          </div>
+  // Message WhatsApp pré-rempli avec la recherche du visiteur
+  const place = (p: string, addr: string) => (p === HOME ? `à domicile (${addr || "adresse à préciser"})` : p);
+  const waMessage = [
+    "Bonjour MYLOC.DZ, je souhaite louer un véhicule.",
+    `Retrait : ${place(pickup, pickupAddress)}`,
+    differentReturn ? `Retour : ${place(returnPlace, returnAddress)}` : "",
+    departDate ? `Du ${formatDate(departDate)}${retourDate ? ` au ${formatDate(retourDate)}` : ""}` : "",
+    category !== "all" ? `Catégorie : ${categoryInfo[category]?.label}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
 
+  return (
+    <section id="accueil" className="bg-brand-mist relative overflow-hidden pt-24 lg:pt-28">
+      <PalmShadow className="-left-24 -top-10 w-[420px] opacity-25 sm:w-[560px]" />
+      <PalmShadow flip className="-right-32 top-40 hidden w-[480px] opacity-15 lg:block" />
+      <AlgiersSkyline className="inset-x-0 bottom-0 h-40 w-full text-navy opacity-[0.035] lg:h-56" />
+
+      <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 sm:px-6 lg:grid-cols-[1fr_1.05fr] lg:gap-6 lg:px-8">
+        {/* ── Texte ── */}
+        <div className="relative z-10 flex flex-col gap-6 pt-6 lg:pt-10">
+          <span className="fade-up kicker text-navy/80" style={{ animationDelay: "0.05s" }}>
+            Location de véhicules en <strong className="font-extrabold text-navy">Algérie</strong>
+          </span>
           <h1
-            className="fade-up font-display text-[46px] font-semibold leading-[0.98] tracking-[-0.035em] text-ink sm:text-7xl lg:text-[84px]"
+            className="fade-up text-[42px] font-extrabold uppercase leading-[1] tracking-[-0.015em] text-navy sm:text-6xl lg:text-[68px]"
             style={{ animationDelay: "0.15s" }}
           >
-            Prenez la route,
+            Votre <Sky>mobilité</Sky>,
             <br />
-            <span className="font-normal italic text-sea">l&apos;Algérie</span>
-            <br />
-            vous attend.
+            notre priorité
           </h1>
-
-          <p className="fade-up max-w-xl text-base leading-relaxed text-ink-soft sm:text-lg" style={{ animationDelay: "0.25s" }}>
-            Citadines, SUV et berlines récentes, disponibles à l&apos;aéroport et dans nos agences d&apos;Alger, Oran,
-            Constantine et Annaba. Réservez en deux minutes, prix clairs, sans surprise.
+          <BlueBar className="fade-up w-16" />
+          <p
+            className="fade-up max-w-lg text-[15px] font-semibold uppercase leading-relaxed tracking-[0.06em] text-ink-soft sm:text-base"
+            style={{ animationDelay: "0.25s" }}
+          >
+            Une équipe professionnelle à votre service, partout en Algérie.
           </p>
 
           <div className="fade-up flex flex-wrap items-center gap-3" style={{ animationDelay: "0.35s" }}>
             <a
-              href="#vehicules"
-              className="inline-flex h-14 items-center gap-2.5 rounded-full bg-terra px-7 text-base font-bold text-white transition-colors hover:bg-terra-dark"
-            >
-              Voir la flotte
-              <ArrowRight className="h-[18px] w-[18px]" />
-            </a>
-            <a
               href={site.whatsappHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex h-14 items-center gap-3 rounded-full px-3 text-base font-bold text-ink transition-colors hover:text-terra"
+              className="inline-flex h-14 items-center gap-2.5 rounded-full bg-sky px-7 text-[15px] font-bold text-navy shadow-[0_14px_30px_-12px_rgba(67,176,230,0.8)] transition-colors hover:bg-sky-mid hover:text-white"
             >
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-olive text-white">
-                <WhatsAppIcon className="h-5 w-5" />
-              </span>
+              <WhatsAppIcon className="h-5 w-5" />
               Réserver sur WhatsApp
+            </a>
+            <a
+              href="#vehicules"
+              className="inline-flex h-14 items-center gap-2 rounded-full border-2 border-navy px-6 text-[15px] font-bold text-navy transition-colors hover:bg-navy hover:text-white"
+            >
+              Voir la flotte
+              <ArrowDown className="h-4 w-4" />
             </a>
           </div>
 
-          <ul className="fade-up flex flex-wrap gap-x-6 gap-y-2 text-sm font-semibold text-muted" style={{ animationDelay: "0.45s" }}>
+          <ul className="fade-up flex flex-wrap gap-x-6 gap-y-2 text-[13px] font-semibold text-muted" style={{ animationDelay: "0.45s" }}>
             {trust.map((t) => (
               <li key={t} className="flex items-center gap-2">
-                <Star className="h-3.5 w-3.5 fill-terra text-terra" />
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-sky-soft">
+                  <Check className="h-3 w-3 text-sky-text" strokeWidth={3} />
+                </span>
                 {t}
               </li>
             ))}
           </ul>
         </div>
 
-        {/* ── Arc + photo ── */}
-        <div className="relative mx-auto h-[440px] w-full max-w-[420px] sm:h-[560px] lg:mx-0 lg:h-[660px] lg:max-w-none">
-          <div className="absolute -inset-x-10 -top-4 bottom-10 hidden sm:block">
-            <Zellige size={56} />
-          </div>
-          <div className="arch absolute inset-x-4 top-0 bottom-10 overflow-hidden border-[10px] border-cream shadow-[0_40px_80px_-30px_rgba(15,76,117,0.45)] sm:inset-x-8">
+        {/* ── Groupe de voitures, comme sur les posts ── */}
+        <div className="relative h-[280px] sm:h-[380px] lg:h-[500px]">
+          <SkyCircle className="left-1/2 top-1/2 h-[300px] w-[300px] -translate-x-1/2 -translate-y-1/2 sm:h-[440px] sm:w-[440px] lg:h-[540px] lg:w-[540px]" />
+          <div className="absolute inset-x-0 bottom-10 flex items-end justify-center sm:bottom-14">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="images/scenes/jetour-x70-plus.jpg"
-              alt="Jetour X70+ garé face à la mer, entre palmiers et murs blancs"
-              className="h-full w-full object-cover object-[center_62%]"
+              src="images/cars/renault-captur.png"
+              alt="Renault Captur"
+              className="car-reflect drive-in relative z-0 -mr-[14%] w-[42%] max-w-[300px]"
+              style={{ animationDelay: "0.45s" }}
+            />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="images/cars/jetour-x70-plus.png"
+              alt="Jetour X70 Plus"
+              className="car-reflect drive-in relative z-10 w-[56%] max-w-[400px]"
+              style={{ animationDelay: "0.25s" }}
               fetchPriority="high"
             />
-          </div>
-
-          <div className="absolute bottom-0 left-0 flex w-56 lg:bottom-24 flex-col gap-1 rounded-[20px] bg-cream p-5 shadow-[0_24px_48px_-20px_rgba(22,34,46,0.35)] sm:w-64 lg:-left-6">
-            <span className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-terra">À la une</span>
-            <span className="font-display text-2xl font-semibold text-ink">Jetour X70+</span>
-            <span className="text-[13px] text-muted">SUV · 7 places · Automatique</span>
-            <span className="mt-1 font-display text-3xl font-bold text-sea">
-              95 {site.currency} <span className="font-sans text-sm font-semibold text-muted">/ jour</span>
-            </span>
-          </div>
-
-          <div className="float-slow absolute right-0 top-10 flex h-24 w-24 flex-col items-center justify-center rounded-full bg-sea text-center text-sand lg:-right-4 lg:h-28 lg:w-28">
-            <span className="font-display text-2xl font-semibold italic leading-none lg:text-3xl">2 min</span>
-            <span className="mt-1 text-[10px] font-bold uppercase tracking-wide lg:text-[11px]">pour réserver</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="images/cars/clio5-alpino.png"
+              alt="Renault Clio 5 Alpino"
+              className="car-reflect drive-in relative z-20 -ml-[16%] w-[42%] max-w-[300px]"
+              style={{ animationDelay: "0.6s" }}
+            />
           </div>
         </div>
       </div>
 
-      {/* ── Formulaire de recherche ── */}
-      <div className="relative z-20 mx-auto mt-10 max-w-7xl px-4 sm:px-6 lg:-mt-6 lg:px-8">
+      {/* ── Recherche ── */}
+      <div className="relative z-20 mx-auto max-w-7xl px-4 pb-14 pt-6 sm:px-6 lg:px-8 lg:pb-20">
         <form
           onSubmit={handleSubmit}
           aria-label="Rechercher un véhicule"
-          className="rounded-[28px] bg-white p-2 shadow-[0_30px_60px_-28px_rgba(22,34,46,0.35)] lg:p-3"
+          className="rounded-3xl border border-line bg-white p-2 shadow-[0_30px_60px_-30px_rgba(15,27,45,0.3)] lg:p-3"
         >
           <div className="flex flex-col lg:flex-row lg:items-stretch">
-            <label className="flex flex-col gap-1.5 rounded-2xl px-5 py-4 focus-within:bg-sand/60 lg:flex-[1.5] lg:px-6">
+            <label className="flex flex-col gap-1.5 rounded-2xl px-5 py-4 focus-within:bg-mist lg:flex-[1.5] lg:px-6">
               <span className={fieldLabel}>Retrait</span>
               <select className={fieldInput} value={pickup} onChange={(e) => setPickup(e.target.value)}>
                 {site.agencies.map((a) => (
@@ -153,25 +165,19 @@ export function Hero() {
                   onChange={(e) => setPickupAddress(e.target.value)}
                   placeholder="Votre adresse"
                   aria-label="Adresse de livraison"
-                  className={`${fieldInput} mt-1 border-b border-sand-deep pb-1 text-sm`}
+                  className={`${fieldInput} mt-1 border-b border-line pb-1 text-sm`}
                 />
               )}
             </label>
 
-            <span className="mx-5 h-px bg-sand-deep lg:mx-0 lg:my-3 lg:h-auto lg:w-px" />
+            <span className="mx-5 h-px bg-line lg:mx-0 lg:my-3 lg:h-auto lg:w-px" />
 
             <div className="grid grid-cols-2 lg:flex lg:flex-[2]">
-              <label className="flex flex-col gap-1.5 rounded-2xl px-5 py-4 focus-within:bg-sand/60 lg:flex-1 lg:px-6">
+              <label className="flex flex-col gap-1.5 rounded-2xl px-5 py-4 focus-within:bg-mist lg:flex-1 lg:px-6">
                 <span className={fieldLabel}>Départ</span>
-                <input
-                  type="date"
-                  min={today}
-                  value={departDate}
-                  onChange={(e) => setDepartDate(e.target.value)}
-                  className={fieldInput}
-                />
+                <input type="date" min={today} value={departDate} onChange={(e) => setDepartDate(e.target.value)} className={fieldInput} />
               </label>
-              <label className="flex flex-col gap-1.5 rounded-2xl border-l border-sand-deep px-5 py-4 focus-within:bg-sand/60 lg:flex-1 lg:px-6">
+              <label className="flex flex-col gap-1.5 rounded-2xl border-l border-line px-5 py-4 focus-within:bg-mist lg:flex-1 lg:px-6">
                 <span className={fieldLabel}>Retour</span>
                 <input
                   type="date"
@@ -183,9 +189,9 @@ export function Hero() {
               </label>
             </div>
 
-            <span className="mx-5 h-px bg-sand-deep lg:mx-0 lg:my-3 lg:h-auto lg:w-px" />
+            <span className="mx-5 h-px bg-line lg:mx-0 lg:my-3 lg:h-auto lg:w-px" />
 
-            <label className="flex flex-col gap-1.5 rounded-2xl px-5 py-4 focus-within:bg-sand/60 lg:flex-1 lg:px-6">
+            <label className="flex flex-col gap-1.5 rounded-2xl px-5 py-4 focus-within:bg-mist lg:flex-1 lg:px-6">
               <span className={fieldLabel}>Catégorie</span>
               <select className={fieldInput} value={category} onChange={(e) => setCategory(e.target.value)}>
                 {categories.map((c) => (
@@ -198,20 +204,20 @@ export function Hero() {
 
             <button
               type="submit"
-              className="m-1 mt-2 flex h-14 items-center justify-center gap-2.5 rounded-[20px] bg-terra px-8 text-base font-bold text-white transition-colors hover:bg-terra-dark lg:m-0 lg:ml-2 lg:h-auto lg:self-stretch"
+              className="m-1 mt-2 flex h-14 items-center justify-center gap-2.5 rounded-2xl bg-navy px-8 text-[15px] font-bold text-white transition-colors hover:bg-navy-soft lg:m-0 lg:ml-2 lg:h-auto lg:self-stretch"
             >
               <Search className="h-[18px] w-[18px]" />
               Rechercher
             </button>
           </div>
 
-          <div className="flex flex-col gap-3 border-t border-sand-deep px-5 pb-2 pt-3 sm:flex-row sm:items-center lg:mt-2 lg:px-6">
+          <div className="flex flex-col gap-3 border-t border-line px-5 pb-2 pt-3 sm:flex-row sm:items-center lg:mt-2 lg:px-6">
             <label className="flex cursor-pointer items-center gap-2.5 text-sm font-semibold text-muted">
               <input
                 type="checkbox"
                 checked={differentReturn}
                 onChange={(e) => setDifferentReturn(e.target.checked)}
-                className="h-[18px] w-[18px] accent-terra"
+                className="h-[18px] w-[18px] accent-sky"
               />
               Retour dans un autre lieu
             </label>
@@ -221,7 +227,7 @@ export function Hero() {
                   aria-label="Lieu de retour"
                   value={returnPlace}
                   onChange={(e) => setReturnPlace(e.target.value)}
-                  className="h-10 rounded-xl bg-sand px-3 text-sm font-semibold text-ink outline-none"
+                  className="h-10 rounded-xl bg-mist px-3 text-sm font-semibold text-navy outline-none"
                 >
                   {site.agencies.map((a) => (
                     <option key={a}>{a}</option>
@@ -235,11 +241,20 @@ export function Hero() {
                     onChange={(e) => setReturnAddress(e.target.value)}
                     placeholder="Adresse de récupération"
                     aria-label="Adresse de récupération"
-                    className="h-10 flex-1 rounded-xl bg-sand px-3 text-sm font-semibold text-ink outline-none placeholder:text-muted/70"
+                    className="h-10 flex-1 rounded-xl bg-mist px-3 text-sm font-semibold text-navy outline-none placeholder:text-muted/70"
                   />
                 )}
               </div>
             )}
+            <a
+              href={whatsappLink(waMessage)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm font-bold text-whatsapp hover:underline sm:ml-auto"
+            >
+              <WhatsAppIcon className="h-4 w-4" />
+              Envoyer ma demande sur WhatsApp
+            </a>
           </div>
         </form>
       </div>

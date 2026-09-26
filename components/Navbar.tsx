@@ -1,25 +1,19 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Menu, X, UserRound, LayoutDashboard, ArrowRight } from "lucide-react";
+import { Menu, X, UserRound, LayoutDashboard } from "lucide-react";
+import { Logo } from "./Brand";
+import { WhatsAppIcon } from "./FloatingWhatsApp";
+import { site } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
 const mainLinks = [
-  { href: "#vehicules", label: "Nos véhicules" },
-  { href: "#avantages", label: "Pourquoi nous" },
+  { href: "#vehicules", label: "Véhicules" },
+  { href: "#avantages", label: "Avantages" },
   { href: "#agences", label: "Agences" },
   { href: "#a-propos", label: "À propos" },
   { href: "#contact", label: "Contact" },
 ];
-
-export function Logo({ light = false, className }: { light?: boolean; className?: string }) {
-  return (
-    <span className={cn("inline-flex items-baseline font-display text-[28px] leading-none", className)}>
-      <span className={cn("font-bold tracking-tight", light ? "text-sand" : "text-ink")}>MYLOC</span>
-      <span className={cn("font-semibold italic", light ? "text-terra-light" : "text-terra")}>.dz</span>
-    </span>
-  );
-}
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -49,7 +43,6 @@ export function Navbar() {
     return () => observer.disconnect();
   }, []);
 
-  // Bloque le scroll de la page quand le menu mobile est ouvert.
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "";
     return () => {
@@ -61,7 +54,7 @@ export function Navbar() {
     <header
       className={cn(
         "fixed inset-x-0 top-0 z-[70] transition-all duration-500",
-        scrolled || isOpen ? "bg-cream/90 shadow-[0_1px_0_#E6D6BC] backdrop-blur-md" : "bg-transparent"
+        scrolled || isOpen ? "bg-white/90 shadow-[0_1px_0_var(--line)] backdrop-blur-md" : "bg-transparent"
       )}
     >
       <div className="mx-auto flex h-18 max-w-7xl items-center justify-between px-4 sm:px-6 lg:h-22 lg:px-8">
@@ -69,8 +62,7 @@ export function Navbar() {
           <Logo />
         </a>
 
-        {/* Navigation desktop */}
-        <nav className="hidden items-center gap-9 lg:flex" aria-label="Navigation principale">
+        <nav className="hidden items-center gap-8 lg:flex" aria-label="Navigation principale">
           {mainLinks.map((link) => {
             const isActive = activeSection === link.href.slice(1);
             return (
@@ -79,15 +71,15 @@ export function Navbar() {
                 href={link.href}
                 aria-current={isActive ? "true" : undefined}
                 className={cn(
-                  "relative text-[15px] font-semibold transition-colors hover:text-terra",
-                  isActive ? "text-terra" : "text-ink"
+                  "relative text-[13px] font-bold uppercase tracking-[0.12em] transition-colors hover:text-sky-text",
+                  isActive ? "text-sky-text" : "text-navy"
                 )}
               >
                 {link.label}
                 <span
                   className={cn(
-                    "absolute -bottom-1.5 left-0 h-[2px] rounded-full bg-terra transition-all duration-300",
-                    isActive ? "w-full" : "w-0"
+                    "absolute -bottom-2 left-0 h-[3px] rounded-full bg-sky transition-all duration-300",
+                    isActive ? "w-6" : "w-0"
                   )}
                 />
               </a>
@@ -97,26 +89,27 @@ export function Navbar() {
 
         <div className="hidden items-center gap-2 lg:flex">
           <a
-            href="admin.html"
-            className="flex h-11 items-center gap-2 rounded-full px-4 text-sm font-semibold text-muted transition-colors hover:text-ink"
-          >
-            <LayoutDashboard className="h-4 w-4" />
-            Admin
-          </a>
-          <a
             href="client.html"
-            className="flex h-11 items-center gap-2 rounded-full border-[1.5px] border-ink px-5 text-sm font-bold text-ink transition-colors hover:bg-ink hover:text-sand"
+            className="flex h-11 items-center gap-2 rounded-full px-4 text-[13px] font-bold text-navy transition-colors hover:text-sky-text"
           >
             <UserRound className="h-4 w-4" />
             Mon espace
           </a>
+          <a
+            href={site.whatsappHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex h-11 items-center gap-2 rounded-full bg-sky px-5 text-[13px] font-bold text-navy transition-colors hover:bg-sky-mid hover:text-white"
+          >
+            <WhatsAppIcon className="h-4 w-4" />
+            Réserver
+          </a>
         </div>
 
-        {/* Bouton menu mobile */}
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="flex h-11 w-11 items-center justify-center rounded-full bg-ink text-sand lg:hidden"
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-navy text-white lg:hidden"
           aria-label={isOpen ? "Fermer le menu" : "Ouvrir le menu"}
           aria-expanded={isOpen}
         >
@@ -124,10 +117,9 @@ export function Navbar() {
         </button>
       </div>
 
-      {/* Menu mobile */}
       <div
         className={cn(
-          "overflow-hidden bg-cream transition-all duration-300 lg:hidden",
+          "overflow-hidden bg-white transition-all duration-300 lg:hidden",
           isOpen ? "max-h-[36rem] opacity-100" : "pointer-events-none max-h-0 opacity-0"
         )}
       >
@@ -137,7 +129,7 @@ export function Navbar() {
               key={link.href}
               href={link.href}
               onClick={() => setIsOpen(false)}
-              className="border-b border-sand-deep py-4 font-display text-2xl font-semibold text-ink"
+              className="border-b border-line py-4 text-lg font-extrabold uppercase tracking-wide text-navy"
             >
               {link.label}
             </a>
@@ -146,7 +138,7 @@ export function Navbar() {
             <a
               href="client.html"
               onClick={() => setIsOpen(false)}
-              className="flex h-12 items-center justify-center gap-2 rounded-full border-[1.5px] border-ink text-sm font-bold text-ink"
+              className="flex h-12 items-center justify-center gap-2 rounded-full border-2 border-navy text-sm font-bold text-navy"
             >
               <UserRound className="h-4 w-4" />
               Mon espace
@@ -154,19 +146,21 @@ export function Navbar() {
             <a
               href="admin.html"
               onClick={() => setIsOpen(false)}
-              className="flex h-12 items-center justify-center gap-2 rounded-full bg-sand-deep text-sm font-bold text-ink"
+              className="flex h-12 items-center justify-center gap-2 rounded-full bg-mist text-sm font-bold text-navy"
             >
               <LayoutDashboard className="h-4 w-4" />
               Admin
             </a>
           </div>
           <a
-            href="#vehicules"
+            href={site.whatsappHref}
+            target="_blank"
+            rel="noopener noreferrer"
             onClick={() => setIsOpen(false)}
-            className="mt-2 flex h-13 items-center justify-center gap-2 rounded-full bg-terra text-base font-bold text-white"
+            className="mt-2 flex h-13 items-center justify-center gap-2 rounded-full bg-sky text-base font-bold text-navy"
           >
-            Réserver maintenant
-            <ArrowRight className="h-4 w-4" />
+            <WhatsAppIcon className="h-5 w-5" />
+            Réserver sur WhatsApp
           </a>
         </nav>
       </div>

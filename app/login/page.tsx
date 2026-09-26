@@ -36,7 +36,7 @@ export default function LoginPage() {
     <button
       type="button"
       onClick={() => setShowPassword(!showPassword)}
-      className="flex h-9 w-9 items-center justify-center rounded-full text-muted hover:bg-sand hover:text-ink"
+      className="flex h-9 w-9 items-center justify-center rounded-full text-muted hover:bg-mist hover:text-navy"
       aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
     >
       {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -49,12 +49,12 @@ export default function LoginPage() {
       title={
         <>
           Bon retour <br />
-          <span className="font-normal italic">parmi nous.</span>
+          <span className="text-sky-gradient">parmi nous.</span>
         </>
       }
       subtitle="Connectez-vous pour gérer vos réservations MYLOC.DZ."
-      image="images/scenes/jetour-x70-plus.jpg"
-      imageAlt="Jetour X70+ face à la mer"
+      image="images/cars/jetour-x70-plus.png"
+      imageAlt="Jetour X70 Plus"
     >
       <AuthError message={error} />
       <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
@@ -83,10 +83,10 @@ export default function LoginPage() {
 
         <div className="flex items-center justify-between text-sm">
           <label className="flex cursor-pointer items-center gap-2 font-semibold text-ink-soft">
-            <input type="checkbox" className="h-4 w-4 accent-terra" />
+            <input type="checkbox" className="h-4 w-4 accent-sky" />
             Se souvenir de moi
           </label>
-          <a href="#" className="font-bold text-terra hover:underline">
+          <a href="#" className="font-bold text-sky-text hover:underline">
             Mot de passe oublié ?
           </a>
         </div>
@@ -99,7 +99,7 @@ export default function LoginPage() {
 
       <p className="mt-8 text-center text-[15px] text-ink-soft">
         Pas encore de compte ?{" "}
-        <a href="./register.html" className="font-bold text-terra hover:underline">
+        <a href="./register.html" className="font-bold text-sky-text hover:underline">
           Créer un compte
         </a>
       </p>

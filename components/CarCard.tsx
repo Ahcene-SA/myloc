@@ -1,9 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowUpRight } from "lucide-react";
-import { Zellige } from "./Zellige";
-import { site } from "@/lib/site";
+import { Cog, Car as CarIcon, Armchair, CalendarDays } from "lucide-react";
+import { WhatsAppIcon } from "./FloatingWhatsApp";
+import { categoryInfo, site, whatsappLink } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
 export interface Car {
@@ -25,14 +25,22 @@ interface CarCardProps {
   index?: number;
 }
 
-const categoryStyle: Record<string, { label: string; tint: string }> = {
-  citadine: { label: "Citadine", tint: "#CFE3EE" },
-  suv: { label: "SUV", tint: "#E9D3BE" },
-  berline: { label: "Berline", tint: "#D6DCCB" },
-};
+/** « Jetour X70+ » → marque « JETOUR », modèle « X70+ » (affichés comme sur les posts). */
+function splitName(name: string) {
+  const [brand, ...rest] = name.trim().split(/\s+/);
+  return { brand, model: rest.join(" ") };
+}
 
 export function CarCard({ car, index = 0 }: CarCardProps) {
-  const style = categoryStyle[car.category?.toLowerCase()] ?? { label: car.category, tint: "#E4DCCD" };
+  const cat = categoryInfo[car.category?.toLowerCase()];
+  const { brand, model } = splitName(car.name);
+
+  const specs = [
+    { icon: Cog, label: car.transmission === "Automatique" ? "Boîte auto" : `Boîte ${car.transmission.toLowerCase()}` },
+    { icon: CarIcon, label: cat?.label ?? car.category },
+    { icon: Armchair, label: `${car.seats} places` },
+    { icon: CalendarDays, label: String(car.year) },
+  ];
 
   return (
     <motion.article
@@ -41,48 +49,59 @@ export function CarCard({ car, index = 0 }: CarCardProps) {
       viewport={{ once: true, margin: "-40px" }}
       transition={{ duration: 0.55, delay: (index % 4) * 0.08, ease: "easeOut" }}
       className={cn(
-        "group flex h-full flex-col rounded-[28px] bg-cream p-3.5 shadow-[0_1px_0_#E6D6BC] transition-transform duration-300 hover:-translate-y-1.5",
-        car.featured && "ring-2 ring-terra/30"
+        "group relative flex h-full flex-col overflow-hidden rounded-3xl border border-line bg-white transition-shadow duration-300 hover:shadow-[0_24px_50px_-24px_rgba(15,27,45,0.35)]",
+        car.featured && "ring-2 ring-sky/50"
       )}
     >
-      <div
-        className="arch relative flex h-[210px] items-end justify-center overflow-hidden sm:h-[230px]"
-        style={{ backgroundColor: style.tint }}
-      >
-        <Zellige size={40} color="#FFFFFF" className="opacity-35" />
+      {/* Visuel */}
+      <div className="bg-brand-mist relative flex h-[200px] items-center justify-center overflow-hidden px-6 pt-4">
+        <span aria-hidden="true" className="absolute -right-16 -top-16 h-48 w-48 rounded-full border-[26px] border-sky/10" />
+        {car.featured && (
+          <span className="absolute left-4 top-4 rounded-full bg-navy px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-white">
+            Coup de cœur
+          </span>
+        )}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={car.image}
           alt={car.name}
           loading="lazy"
-          className="relative -mb-4 w-[112%] max-w-none object-contain drop-shadow-[0_18px_16px_rgba(22,34,46,0.28)] transition-transform duration-500 group-hover:translate-x-2 group-hover:scale-[1.04]"
+          className="car-reflect relative w-[88%] object-contain transition-transform duration-500 group-hover:-translate-y-1 group-hover:scale-[1.03]"
         />
-        <span className="absolute left-1/2 top-4 -translate-x-1/2 rounded-xl bg-cream/90 px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink">
-          {style.label}
-        </span>
       </div>
 
-      <div className="flex flex-1 flex-col gap-3 px-2 pb-1 pt-5">
-        <div className="flex items-baseline justify-between gap-2">
-          <h3 className="font-display text-2xl font-semibold tracking-tight text-ink">{car.name}</h3>
-          <span className="text-[13px] font-bold text-muted">{car.year}</span>
-        </div>
-        <div className="flex flex-wrap gap-2 text-xs font-bold text-ink-soft">
-          <span className="rounded-[10px] bg-sand px-2.5 py-1.5">{car.transmission}</span>
-          <span className="rounded-[10px] bg-sand px-2.5 py-1.5">{car.seats} places</span>
-          {car.fuel && <span className="rounded-[10px] bg-sand px-2.5 py-1.5">{car.fuel}</span>}
-        </div>
-        <div className="mt-auto flex items-center justify-between pt-1">
-          <span className="font-display text-3xl font-bold text-sea">
-            {car.price} {site.currency}
-            <span className="ml-1 font-sans text-[13px] font-semibold text-muted">/{car.priceUnit}</span>
-          </span>
+      {/* Nom façon post Instagram */}
+      <div className="flex flex-1 flex-col px-5 pb-5 pt-4">
+        <h3 className="text-[22px] font-extrabold uppercase leading-[1.05] text-navy">
+          {brand} {model && <span className="text-sky-gradient">{model}</span>}
+        </h3>
+
+        <ul className="mt-4 grid grid-cols-4 divide-x divide-line rounded-2xl bg-mist py-3">
+          {specs.map(({ icon: Icon, label }) => (
+            <li key={label} className="flex flex-col items-center gap-1.5 px-1 text-center">
+              <Icon className="h-[18px] w-[18px] text-navy" strokeWidth={1.8} />
+              <span className="text-[9.5px] font-bold uppercase leading-tight tracking-wide text-muted">{label}</span>
+            </li>
+          ))}
+        </ul>
+
+        <div className="mt-5 flex items-end justify-between gap-3">
+          <p className="leading-none">
+            <span className="block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">À partir de</span>
+            <span className="mt-1.5 block text-[28px] font-extrabold text-navy">
+              {car.price} {site.currency}
+              <span className="ml-1 text-xs font-semibold text-muted">/ {car.priceUnit}</span>
+            </span>
+          </p>
           <a
-            href="register.html"
-            aria-label={`Réserver ${car.name}`}
-            className="flex h-12 w-12 items-center justify-center rounded-full bg-terra text-white transition-colors hover:bg-terra-dark"
+            href={whatsappLink(`Bonjour MYLOC.DZ, je suis intéressé(e) par la ${car.name}. Est-elle disponible ?`)}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`Réserver la ${car.name} sur WhatsApp`}
+            className="flex h-12 items-center gap-2 rounded-full bg-sky px-4 text-sm font-bold text-navy transition-colors hover:bg-sky-mid hover:text-white"
           >
-            <ArrowUpRight className="h-5 w-5" />
+            <WhatsAppIcon className="h-4 w-4" />
+            Réserver
           </a>
         </div>
       </div>

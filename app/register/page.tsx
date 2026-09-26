@@ -37,7 +37,7 @@ export default function RegisterPage() {
     <button
       type="button"
       onClick={() => setShowPassword(!showPassword)}
-      className="flex h-9 w-9 items-center justify-center rounded-full text-muted hover:bg-sand hover:text-ink"
+      className="flex h-9 w-9 items-center justify-center rounded-full text-muted hover:bg-mist hover:text-navy"
       aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
     >
       {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -49,12 +49,12 @@ export default function RegisterPage() {
       eyebrow="Inscription"
       title={
         <>
-          Créez votre <span className="font-normal italic">compte.</span>
+          Créez votre <span className="text-sky-gradient">compte.</span>
         </>
       }
       subtitle="Un compte MYLOC.DZ pour réserver votre véhicule en deux minutes et suivre vos locations."
-      image="images/scenes/renault-captur.jpg"
-      imageAlt="Renault Captur au bord de la mer"
+      image="images/cars/renault-captur.png"
+      imageAlt="Renault Captur"
     >
       <AuthError message={error} />
       <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
@@ -111,7 +111,7 @@ export default function RegisterPage() {
 
       <p className="mt-8 text-center text-[15px] text-ink-soft">
         Déjà un compte ?{" "}
-        <a href="./login.html" className="font-bold text-terra hover:underline">
+        <a href="./login.html" className="font-bold text-sky-text hover:underline">
           Se connecter
         </a>
       </p>

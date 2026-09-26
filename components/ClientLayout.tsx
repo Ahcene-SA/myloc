@@ -7,7 +7,7 @@ import { ClientContent } from "./ClientContent";
 export function ClientLayout() {
   return (
     <ClientProvider>
-      <div className="min-h-screen bg-sand">
+      <div className="min-h-screen bg-mist">
         <ClientSidebar />
         <main className="transition-all duration-300 md:pl-72">
           <div className="p-4 pt-20 sm:p-6 sm:pt-22 md:pt-8 lg:p-10">
