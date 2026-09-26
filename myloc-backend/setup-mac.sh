@@ -23,22 +23,11 @@ for pkg in php composer mysql; do
   if brew list "$pkg" >/dev/null 2>&1; then ok "$pkg déjà installé"; else brew install "$pkg"; fi
 done
 
-say "Démarrage de MySQL"
-if mysqladmin ping --silent 2>/dev/null; then
-  ok "MySQL tourne déjà"
-else
-  # "Bootstrap failed: 5" = service mal enregistré : on le réinitialise, sinon on démarre MySQL à la main.
-  brew services stop mysql >/dev/null 2>&1 || true
-  brew services start mysql >/dev/null 2>&1 || mysql.server start || true
-  for i in {1..30}; do mysqladmin ping --silent 2>/dev/null && break; sleep 1; done
-  if ! mysqladmin ping --silent 2>/dev/null; then
-    echo "MySQL ne démarre pas. Envoie ces infos à Claude :"
-    echo "--- port 3306 :"; lsof -nP -iTCP:3306 -sTCP:LISTEN || echo "(libre)"
-    echo "--- journal MySQL :"; tail -n 25 "$(brew --prefix)"/var/mysql/*.err 2>/dev/null || true
-    exit 1
-  fi
-  ok "MySQL tourne"
-fi
+say "Démarrage d'un MySQL dédié à MYLOC (port 3307)"
+# On ne touche pas au MySQL de tes autres projets : MYLOC a sa propre instance,
+# ses données dans myloc-backend/.mysql-data et son port 3307.
+bash ./mysql-local.sh start
+ok "MySQL MYLOC tourne sur le port 3307"
 
 # 3. Dépendances PHP
 say "Installation des dépendances PHP (composer install)"
@@ -60,7 +49,7 @@ if [ ! -f .env ]; then
   JWT_SECRET=$(openssl rand -hex 32)
   cat > .env <<EOF
 DB_HOST=127.0.0.1
-DB_PORT=3306
+DB_PORT=3307
 DB_NAME=myloc_db
 DB_USER=myloc
 DB_PASS=${DB_PASS}
@@ -79,7 +68,9 @@ EOF
   chmod 600 .env
   ok ".env créé (il n'est jamais envoyé sur GitHub)"
 else
-  ok ".env existe déjà, je le garde"
+  # .env créé par une ancienne version : on bascule sur le MySQL dédié (port 3307)
+  sed -i '' -e 's/^DB_HOST=.*/DB_HOST=127.0.0.1/' -e 's/^DB_PORT=.*/DB_PORT=3307/' .env
+  ok ".env existe déjà, je le garde (port MySQL : 3307)"
 fi
 
 env_get() { grep -E "^$1=" .env | head -1 | cut -d= -f2-; }
@@ -87,19 +78,8 @@ DB_NAME=$(env_get DB_NAME); DB_USER=$(env_get DB_USER); DB_PASS=$(env_get DB_PAS
 
 # 5. Base de données
 say "Création de la base de données"
-# Accès root à MySQL : sans mot de passe (installation Homebrew neuve) ou avec celui que tu as défini.
-if ! mysql -u root -e "SELECT 1" >/dev/null 2>&1; then
-  for attempt in 1 2 3; do
-    read -r -s -p "Mot de passe ROOT de MySQL (celui de tes autres projets) : " MYSQL_ROOT_PW; echo
-    if MYSQL_PWD="$MYSQL_ROOT_PW" mysql -u root -e "SELECT 1" >/dev/null 2>&1; then
-      export MYSQL_PWD="$MYSQL_ROOT_PW"; break
-    fi
-    echo "Refusé, réessaie."
-    [ "$attempt" = 3 ] && { echo "Impossible de se connecter à MySQL en root. Demande de l'aide à Claude."; exit 1; }
-  done
-fi
-ok "Connecté à MySQL"
-mysql -u root <<SQL
+SQL_ROOT=(mysql -u root --socket="$PWD/.mysql-data/mysql.sock")
+"${SQL_ROOT[@]}" <<SQL
 CREATE DATABASE IF NOT EXISTS ${DB_NAME} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER IF NOT EXISTS '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASS}';
 CREATE USER IF NOT EXISTS '${DB_USER}'@'127.0.0.1' IDENTIFIED BY '${DB_PASS}';
@@ -107,12 +87,11 @@ GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '${DB_USER}'@'localhost';
 GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '${DB_USER}'@'127.0.0.1';
 FLUSH PRIVILEGES;
 SQL
-mysql -u root < database/migrations.sql
+"${SQL_ROOT[@]}" < database/migrations.sql
 ok "Tables créées"
 
 # 6. Admin + flotte de démo
 say "Création du compte admin et de la flotte de démo"
-unset MYSQL_PWD
 php database/seed.php
 
 # 7. Front : pointer vers l'API locale
