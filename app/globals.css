@@ -23,12 +23,12 @@
   --terra-light: #e0a07f;
   --olive: #25603f;
 
-  /* Anciennes variables conservées pour les espaces client / admin */
-  --brand: #43b0e6;
-  --brand-dark: #0f172a;
-  --brand-light: #f8fafc;
-  --brand-gray: #e2e8f0;
-  --brand-hover: #2b9ed6;
+  /* Anciennes classes "brand" (espaces client / admin) → terracotta */
+  --brand: #b4532a;
+  --brand-dark: #16222e;
+  --brand-light: #fbf6ee;
+  --brand-gray: #eadcc6;
+  --brand-hover: #963f1c;
 }
 
 @theme inline {
@@ -59,6 +59,19 @@
   --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
   --font-arabic: var(--font-reem-kufi), var(--font-manrope), sans-serif;
 
+  /* Palette "slate" réchauffée : les espaces client / admin passent
+     automatiquement du gris-bleu au sable / encre. */
+  --color-slate-50: #f8f2e8;
+  --color-slate-100: #f1e7d7;
+  --color-slate-200: #e5d7c1;
+  --color-slate-300: #d0bfa4;
+  --color-slate-400: #978770;
+  --color-slate-500: #6f6354;
+  --color-slate-600: #574d41;
+  --color-slate-700: #41392f;
+  --color-slate-800: #2a2d31;
+  --color-slate-900: #16222e;
+
   --animate-slide-left: slide-left 40s linear infinite;
 }
 
@@ -78,6 +91,14 @@
 html {
   scroll-behavior: smooth;
   scroll-padding-top: 88px;
+}
+
+@layer base {
+  h1,
+  h2 {
+    font-family: var(--font-fraunces), ui-serif, Georgia, serif;
+    letter-spacing: -0.02em;
+  }
 }
 
 body {
