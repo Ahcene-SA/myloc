@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, User, Phone } from "lucide-react";
 import { useAuth } from "@/components/AuthContext";
 import { AuthShell, AuthField, AuthError, authSubmitClass } from "@/components/AuthShell";
+import { pageUrl } from "@/lib/routes";
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -29,7 +30,7 @@ export default function RegisterPage() {
     }
 
     if (typeof window !== "undefined") {
-      window.location.href = "./client.html";
+      window.location.href = pageUrl("client");
     }
   };
 
@@ -111,7 +112,7 @@ export default function RegisterPage() {
 
       <p className="mt-8 text-center text-[15px] text-ink-soft">
         Déjà un compte ?{" "}
-        <a href="./login.html" className="font-bold text-sky-text hover:underline">
+        <a href={pageUrl("login")} className="font-bold text-sky-text hover:underline">
           Se connecter
         </a>
       </p>

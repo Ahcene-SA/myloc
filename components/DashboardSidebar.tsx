@@ -5,6 +5,7 @@ import { Menu, X, LogOut, ArrowLeft } from "lucide-react";
 import { useAuth } from "./AuthContext";
 import { Logo, PalmShadow } from "./Brand";
 import { cn } from "@/lib/utils";
+import { pageUrl } from "@/lib/routes";
 
 export interface SidebarItem<T extends string> {
   label: string;
@@ -27,7 +28,7 @@ export function DashboardSidebar<T extends string>({ title, items, activeTab, on
 
   const handleLogout = () => {
     logout();
-    window.location.href = "./login.html";
+    window.location.href = pageUrl("login");
   };
 
   return (

@@ -6,6 +6,7 @@ import { Logo } from "./Brand";
 import { WhatsAppIcon } from "./FloatingWhatsApp";
 import { site } from "@/lib/site";
 import { cn } from "@/lib/utils";
+import { pageUrl } from "@/lib/routes";
 
 const mainLinks = [
   { href: "#vehicules", label: "Véhicules" },
@@ -89,7 +90,7 @@ export function Navbar() {
 
         <div className="hidden items-center gap-2 lg:flex">
           <a
-            href="client.html"
+            href={pageUrl("client")}
             className="flex h-11 items-center gap-2 rounded-full px-4 text-[13px] font-bold text-navy transition-colors hover:text-sky-text"
           >
             <UserRound className="h-4 w-4" />
@@ -136,7 +137,7 @@ export function Navbar() {
           ))}
           <div className="mt-5 grid grid-cols-2 gap-2">
             <a
-              href="client.html"
+              href={pageUrl("client")}
               onClick={() => setIsOpen(false)}
               className="flex h-12 items-center justify-center gap-2 rounded-full border-2 border-navy text-sm font-bold text-navy"
             >
@@ -144,7 +145,7 @@ export function Navbar() {
               Mon espace
             </a>
             <a
-              href="admin.html"
+              href={pageUrl("admin")}
               onClick={() => setIsOpen(false)}
               className="flex h-12 items-center justify-center gap-2 rounded-full bg-mist text-sm font-bold text-navy"
             >

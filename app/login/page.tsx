@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 import { useAuth } from "@/components/AuthContext";
 import { AuthShell, AuthField, AuthError, authSubmitClass } from "@/components/AuthShell";
+import { pageUrl } from "@/lib/routes";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -28,7 +29,7 @@ export default function LoginPage() {
 
     // Static export: use a full page navigation so .html files resolve on any server.
     if (typeof window !== "undefined") {
-      window.location.href = result.role === "admin" ? "./admin.html" : "./client.html";
+      window.location.href = pageUrl(result.role === "admin" ? "admin" : "client");
     }
   };
 
@@ -99,7 +100,7 @@ export default function LoginPage() {
 
       <p className="mt-8 text-center text-[15px] text-ink-soft">
         Pas encore de compte ?{" "}
-        <a href="./register.html" className="font-bold text-sky-text hover:underline">
+        <a href={pageUrl("register")} className="font-bold text-sky-text hover:underline">
           Créer un compte
         </a>
       </p>

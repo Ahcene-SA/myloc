@@ -2,6 +2,7 @@ import { Phone, Mail, MapPin, UserPlus } from "lucide-react";
 import { BrandHeading, PalmShadow, Sky } from "./Brand";
 import { WhatsAppIcon } from "./FloatingWhatsApp";
 import { site } from "@/lib/site";
+import { pageUrl } from "@/lib/routes";
 
 const contacts = [
   { label: "WhatsApp", value: site.phoneDisplay, href: site.whatsappHref, icon: WhatsAppIcon },
@@ -84,7 +85,7 @@ export function Contact() {
               Écrire sur WhatsApp
             </a>
             <a
-              href="register.html"
+              href={pageUrl("register")}
               className="flex h-14 items-center justify-center gap-2.5 rounded-full border-2 border-white/30 text-[15px] font-bold text-white transition-colors hover:border-white"
             >
               <UserPlus className="h-5 w-5" />
