@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# MySQL dédié à MYLOC.DZ (port 3307, données dans myloc-backend/.mysql-data)
+# MySQL dédié à MYLOC.DZ (port 3307, données dans ~/.myloc-mysql)
 # Usage : bash myloc-backend/mysql-local.sh start|stop|status
 set -euo pipefail
 cd "$(dirname "$0")"
-DATA="$PWD/.mysql-data"
+DATA="$HOME/.myloc-mysql"   # hors du Bureau (iCloud / protections macOS)
 SOCK="$DATA/mysql.sock"
 PORT=3307
 

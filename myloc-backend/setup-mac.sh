@@ -25,7 +25,7 @@ done
 
 say "Démarrage d'un MySQL dédié à MYLOC (port 3307)"
 # On ne touche pas au MySQL de tes autres projets : MYLOC a sa propre instance,
-# ses données dans myloc-backend/.mysql-data et son port 3307.
+# ses données dans ~/.myloc-mysql et son port 3307.
 bash ./mysql-local.sh start
 ok "MySQL MYLOC tourne sur le port 3307"
 
@@ -78,7 +78,7 @@ DB_NAME=$(env_get DB_NAME); DB_USER=$(env_get DB_USER); DB_PASS=$(env_get DB_PAS
 
 # 5. Base de données
 say "Création de la base de données"
-SQL_ROOT=(mysql -u root --socket="$PWD/.mysql-data/mysql.sock")
+SQL_ROOT=(mysql -u root --socket="$HOME/.myloc-mysql/mysql.sock")
 "${SQL_ROOT[@]}" <<SQL
 CREATE DATABASE IF NOT EXISTS ${DB_NAME} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER IF NOT EXISTS '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASS}';
