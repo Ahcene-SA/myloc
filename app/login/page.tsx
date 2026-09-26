@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 import { useAuth } from "@/components/AuthContext";
 import { AuthShell, AuthField, AuthError, authSubmitClass } from "@/components/AuthShell";
@@ -12,6 +12,12 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  // ?expired=1 : la session a expiré (renvoyé ici automatiquement)
+  const expired = useSyncExternalStore(
+    () => () => {},
+    () => new URLSearchParams(window.location.search).has("expired"),
+    () => false
+  );
   const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -57,7 +63,7 @@ export default function LoginPage() {
       image="images/cars/jetour-x70-plus.png"
       imageAlt="Jetour X70 Plus"
     >
-      <AuthError message={error} />
+      <AuthError message={error || (expired ? "Votre session a expiré : reconnectez-vous." : "")} />
       <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
         <AuthField
           label="Adresse email"

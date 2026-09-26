@@ -67,6 +67,10 @@ $router->put('/api/auth/me', fn() => $authController->updateMe());
 $router->put('/api/auth/password', fn() => $authController->changePassword());
 $router->get('/api/auth/clients', fn() => $authController->listClients(), 'admin');
 
+// Administration
+$router->get('/api/admin/cars', fn() => $carController->adminIndex(), 'admin');
+$router->post('/api/admin/reservations', fn() => $reservationController->adminCreate(), 'admin');
+
 // Public car routes
 $router->get('/api/cars', fn() => $carController->index());
 $router->get('/api/cars/{id}', fn(array $params) => $carController->show($params));

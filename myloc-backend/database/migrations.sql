@@ -33,14 +33,15 @@ CREATE TABLE IF NOT EXISTS cars (
 
 CREATE TABLE IF NOT EXISTS reservations (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
+    user_id INT NULL,
     car_id INT NOT NULL,
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     full_name VARCHAR(100) NOT NULL,
-    email VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NULL,
     phone VARCHAR(20) NOT NULL,
     status ENUM('pending', 'confirmed', 'rejected', 'cancelled') NOT NULL DEFAULT 'pending',
+    source VARCHAR(20) NOT NULL DEFAULT 'site',
     admin_note TEXT NULL,
     total_price DECIMAL(10, 2) NOT NULL,
     pickup_place VARCHAR(150) NULL,

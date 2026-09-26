@@ -54,6 +54,28 @@ try {
         }
     }
 
+    // 3. Réservations saisies par l'agence (sans compte client)
+    if (!$hasColumn('reservations', 'source')) {
+        $pdo->exec("ALTER TABLE reservations ADD COLUMN source VARCHAR(20) NOT NULL DEFAULT 'site' AFTER status");
+        echo "✓ reservations.source ajoutée\n";
+        $changes++;
+    }
+    $isNullable = function (string $table, string $column) use ($pdo, $dbName): bool {
+        $stmt = $pdo->prepare('SELECT IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?');
+        $stmt->execute([$dbName, $table, $column]);
+        return $stmt->fetchColumn() === 'YES';
+    };
+    if (!$isNullable('reservations', 'user_id')) {
+        $pdo->exec("ALTER TABLE reservations MODIFY COLUMN user_id INT NULL");
+        echo "✓ reservations.user_id facultatif (réservations prises par l'agence)\n";
+        $changes++;
+    }
+    if (!$isNullable('reservations', 'email')) {
+        $pdo->exec("ALTER TABLE reservations MODIFY COLUMN email VARCHAR(255) NULL");
+        echo "✓ reservations.email facultatif\n";
+        $changes++;
+    }
+
     echo $changes === 0 ? "Schéma déjà à jour.\n" : "Schéma mis à jour ({$changes} changement(s)).\n";
 } catch (Throwable $e) {
     fwrite(STDERR, 'Migration error: ' . $e->getMessage() . "\n");

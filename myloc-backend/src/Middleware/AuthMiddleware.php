@@ -14,22 +14,22 @@ class AuthMiddleware
     {
         $header = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
         if ($header === '' || !str_starts_with($header, 'Bearer ')) {
-            Response::error('Authentication required.', 401);
+            Response::error('Veuillez vous connecter.', 401);
         }
 
         $token = substr($header, 7);
         if ($token === '') {
-            Response::error('Authentication required.', 401);
+            Response::error('Veuillez vous connecter.', 401);
         }
 
         try {
             $decoded = JwtHelper::decode($token);
         } catch (\RuntimeException $e) {
-            Response::error($e->getMessage(), 401);
+            Response::error('Session expirée : reconnectez-vous.', 401);
         }
 
         if (!isset($decoded->sub, $decoded->role)) {
-            Response::error('Invalid token payload.', 401);
+            Response::error('Session invalide : reconnectez-vous.', 401);
         }
 
         return [
@@ -42,7 +42,7 @@ class AuthMiddleware
     {
         $user = self::requireAuth();
         if ($user['role'] !== 'admin') {
-            Response::error('Forbidden: admin access required.', 403);
+            Response::error('Accès réservé à l\'administration.', 403);
         }
         return $user;
     }
@@ -51,7 +51,7 @@ class AuthMiddleware
     {
         $user = self::requireAuth();
         if ($user['role'] !== 'client') {
-            Response::error('Forbidden: client access required.', 403);
+            Response::error('Accès réservé aux clients.', 403);
         }
         return $user;
     }

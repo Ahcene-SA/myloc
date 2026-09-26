@@ -11,6 +11,8 @@ export interface SidebarItem<T extends string> {
   label: string;
   tab: T;
   icon: ElementType;
+  /** Petit compteur (ex. réservations à traiter) */
+  badge?: number;
 }
 
 interface DashboardSidebarProps<T extends string> {
@@ -87,7 +89,18 @@ export function DashboardSidebar<T extends string>({ title, items, activeTab, on
                   )}
                 >
                   <Icon className="h-5 w-5 transition-transform group-hover:scale-110" />
-                  {item.label}
+                  <span className="flex-1">{item.label}</span>
+                  {!!item.badge && (
+                    <span
+                      className={cn(
+                        "flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-extrabold",
+                        isActive ? "bg-navy text-white" : "bg-amber-400 text-navy"
+                      )}
+                      aria-label={`${item.badge} à traiter`}
+                    >
+                      {item.badge}
+                    </span>
+                  )}
                 </button>
               );
             })}

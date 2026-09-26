@@ -8,6 +8,7 @@ use Myloc\Config\Database;
 use Myloc\Middleware\AuthMiddleware;
 use Myloc\Models\Car;
 use Myloc\Models\Reservation;
+use Myloc\Models\User;
 use Myloc\Utils\Response;
 use Myloc\Utils\Validator;
 
@@ -18,9 +19,11 @@ class ReservationController
 
     private Reservation $reservationModel;
     private Car $carModel;
+    private User $userModel;
 
     public function __construct(Database $db)
     {
+        $this->userModel = new User($db);
         $this->reservationModel = new Reservation($db);
         $this->carModel = new Car($db);
     }
@@ -87,7 +90,7 @@ class ReservationController
         $totalPrice = round((float) $car['price_per_day'] * $days, 2);
 
         $reservationId = $this->reservationModel->create(
-            $user['user_id'],
+            (int) $user['user_id'],
             $carId,
             $startDate,
             $endDate,
@@ -171,10 +174,124 @@ class ReservationController
             Response::error('Réservation introuvable.', 404);
         }
 
-        $adminNote = isset($input['admin_note']) ? Validator::sanitizeString((string) $input['admin_note']) : null;
+        // Réactiver une réservation refusée/annulée : la voiture doit être encore libre
+        $blocking = ['pending', 'confirmed'];
+        if (in_array($status, $blocking, true) && !in_array($existing['status'], $blocking, true)
+            && $this->reservationModel->hasOverlap((int) $existing['car_id'], $existing['start_date'], $existing['end_date'], $id)) {
+            Response::error('Impossible : ce véhicule est déjà réservé sur ces dates par une autre réservation.', 409);
+        }
+
+        $adminNote = null;
+        if (array_key_exists('admin_note', $input)) {
+            $adminNote = Validator::sanitizeString((string) ($input['admin_note'] ?? ''));
+            if (mb_strlen($adminNote) > 1000) {
+                Response::error('Le message est trop long (1000 caractères maximum).', 422);
+            }
+        }
 
         $this->reservationModel->updateStatus($id, $status, $adminNote);
-        Response::success('Statut mis à jour.', ['admin_note' => $adminNote]);
+        Response::success('Statut mis à jour.', [
+            'admin_note' => $adminNote,
+            'reservation' => $this->reservationModel->findDetailedById($id),
+        ]);
+    }
+
+    /**
+     * L'agence enregistre elle-même une réservation (prise par WhatsApp, téléphone ou au comptoir).
+     * Pas de compte client nécessaire ; le prix peut être négocié.
+     */
+    public function adminCreate(): void
+    {
+        AuthMiddleware::requireAdmin();
+        $input = $this->getJsonInput();
+
+        $required = Validator::required($input, ['car_id', 'start_date', 'end_date', 'full_name', 'phone']);
+        if (!empty($required)) {
+            Response::error('Champs obligatoires manquants.', 422, ['missing' => $required]);
+        }
+
+        $carId = filter_var($input['car_id'], FILTER_VALIDATE_INT);
+        if ($carId === false || $carId <= 0) {
+            Response::error('Véhicule invalide.', 422);
+        }
+        $car = $this->carModel->findById($carId, true);
+        if (!$car) {
+            Response::error('Véhicule introuvable.', 404);
+        }
+
+        $startDate = Validator::sanitizeString((string) $input['start_date']);
+        $endDate = Validator::sanitizeString((string) $input['end_date']);
+        if (!Validator::date($startDate) || !Validator::date($endDate)) {
+            Response::error('Les dates doivent être au format AAAA-MM-JJ.', 422);
+        }
+        $start = \DateTimeImmutable::createFromFormat('!Y-m-d', $startDate);
+        $end = \DateTimeImmutable::createFromFormat('!Y-m-d', $endDate);
+        if ($end <= $start) {
+            Response::error('La date de retour doit être après la date de départ.', 422);
+        }
+        $days = (int) $start->diff($end)->days;
+        if ($days > 365) {
+            Response::error('Durée maximale : 365 jours.', 422);
+        }
+
+        $fullName = Validator::sanitizeString((string) $input['full_name']);
+        $phone = Validator::sanitizeString((string) $input['phone']);
+        $email = strtolower(Validator::sanitizeString((string) ($input['email'] ?? '')));
+        if (!Validator::stringLength($fullName, 2, 100)) {
+            Response::error('Le nom doit contenir entre 2 et 100 caractères.', 422);
+        }
+        if (!Validator::stringLength($phone, 5, 20)) {
+            Response::error('Le téléphone doit contenir entre 5 et 20 caractères.', 422);
+        }
+        if ($email !== '' && !Validator::email($email)) {
+            Response::error('Adresse email invalide.', 422);
+        }
+
+        $status = Validator::sanitizeString((string) ($input['status'] ?? 'confirmed'));
+        if (!in_array($status, ['pending', 'confirmed'], true)) {
+            Response::error('Statut invalide.', 422);
+        }
+
+        if ($this->reservationModel->hasOverlap($carId, $startDate, $endDate)) {
+            Response::error('Ce véhicule est déjà réservé sur ces dates.', 409);
+        }
+
+        $totalPrice = round((float) $car['price_per_day'] * $days, 2);
+        if (isset($input['total_price']) && $input['total_price'] !== '' && $input['total_price'] !== null) {
+            $custom = filter_var($input['total_price'], FILTER_VALIDATE_FLOAT);
+            if ($custom === false || $custom < 0) {
+                Response::error('Montant invalide.', 422);
+            }
+            $totalPrice = round((float) $custom, 2);
+        }
+
+        // Rattacher à un compte client existant (il la verra dans son espace)
+        $userId = null;
+        if (!empty($input['user_id'])) {
+            $userId = filter_var($input['user_id'], FILTER_VALIDATE_INT);
+            $account = $userId ? $this->userModel->findById($userId) : null;
+            if (!$account || $account['role'] !== 'client') {
+                Response::error('Compte client introuvable.', 422);
+            }
+        }
+
+        $adminNote = Validator::sanitizeString((string) ($input['admin_note'] ?? ''));
+        $id = $this->reservationModel->create(
+            $userId,
+            $carId,
+            $startDate,
+            $endDate,
+            $fullName,
+            $email !== '' ? $email : null,
+            $phone,
+            $totalPrice,
+            $this->readDetails($input),
+            ['status' => $status, 'source' => 'agence', 'admin_note' => $adminNote !== '' ? $adminNote : null]
+        );
+
+        Response::success('Réservation enregistrée.', [
+            'reservation' => $this->reservationModel->findDetailedById($id),
+        ], 201);
     }
 
     /** Champs facultatifs du formulaire de réservation, nettoyés et bornés. */

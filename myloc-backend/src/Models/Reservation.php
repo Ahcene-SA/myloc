@@ -46,13 +46,14 @@ class Reservation
     /**
      * @param array<string, mixed> $details pickup_place, pickup_time, return_place, return_time,
      *                                      delivery_address, license_number, payment_method, client_note
+     * @param array{status?: string, source?: string, admin_note?: ?string} $options
      */
-    public function create(int $userId, int $carId, string $startDate, string $endDate, string $fullName, string $email, string $phone, float $totalPrice, array $details = []): int
+    public function create(?int $userId, int $carId, string $startDate, string $endDate, string $fullName, ?string $email, string $phone, float $totalPrice, array $details = [], array $options = []): int
     {
         $stmt = $this->pdo->prepare("
-            INSERT INTO reservations (user_id, car_id, start_date, end_date, full_name, email, phone, status, total_price,
+            INSERT INTO reservations (user_id, car_id, start_date, end_date, full_name, email, phone, status, source, admin_note, total_price,
                 pickup_place, pickup_time, return_place, return_time, delivery_address, license_number, payment_method, client_note)
-            VALUES (:user_id, :car_id, :start_date, :end_date, :full_name, :email, :phone, 'pending', :total_price,
+            VALUES (:user_id, :car_id, :start_date, :end_date, :full_name, :email, :phone, :status, :source, :admin_note, :total_price,
                 :pickup_place, :pickup_time, :return_place, :return_time, :delivery_address, :license_number, :payment_method, :client_note)
         ");
         $stmt->execute([
@@ -63,6 +64,9 @@ class Reservation
             ':full_name' => $fullName,
             ':email' => $email,
             ':phone' => $phone,
+            ':status' => $options['status'] ?? 'pending',
+            ':source' => $options['source'] ?? 'site',
+            ':admin_note' => $options['admin_note'] ?? null,
             ':total_price' => $totalPrice,
             ':pickup_place' => $details['pickup_place'] ?? null,
             ':pickup_time' => $details['pickup_time'] ?? null,
@@ -109,10 +113,11 @@ class Reservation
     {
         $stmt = $this->pdo->query("
             SELECT r.*, c.name AS car_name, c.category AS car_category, c.image_url AS car_image_url,
-                   u.full_name AS user_full_name
+                   c.price_per_day AS car_price_per_day, c.transmission AS car_transmission, c.seats AS car_seats,
+                   u.full_name AS user_full_name, u.email AS user_email
             FROM reservations r
             JOIN cars c ON r.car_id = c.id
-            JOIN users u ON r.user_id = u.id
+            LEFT JOIN users u ON r.user_id = u.id
             ORDER BY r.created_at DESC
         ");
         return $stmt->fetchAll();
@@ -121,6 +126,23 @@ class Reservation
     public function findById(int $id): ?array
     {
         $stmt = $this->pdo->prepare("SELECT * FROM reservations WHERE id = :id LIMIT 1");
+        $stmt->execute([':id' => $id]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
+    /** Une réservation avec les infos voiture/compte, comme dans findAll(). */
+    public function findDetailedById(int $id): ?array
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT r.*, c.name AS car_name, c.category AS car_category, c.image_url AS car_image_url,
+                   c.price_per_day AS car_price_per_day, c.transmission AS car_transmission, c.seats AS car_seats,
+                   u.full_name AS user_full_name, u.email AS user_email
+            FROM reservations r
+            JOIN cars c ON r.car_id = c.id
+            LEFT JOIN users u ON r.user_id = u.id
+            WHERE r.id = :id LIMIT 1
+        ");
         $stmt->execute([':id' => $id]);
         $row = $stmt->fetch();
         return $row ?: null;

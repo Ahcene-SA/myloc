@@ -76,6 +76,23 @@ class User
         return $stmt->fetchAll();
     }
 
+    /** Clients avec leur nombre de réservations et le montant confirmé. */
+    public function findClientsWithStats(): array
+    {
+        $stmt = $this->pdo->query("
+            SELECT u.id, u.full_name, u.email, u.phone, u.created_at,
+                   COUNT(r.id) AS reservations_count,
+                   COALESCE(SUM(CASE WHEN r.status = 'confirmed' THEN r.total_price ELSE 0 END), 0) AS confirmed_total,
+                   MAX(r.created_at) AS last_reservation_at
+            FROM users u
+            LEFT JOIN reservations r ON r.user_id = u.id
+            WHERE u.role = 'client'
+            GROUP BY u.id, u.full_name, u.email, u.phone, u.created_at
+            ORDER BY u.created_at DESC
+        ");
+        return $stmt->fetchAll();
+    }
+
     public function updateProfile(int $id, string $fullName, string $phone): void
     {
         $stmt = $this->pdo->prepare("UPDATE users SET full_name = :full_name, phone = :phone WHERE id = :id");

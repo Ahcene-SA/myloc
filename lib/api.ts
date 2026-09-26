@@ -55,6 +55,9 @@ export interface CarFromApi {
   year: number;
   image_url?: string;
   status: string;
+  created_at?: string;
+  /** Renvoyé par /admin/cars uniquement */
+  reservations_count?: number;
 }
 
 export interface UserFromApi {
@@ -116,10 +119,20 @@ async function request<T>(
 
   if (!response.ok || data.success === false) {
     const message = data.error || `Erreur HTTP ${response.status}`;
+    if (response.status === 401 && auth) handleExpiredSession();
     throw new Error(message);
   }
 
   return data;
+}
+
+/** Jeton expiré ou invalide : on vide la session et on renvoie vers la connexion. */
+function handleExpiredSession() {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem("myloc_token");
+  localStorage.removeItem("myloc_user");
+  const login = process.env.NODE_ENV === "production" ? "./login.html" : "/login";
+  window.setTimeout(() => window.location.replace(`${login}?expired=1`), 1200);
 }
 
 export async function login(email: string, password: string): Promise<LoginResponse> {
@@ -161,6 +174,9 @@ export interface ClientFromApi {
   email: string;
   phone: string;
   created_at: string;
+  reservations_count?: number | string;
+  confirmed_total?: number | string;
+  last_reservation_at?: string | null;
 }
 
 export async function fetchClients(): Promise<ClientFromApi[]> {
@@ -181,8 +197,15 @@ export async function fetchCars(): Promise<CarFromApi[]> {
   return res.cars || [];
 }
 
-export async function createCar(car: Partial<CarFromApi>): Promise<CarFromApi> {
-  return request<CarFromApi>("POST", "/cars", car, true);
+/** Administration : toute la flotte, y compris les véhicules retirés du site. */
+export async function fetchAllCars(): Promise<CarFromApi[]> {
+  const res = await request<{ success: boolean; cars?: CarFromApi[] }>("GET", "/admin/cars", undefined, true);
+  return res.cars || [];
+}
+
+export async function createCar(car: Partial<CarFromApi>): Promise<CarFromApi | undefined> {
+  const res = await request<{ success: boolean; car?: CarFromApi }>("POST", "/cars", car, true);
+  return res.car;
 }
 
 export async function uploadCarImage(file: File): Promise<string> {
@@ -219,12 +242,15 @@ export async function uploadCarImage(file: File): Promise<string> {
   return data.image_url;
 }
 
-export async function updateCar(id: number, car: Partial<CarFromApi>): Promise<CarFromApi> {
-  return request<CarFromApi>("PUT", `/cars/${id}`, car, true);
+export async function updateCar(id: number, car: Partial<CarFromApi>): Promise<CarFromApi | undefined> {
+  const res = await request<{ success: boolean; car?: CarFromApi }>("PUT", `/cars/${id}`, car, true);
+  return res.car;
 }
 
-export async function deleteCar(id: number): Promise<void> {
-  await request<void>("DELETE", `/cars/${id}`, undefined, true);
+/** Supprime le véhicule, ou le retire seulement du site s'il a un historique de réservations. */
+export async function deleteCar(id: number): Promise<{ deleted: boolean; message: string }> {
+  const res = await request<{ success: boolean; deleted?: boolean; message?: string }>("DELETE", `/cars/${id}`, undefined, true);
+  return { deleted: !!res.deleted, message: res.message || "" };
 }
 
 export type PaymentMethod = "especes" | "carte" | "virement";
@@ -249,7 +275,11 @@ export interface ReservationInput {
 export interface ReservationFromApi {
   id: number;
   user_id?: number;
-  user_full_name?: string;
+  user_full_name?: string | null;
+  user_email?: string | null;
+  /** "site" (réservée par le client) ou "agence" (saisie par l'agence) */
+  source?: "site" | "agence";
+  updated_at?: string | null;
   car_id?: number;
   car_name?: string;
   car_category?: string;
@@ -358,12 +388,36 @@ export async function updateReservationStatus(
   id: number,
   status: "pending" | "confirmed" | "rejected" | "cancelled",
   adminNote?: string
-): Promise<unknown> {
-  return request<unknown>("PATCH", `/reservations/${id}/status`, { status, admin_note: adminNote }, true);
+): Promise<ReservationFromApi | undefined> {
+  const body: Record<string, string> = { status };
+  if (adminNote !== undefined) body.admin_note = adminNote;
+  const res = await request<{ success: boolean; reservation?: ReservationFromApi }>(
+    "PATCH",
+    `/reservations/${id}/status`,
+    body,
+    true
+  );
+  return res.reservation;
+}
+
+export interface AdminReservationInput extends Omit<ReservationInput, "email"> {
+  email?: string;
+  /** Rattache la réservation à un compte client existant */
+  user_id?: number;
+  status?: "pending" | "confirmed";
+  /** Montant négocié ; vide = prix/jour × nombre de jours */
+  total_price?: number | string;
+  admin_note?: string;
+}
+
+/** L'agence enregistre une réservation prise par WhatsApp, téléphone ou au comptoir. */
+export async function adminCreateReservation(input: AdminReservationInput): Promise<ReservationFromApi | undefined> {
+  const res = await request<{ success: boolean; reservation?: ReservationFromApi }>("POST", "/admin/reservations", input, true);
+  return res.reservation;
 }
 
 /** "automatique" / "manuel" (valeurs de l'API) → libellés affichés sur le site. */
-function formatTransmission(value: string): string {
+export function formatTransmission(value: string): string {
   const v = (value || "").toLowerCase();
   if (v.startsWith("auto")) return "Automatique";
   if (v.startsWith("manu")) return "Manuelle";

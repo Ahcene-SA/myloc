@@ -90,6 +90,32 @@ class Car
         return $stmt->rowCount() > 0;
     }
 
+    /** Toute la flotte (y compris retirée du site), pour l'administration. */
+    public function findAll(): array
+    {
+        $stmt = $this->pdo->query("
+            SELECT c.*,
+                   (SELECT COUNT(*) FROM reservations r WHERE r.car_id = c.id) AS reservations_count
+            FROM cars c
+            ORDER BY c.status = 'available' DESC, c.created_at DESC
+        ");
+        return $stmt->fetchAll();
+    }
+
+    public function countReservations(int $id): int
+    {
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM reservations WHERE car_id = :id");
+        $stmt->execute([':id' => $id]);
+        return (int) $stmt->fetchColumn();
+    }
+
+    public function hardDelete(int $id): bool
+    {
+        $stmt = $this->pdo->prepare("DELETE FROM cars WHERE id = :id");
+        $stmt->execute([':id' => $id]);
+        return $stmt->rowCount() > 0;
+    }
+
     public function setUnavailable(int $id): bool
     {
         $stmt = $this->pdo->prepare("UPDATE cars SET status = 'unavailable' WHERE id = :id");
