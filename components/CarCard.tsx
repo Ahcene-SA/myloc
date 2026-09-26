@@ -1,7 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Users, Calendar, Settings2, ArrowRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
+import { Zellige } from "./Zellige";
+import { site } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
 export interface Car {
@@ -23,68 +25,67 @@ interface CarCardProps {
   index?: number;
 }
 
+const categoryStyle: Record<string, { label: string; tint: string }> = {
+  citadine: { label: "Citadine", tint: "#CFE3EE" },
+  suv: { label: "SUV", tint: "#E9D3BE" },
+  berline: { label: "Berline", tint: "#D6DCCB" },
+};
+
 export function CarCard({ car, index = 0 }: CarCardProps) {
+  const style = categoryStyle[car.category?.toLowerCase()] ?? { label: car.category, tint: "#E4DCCD" };
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 40 }}
+    <motion.article
+      initial={{ opacity: 0, y: 32 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-50px" }}
-      transition={{ duration: 0.6, delay: index * 0.1, ease: "easeOut" }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.55, delay: (index % 4) * 0.08, ease: "easeOut" }}
       className={cn(
-        "group relative flex flex-col overflow-hidden rounded-[2.5rem] border border-slate-200/60 bg-gradient-to-b from-white to-slate-100 p-5 shadow-xl shadow-slate-200/50 transition-shadow duration-300 hover:shadow-2xl hover:shadow-slate-300/60 sm:p-6",
-        car.featured && "ring-2 ring-brand/20"
+        "group flex h-full flex-col rounded-[28px] bg-cream p-3.5 shadow-[0_1px_0_#E6D6BC] transition-transform duration-300 hover:-translate-y-1.5",
+        car.featured && "ring-2 ring-terra/30"
       )}
     >
-      {/* Top info */}
-      <div className="flex items-start justify-between">
-        <div>
-          <span className="inline-block rounded-full bg-brand/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-brand">
-            {car.category}
+      <div
+        className="arch relative flex h-[210px] items-end justify-center overflow-hidden sm:h-[230px]"
+        style={{ backgroundColor: style.tint }}
+      >
+        <Zellige size={40} color="#FFFFFF" className="opacity-35" />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={car.image}
+          alt={car.name}
+          loading="lazy"
+          className="relative -mb-4 w-[112%] max-w-none object-contain drop-shadow-[0_18px_16px_rgba(22,34,46,0.28)] transition-transform duration-500 group-hover:translate-x-2 group-hover:scale-[1.04]"
+        />
+        <span className="absolute left-1/2 top-4 -translate-x-1/2 rounded-xl bg-cream/90 px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink">
+          {style.label}
+        </span>
+      </div>
+
+      <div className="flex flex-1 flex-col gap-3 px-2 pb-1 pt-5">
+        <div className="flex items-baseline justify-between gap-2">
+          <h3 className="font-display text-2xl font-semibold tracking-tight text-ink">{car.name}</h3>
+          <span className="text-[13px] font-bold text-muted">{car.year}</span>
+        </div>
+        <div className="flex flex-wrap gap-2 text-xs font-bold text-ink-soft">
+          <span className="rounded-[10px] bg-sand px-2.5 py-1.5">{car.transmission}</span>
+          <span className="rounded-[10px] bg-sand px-2.5 py-1.5">{car.seats} places</span>
+          {car.fuel && <span className="rounded-[10px] bg-sand px-2.5 py-1.5">{car.fuel}</span>}
+        </div>
+        <div className="mt-auto flex items-center justify-between pt-1">
+          <span className="font-display text-3xl font-bold text-sea">
+            {car.price} {site.currency}
+            <span className="ml-1 font-sans text-[13px] font-semibold text-muted">/{car.priceUnit}</span>
           </span>
-          <h3 className="mt-1 text-xl font-bold text-slate-900 sm:text-2xl">{car.name}</h3>
-        </div>
-        <div className="text-right">
-          <div className="text-3xl font-extrabold text-brand sm:text-4xl">{car.price}€</div>
-          <div className="text-xs font-medium text-slate-500">/{car.priceUnit}</div>
-        </div>
-      </div>
-
-      {/* Car image */}
-      <div className="relative flex items-start justify-center h-auto -mt-2 -mb-2">
-        <div className="relative w-full">
-          <img
-            src={car.image}
-            alt={car.name}
-            className="mx-auto h-auto max-h-60 w-full object-contain drop-shadow-[0_25px_50px_rgba(15,23,42,0.35)] transition-transform duration-500 group-hover:scale-105"
-          />
+          <a
+            href="register.html"
+            aria-label={`Réserver ${car.name}`}
+            className="flex h-12 w-12 items-center justify-center rounded-full bg-terra text-white transition-colors hover:bg-terra-dark"
+          >
+            <ArrowUpRight className="h-5 w-5" />
+          </a>
         </div>
       </div>
-
-      {/* Bottom specs + CTA */}
-      <div className="mt-2">
-        <div className="grid grid-cols-3 gap-2 rounded-2xl border border-slate-200/60 bg-white/80 p-3 backdrop-blur-sm">
-          <div className="flex flex-col items-center gap-1 text-center">
-            <Settings2 className="h-5 w-5 text-slate-400" />
-            <span className="text-xs font-semibold text-slate-700">{car.transmission}</span>
-          </div>
-          <div className="flex flex-col items-center gap-1 text-center">
-            <Users className="h-5 w-5 text-slate-400" />
-            <span className="text-xs font-semibold text-slate-700">{car.seats} places</span>
-          </div>
-          <div className="flex flex-col items-center gap-1 text-center">
-            <Calendar className="h-5 w-5 text-slate-400" />
-            <span className="text-xs font-semibold text-slate-700">{car.year}</span>
-          </div>
-        </div>
-
-        <a
-          href="#"
-          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-brand"
-        >
-          Créer un compte pour réserver
-          <ArrowRight className="h-4 w-4" />
-        </a>
-      </div>
-    </motion.div>
+    </motion.article>
   );
 }

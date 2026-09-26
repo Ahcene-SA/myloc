@@ -1,10 +1,7 @@
-"use client";
+import { Check } from "lucide-react";
+import { Star8 } from "./Zellige";
 
-import { motion } from "framer-motion";
-import Image from "next/image";
-import { CheckCircle } from "lucide-react";
-
-const highlights = [
+const points = [
   "Flotte moderne et entretenue",
   "Réservation en ligne simplifiée",
   "Service client réactif",
@@ -13,86 +10,66 @@ const highlights = [
 
 export function About() {
   return (
-    <section id="a-propos" className="mx-3 sm:mx-4 mt-6 bg-white rounded-[2.5rem] overflow-hidden shadow-2xl py-20 lg:py-28">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
-          {/* Text */}
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            <span className="inline-block rounded-full bg-brand/10 px-4 py-1.5 text-sm font-bold uppercase tracking-wider text-brand">
-              À propos de MYLOC.DZ
-            </span>
-            <h2 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
-              Votre partenaire mobilité en Algérie
-            </h2>
-            <p className="mt-6 text-lg leading-relaxed text-slate-600">
-              MYLOC.DZ est une agence de location de voitures dédiée à offrir une expérience
-              simple, fiable et accessible. Que vous soyez en voyage d’affaires, en vacances
-              ou que vous ayez besoin d’un véhicule au quotidien, nous mettons à votre
-              disposition une large gamme de citadines, SUV et berlines récentes.
-            </p>
-            <p className="mt-4 text-lg leading-relaxed text-slate-600">
-              Notre équipe travaille chaque jour pour vous garantir des tarifs justes,
-              une prise en charge rapide et un service client disponible à tout moment.
-            </p>
+    <section id="a-propos" className="py-16 lg:py-24">
+      <div className="mx-auto grid max-w-7xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-[minmax(0,620px)_1fr] lg:gap-20 lg:px-8">
+        {/* Mosaïque d'arcs */}
+        <div className="relative mx-auto grid h-[440px] w-full max-w-[620px] grid-cols-2 gap-4 sm:h-[600px] sm:gap-6">
+          <div className="arch mt-16 h-[340px] overflow-hidden border-8 border-cream sm:mt-20 sm:h-[460px]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="images/scenes/renault-captur.jpg"
+              alt="Renault Captur au bord de la mer"
+              loading="lazy"
+              className="h-full w-full object-cover object-[center_65%]"
+            />
+          </div>
+          <div className="flex flex-col gap-4 sm:gap-5">
+            <div className="arch h-[250px] overflow-hidden border-8 border-cream sm:h-[380px]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="images/scenes/clio5-alpino.jpg"
+                alt="Renault Clio 5 Alpino entre les palmiers"
+                loading="lazy"
+                className="h-full w-full object-cover object-[center_65%]"
+              />
+            </div>
+            <div className="relative flex flex-1 flex-col justify-between overflow-hidden rounded-[20px] bg-terra p-5 text-white sm:p-7">
+              <Star8 className="absolute -right-8 -top-8 h-36 w-36 opacity-20" color="#fff" strokeWidth={0.6} />
+              <span lang="ar" dir="rtl" className="font-arabic text-xl font-bold sm:text-[26px]">
+                مرحبا بيكم
+              </span>
+              <span className="font-display text-base italic leading-snug sm:text-[22px]">
+                Bienvenue chez vous, sur toutes les routes d&apos;Algérie.
+              </span>
+            </div>
+          </div>
+        </div>
 
-            <ul className="mt-8 grid gap-3 sm:grid-cols-2">
-              {highlights.map((item, index) => (
-                <motion.li
-                  key={item}
-                  initial={{ opacity: 0, x: -10 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: 0.2 + index * 0.1 }}
-                  className="flex items-center gap-3"
-                >
-                  <CheckCircle className="h-5 w-5 shrink-0 text-brand" />
-                  <span className="font-semibold text-slate-700">{item}</span>
-                </motion.li>
-              ))}
-            </ul>
-          </motion.div>
-
-          {/* Gallery */}
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="grid grid-cols-2 gap-4"
-          >
-            <div className="col-span-2 overflow-hidden rounded-3xl">
-              <Image
-                src="images/fleet-citadines.png"
-                alt="Sélection de citadines MYLOC.DZ"
-                width={800}
-                height={400}
-                className="h-56 w-full object-cover transition-transform duration-500 hover:scale-105"
-              />
-            </div>
-            <div className="overflow-hidden rounded-3xl">
-              <Image
-                src="images/car-fiat-500.png"
-                alt="Fiat 500"
-                width={400}
-                height={300}
-                className="h-48 w-full object-cover transition-transform duration-500 hover:scale-105"
-              />
-            </div>
-            <div className="overflow-hidden rounded-3xl">
-              <Image
-                src="images/fleet-suv.png"
-                alt="Sélection de SUV MYLOC.DZ"
-                width={400}
-                height={300}
-                className="h-48 w-full object-cover transition-transform duration-500 hover:scale-105"
-              />
-            </div>
-          </motion.div>
+        {/* Texte */}
+        <div className="flex flex-col gap-6">
+          <span className="eyebrow text-terra">À propos de MYLOC.DZ</span>
+          <h2 className="font-display text-[38px] font-semibold leading-[1.05] tracking-[-0.03em] text-ink sm:text-5xl lg:text-[52px]">
+            Votre partenaire mobilité <span className="font-normal italic">en Algérie.</span>
+          </h2>
+          <p className="text-base leading-[1.75] text-ink-soft lg:text-[17px]">
+            MYLOC.DZ est une agence de location de voitures dédiée à offrir une expérience simple, fiable et accessible.
+            Que vous soyez en voyage d&apos;affaires, en vacances ou que vous ayez besoin d&apos;un véhicule au quotidien,
+            nous mettons à votre disposition une large gamme de citadines, SUV et berlines récentes.
+          </p>
+          <p className="text-base leading-[1.75] text-ink-soft lg:text-[17px]">
+            Notre équipe travaille chaque jour pour vous garantir des tarifs justes, une prise en charge rapide et un
+            service client disponible à tout moment.
+          </p>
+          <ul className="mt-2 grid gap-3.5 sm:grid-cols-2">
+            {points.map((p) => (
+              <li key={p} className="flex items-center gap-3 text-[15px] font-bold text-ink">
+                <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-sand-deep">
+                  <Check className="h-3.5 w-3.5 text-terra" strokeWidth={3} />
+                </span>
+                {p}
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </section>

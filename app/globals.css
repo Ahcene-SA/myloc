@@ -1,8 +1,29 @@
 @import "tailwindcss";
 
+/* ─────────────────────────────────────────────
+   MYLOC.DZ — thème « Méditerranée »
+   sable · bleu mer · terracotta
+   ───────────────────────────────────────────── */
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --background: #f3e9da;
+  --foreground: #16222e;
+
+  /* Nouvelle palette */
+  --sand: #f3e9da;
+  --sand-deep: #eadcc6;
+  --sand-line: #c9b79c;
+  --cream: #fbf6ee;
+  --ink: #16222e;
+  --ink-soft: #4a4238;
+  --muted: #5e5446;
+  --sea: #0f4c75;
+  --sea-soft: #c9d8e4;
+  --terra: #b4532a;
+  --terra-dark: #963f1c;
+  --terra-light: #e0a07f;
+  --olive: #25603f;
+
+  /* Anciennes variables conservées pour les espaces client / admin */
   --brand: #43b0e6;
   --brand-dark: #0f172a;
   --brand-light: #f8fafc;
@@ -13,13 +34,32 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
+  --color-sand: var(--sand);
+  --color-sand-deep: var(--sand-deep);
+  --color-sand-line: var(--sand-line);
+  --color-cream: var(--cream);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-muted: var(--muted);
+  --color-sea: var(--sea);
+  --color-sea-soft: var(--sea-soft);
+  --color-terra: var(--terra);
+  --color-terra-dark: var(--terra-dark);
+  --color-terra-light: var(--terra-light);
+  --color-olive: var(--olive);
+
   --color-brand: var(--brand);
   --color-brand-dark: var(--brand-dark);
   --color-brand-light: var(--brand-light);
   --color-brand-gray: var(--brand-gray);
   --color-brand-hover: var(--brand-hover);
-  --font-sans: var(--font-inter);
-  --animate-slide-left: slide-left 10s linear infinite;
+
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
+  --font-arabic: var(--font-reem-kufi), var(--font-manrope), sans-serif;
+
+  --animate-slide-left: slide-left 40s linear infinite;
 }
 
 @keyframes slide-left {
@@ -27,7 +67,7 @@
     transform: translateX(0);
   }
   to {
-    transform: translateX(-100%);
+    transform: translateX(-50%);
   }
 }
 
@@ -37,12 +77,13 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 88px;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
 }
 
 @layer utilities {
@@ -50,107 +91,53 @@ body {
     text-wrap: balance;
   }
 
-  .perspective-1000 {
-    perspective: 1000px;
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
 
-  .preserve-3d {
-    transform-style: preserve-3d;
+  /* Arc de la Casbah : haut en demi-cercle */
+  .arch {
+    border-radius: 999px 999px 1.75rem 1.75rem;
   }
 
-  .backface-hidden {
-    backface-visibility: hidden;
+  .eyebrow {
+    font-size: 0.8125rem;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
   }
 
-  .hero-title-wrapper {
+  .fade-up {
     opacity: 0;
-    animation: hero-fade-in 0.6s ease-out forwards;
-    animation-delay: 0.3s;
+    animation: fade-up 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   }
 
-  @keyframes hero-fade-in {
-    0% {
+  @keyframes fade-up {
+    from {
       opacity: 0;
-      transform: translateY(10px);
+      transform: translateY(18px);
     }
-    100% {
+    to {
       opacity: 1;
       transform: translateY(0);
     }
   }
 
-  .shimmer-text {
-    background: linear-gradient(
-      90deg,
-      #ffffff 0%,
-      #e0f0fa 20%,
-      #43B0E6 40%,
-      #43B0E6 60%,
-      #e0f0fa 80%,
-      #ffffff 100%
-    );
-    background-size: 300% 100%;
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: shimmer 4s ease-in-out infinite;
-    filter: drop-shadow(0 0 20px rgba(67, 176, 230, 0.4));
+  .float-slow {
+    animation: float-slow 6s ease-in-out infinite;
   }
 
-  @keyframes shimmer {
-    0% {
-      background-position: 150% 0;
+  @keyframes float-slow {
+    0%,
+    100% {
+      transform: translateY(0) rotate(-10deg);
     }
     50% {
-      background-position: -50% 0;
-    }
-    100% {
-      background-position: -250% 0;
-    }
-  }
-
-  .letter-reveal {
-    opacity: 0;
-    transform: translateY(60%) scale(0.85);
-    animation: letter-reveal 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-  }
-
-  @keyframes letter-reveal {
-    0% {
-      opacity: 0;
-      transform: translateY(60%) scale(0.85);
-    }
-    60% {
-      opacity: 1;
-      transform: translateY(-8%) scale(1.02);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-  }
-
-  .jitter-reveal {
-    opacity: 0;
-    transform: translateY(12px) rotate(-2deg);
-    animation: jitter-reveal 0.45s ease-out forwards;
-  }
-
-  @keyframes jitter-reveal {
-    0% {
-      opacity: 0;
-      transform: translateY(12px) rotate(-2deg);
-    }
-    40% {
-      opacity: 1;
-      transform: translateY(-3px) rotate(1.5deg);
-    }
-    70% {
-      transform: translateY(2px) rotate(-0.5deg);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(0) rotate(0deg);
+      transform: translateY(-8px) rotate(-6deg);
     }
   }
 }

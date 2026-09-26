@@ -1,587 +1,247 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import {
-  MapPin,
-  CalendarDays,
-  Clock,
-  ChevronDown,
-  Zap,
-  Clock as ClockIcon,
-  CircleCheck,
-  Shield,
-  ArrowRight,
-  Home,
-  Building2,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useState, type FormEvent } from "react";
+import { ArrowRight, Search, Star } from "lucide-react";
+import { Zellige } from "./Zellige";
+import { WhatsAppIcon } from "./FloatingWhatsApp";
+import { FILTER_EVENT, site } from "@/lib/site";
 
-const features = [
-  {
-    icon: Zap,
-    title: "Flexibilité",
-    desc: "Horaires souples, 7j/7",
-    active: true,
-  },
-  {
-    icon: ClockIcon,
-    title: "Disponibilité",
-    desc: "Flotte toujours prête",
-    active: false,
-  },
-  {
-    icon: CircleCheck,
-    title: "Simplicité",
-    desc: "Réservation en 2 minutes",
-    active: false,
-  },
-  {
-    icon: Shield,
-    title: "Transparence",
-    desc: "Prix clairs, sans surprise",
-    active: false,
-  },
+const HOME = "__domicile__";
+
+const categories = [
+  { id: "all", label: "Toutes" },
+  { id: "citadine", label: "Citadine" },
+  { id: "suv", label: "SUV" },
+  { id: "berline", label: "Berline" },
 ];
 
-const agencies = [
-  "Aéroport Messali Hadj",
-  "Agence Alger Centre",
-  "Agence Oran",
-  "Agence Constantine",
-  "Agence Annaba",
-];
+const trust = ["5 points de retrait", "Assistance 24/7", "Annulation gratuite 24h avant"];
 
-const timeSlots = Array.from({ length: 33 }, (_, i) => {
-  const hour = Math.floor(i / 2) + 6;
-  const minute = i % 2 === 0 ? "00" : "30";
-  return `${hour.toString().padStart(2, "0")}:${minute}`;
-});
+const fieldLabel = "text-[11px] font-extrabold uppercase tracking-[0.18em] text-muted";
+const fieldInput =
+  "w-full appearance-none bg-transparent p-0 text-base font-semibold text-ink outline-none placeholder:text-muted/70";
 
 export function Hero() {
-  /* ── scroll-to-top on mount ── */
-  useEffect(() => {
-    window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-  }, []);
-
   const today = new Date().toISOString().split("T")[0];
 
-  /* ── pickup location ── */
-  const [pickupType, setPickupType] = useState<"agence" | "domicile">("agence");
-  const [pickupAgency, setPickupAgency] = useState("Aéroport Messali Hadj");
+  const [pickup, setPickup] = useState<string>(site.agencies[0]);
   const [pickupAddress, setPickupAddress] = useState("");
-  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
-
-  /* ── return location ── */
   const [differentReturn, setDifferentReturn] = useState(false);
-  const [returnType, setReturnType] = useState<"agence" | "domicile">("agence");
-  const [returnAgency, setReturnAgency] = useState("Aéroport Messali Hadj");
+  const [returnPlace, setReturnPlace] = useState<string>(site.agencies[0]);
   const [returnAddress, setReturnAddress] = useState("");
-
-  /* ── date + heure départ ── */
   const [departDate, setDepartDate] = useState("");
-  const [departTime, setDepartTime] = useState("10:00");
-  const [showDepartPicker, setShowDepartPicker] = useState(false);
-
-  /* ── date + heure retour ── */
   const [retourDate, setRetourDate] = useState("");
-  const [retourTime, setRetourTime] = useState("10:00");
-  const [showRetourPicker, setShowRetourPicker] = useState(false);
+  const [category, setCategory] = useState("all");
 
-  /* refs for click-outside */
-  const locationRef = useRef<HTMLDivElement>(null);
-  const departRef = useRef<HTMLDivElement>(null);
-  const retourRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        locationRef.current &&
-        !locationRef.current.contains(event.target as Node)
-      )
-        setShowLocationDropdown(false);
-      if (
-        departRef.current &&
-        !departRef.current.contains(event.target as Node)
-      )
-        setShowDepartPicker(false);
-      if (
-        retourRef.current &&
-        !retourRef.current.contains(event.target as Node)
-      )
-        setShowRetourPicker(false);
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const fmtDate = (d: string) => {
-    if (!d) return "";
-    const date = new Date(d + "T00:00:00");
-    return date.toLocaleDateString("fr-FR", {
-      day: "2-digit",
-      month: "short",
-    });
-  };
-
-  const fmtDisplay = (date: string, time: string) => {
-    if (!date) return "Choisir";
-    return `${fmtDate(date)}, ${time}`;
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    window.dispatchEvent(new CustomEvent(FILTER_EVENT, { detail: category }));
+    document.getElementById("vehicules")?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
-    <section id="accueil" className="bg-[#43B0E6] p-3 sm:p-4 lg:p-2">
-      {/* ── Hero container ── */}
-      <div className="rounded-[2rem] relative h-[min(calc(100svh-1.5rem),916px)] lg:h-[calc(100svh-3.5rem)]">
-        {/* Background */}
-        <div className="absolute inset-0 rounded-[2rem] overflow-hidden">
-          <img
-            src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1600&q=80"
-            alt="Aéroport"
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-black/10" />
-        </div>
+    <section id="accueil" className="relative overflow-hidden pt-24 lg:pt-28">
+      <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[1fr_minmax(0,500px)] lg:gap-16 lg:px-8">
+        {/* ── Texte ── */}
+        <div className="relative z-10 flex flex-col gap-6 pt-4 lg:gap-7 lg:pt-12">
+          <div className="fade-up flex items-center gap-3" style={{ animationDelay: "0.05s" }}>
+            <span lang="ar" dir="rtl" className="font-arabic text-xl font-bold text-terra lg:text-2xl">
+              يلا نمشيو
+            </span>
+            <span className="h-[1.5px] w-10 bg-terra" />
+            <span className="eyebrow text-muted">Et c&apos;est parti&nbsp;!</span>
+          </div>
 
-        {/* Title */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none -translate-y-32 sm:-translate-y-20 md:-translate-y-24 hero-title-wrapper">
-          <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tight flex shimmer-text">
-            {"MYLOC".split("").map((letter, i) => (
-              <span
-                key={i}
-                className="letter-reveal inline-block"
-                style={{ animationDelay: `${i * 0.2}s` }}
-              >
-                {letter}
-              </span>
-            ))}
+          <h1
+            className="fade-up font-display text-[46px] font-semibold leading-[0.98] tracking-[-0.035em] text-ink sm:text-7xl lg:text-[84px]"
+            style={{ animationDelay: "0.15s" }}
+          >
+            Prenez la route,
+            <br />
+            <span className="font-normal italic text-sea">l&apos;Algérie</span>
+            <br />
+            vous attend.
           </h1>
-          <p className="mt-3 sm:mt-4 text-xl sm:text-2xl md:text-3xl font-bold tracking-tight flex">
-            {"et c'est parti !".split("").map((letter, i) => (
-              <span
-                key={i}
-                className="jitter-reveal inline-block text-white/90"
-                style={{ animationDelay: `${1.9 + i * 0.04}s` }}
-              >
-                {letter === " " ? " " : letter}
-              </span>
-            ))}
+
+          <p className="fade-up max-w-xl text-base leading-relaxed text-ink-soft sm:text-lg" style={{ animationDelay: "0.25s" }}>
+            Citadines, SUV et berlines récentes, disponibles à l&apos;aéroport et dans nos agences d&apos;Alger, Oran,
+            Constantine et Annaba. Réservez en deux minutes, prix clairs, sans surprise.
           </p>
+
+          <div className="fade-up flex flex-wrap items-center gap-3" style={{ animationDelay: "0.35s" }}>
+            <a
+              href="#vehicules"
+              className="inline-flex h-14 items-center gap-2.5 rounded-full bg-terra px-7 text-base font-bold text-white transition-colors hover:bg-terra-dark"
+            >
+              Voir la flotte
+              <ArrowRight className="h-[18px] w-[18px]" />
+            </a>
+            <a
+              href={site.whatsappHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-14 items-center gap-3 rounded-full px-3 text-base font-bold text-ink transition-colors hover:text-terra"
+            >
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-olive text-white">
+                <WhatsAppIcon className="h-5 w-5" />
+              </span>
+              Réserver sur WhatsApp
+            </a>
+          </div>
+
+          <ul className="fade-up flex flex-wrap gap-x-6 gap-y-2 text-sm font-semibold text-muted" style={{ animationDelay: "0.45s" }}>
+            {trust.map((t) => (
+              <li key={t} className="flex items-center gap-2">
+                <Star className="h-3.5 w-3.5 fill-terra text-terra" />
+                {t}
+              </li>
+            ))}
+          </ul>
         </div>
 
-        {/* ── Reservation Bar ── */}
-        <div className="absolute top-[44%] sm:top-auto sm:bottom-36 left-0 right-0 z-[60] max-w-5xl mx-auto px-3 sm:px-6">
-          <div className="relative">
-            <form
-              className="bg-white rounded-2xl shadow-2xl border border-gray-100"
-              onSubmit={(e) => e.preventDefault()}
-            >
-              {/* Row: Location | Date+heure départ | Date+heure retour | Submit */}
-              <div className="flex flex-col lg:flex-row divide-y lg:divide-y-0 lg:divide-x divide-gray-100">
-                {/* ── Location ── */}
-                <div
-                  ref={locationRef}
-                  className="relative flex items-start gap-3 px-4 py-3 sm:px-6 sm:py-4 lg:flex-[2] min-w-0"
-                >
-                  <MapPin
-                    className="w-5 h-5 flex-shrink-0 mt-5"
-                    style={{ color: "#43B0E6" }}
-                  />
-                  <div className="relative flex-1 min-w-0">
-                    <p className="text-[11px] font-bold uppercase tracking-widest mb-1.5 text-gray-900">
-                      Retrait et retour
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setShowLocationDropdown(!showLocationDropdown)
-                      }
-                      className="flex items-center gap-2 w-full text-left"
-                    >
-                      <span className="font-semibold text-[15px] flex-1 text-left truncate text-gray-900">
-                        {pickupType === "agence"
-                          ? pickupAgency
-                          : "À domicile"}
-                      </span>
-                      <ChevronDown
-                        className={cn(
-                          "w-3.5 h-3.5 flex-shrink-0 text-gray-400 transition-transform",
-                          showLocationDropdown && "rotate-180"
-                        )}
-                      />
-                    </button>
+        {/* ── Arc + photo ── */}
+        <div className="relative mx-auto h-[440px] w-full max-w-[420px] sm:h-[560px] lg:mx-0 lg:h-[660px] lg:max-w-none">
+          <div className="absolute -inset-x-10 -top-4 bottom-10 hidden sm:block">
+            <Zellige size={56} />
+          </div>
+          <div className="arch absolute inset-x-4 top-0 bottom-10 overflow-hidden border-[10px] border-cream shadow-[0_40px_80px_-30px_rgba(15,76,117,0.45)] sm:inset-x-8">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="images/scenes/jetour-x70-plus.jpg"
+              alt="Jetour X70+ garé face à la mer, entre palmiers et murs blancs"
+              className="h-full w-full object-cover object-[center_62%]"
+              fetchPriority="high"
+            />
+          </div>
 
-                    {/* Location Dropdown — 2 options only */}
-                    {showLocationDropdown && (
-                      <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 z-[100] overflow-hidden">
-                        <div className="p-2 space-y-1">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setPickupType("agence");
-                              setShowLocationDropdown(false);
-                            }}
-                            className={cn(
-                              "w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm transition-colors",
-                              pickupType === "agence"
-                                ? "bg-[#43B0E6]/10 text-[#43B0E6] font-semibold"
-                                : "text-gray-700 hover:bg-gray-50"
-                            )}
-                          >
-                            <Building2 className="w-4 h-4" />
-                            En agence
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setPickupType("domicile");
-                              setShowLocationDropdown(false);
-                            }}
-                            className={cn(
-                              "w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm transition-colors",
-                              pickupType === "domicile"
-                                ? "bg-[#43B0E6]/10 text-[#43B0E6] font-semibold"
-                                : "text-gray-700 hover:bg-gray-50"
-                            )}
-                          >
-                            <Home className="w-4 h-4" />
-                            À domicile
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
+          <div className="absolute bottom-0 left-0 flex w-56 lg:bottom-24 flex-col gap-1 rounded-[20px] bg-cream p-5 shadow-[0_24px_48px_-20px_rgba(22,34,46,0.35)] sm:w-64 lg:-left-6">
+            <span className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-terra">À la une</span>
+            <span className="font-display text-2xl font-semibold text-ink">Jetour X70+</span>
+            <span className="text-[13px] text-muted">SUV · 7 places · Automatique</span>
+            <span className="mt-1 font-display text-3xl font-bold text-sea">
+              95 {site.currency} <span className="font-sans text-sm font-semibold text-muted">/ jour</span>
+            </span>
+          </div>
 
-                {/* ── Date et heure de départ ── */}
-                <div
-                  ref={departRef}
-                  className="relative lg:flex-[1.3]"
-                >
-                  <button
-                    type="button"
-                    onClick={() => setShowDepartPicker(!showDepartPicker)}
-                    className="flex items-start gap-3 px-4 py-3 sm:px-6 sm:py-4 w-full text-left hover:bg-gray-50 transition-colors"
-                  >
-                    <CalendarDays
-                      className="w-5 h-5 flex-shrink-0 mt-0.5"
-                      style={{ color: "#43B0E6" }}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[11px] font-bold text-gray-900 uppercase tracking-widest mb-1.5">
-                        Date et heure de départ
-                      </p>
-                      <p
-                        className={cn(
-                          "font-semibold text-[15px]",
-                          departDate ? "text-gray-900" : "text-gray-400"
-                        )}
-                      >
-                        {fmtDisplay(departDate, departTime)}
-                      </p>
-                    </div>
-                  </button>
-
-                  {/* Depart picker dropdown */}
-                  {showDepartPicker && (
-                    <div className="absolute left-0 right-0 lg:right-auto lg:w-80 top-full mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 z-[100] p-4">
-                      <div className="space-y-3">
-                        <div>
-                          <label className="text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">
-                            Date
-                          </label>
-                          <input
-                            type="date"
-                            min={today}
-                            value={departDate}
-                            onChange={(e) => setDepartDate(e.target.value)}
-                            className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#43B0E6]/30 focus:border-[#43B0E6]"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">
-                            Heure
-                          </label>
-                          <div className="grid grid-cols-4 gap-1 max-h-36 overflow-y-auto">
-                            {timeSlots.map((time) => (
-                              <button
-                                key={time}
-                                type="button"
-                                onClick={() => {
-                                  setDepartTime(time);
-                                  setShowDepartPicker(false);
-                                }}
-                                className={cn(
-                                  "px-2 py-1.5 rounded-lg text-xs font-medium transition-colors",
-                                  departTime === time
-                                    ? "bg-[#43B0E6] text-white"
-                                    : "bg-gray-50 text-gray-700 hover:bg-gray-100"
-                                )}
-                              >
-                                {time}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* ── Date et heure de retour ── */}
-                <div
-                  ref={retourRef}
-                  className="relative lg:flex-[1.3]"
-                >
-                  <button
-                    type="button"
-                    onClick={() => setShowRetourPicker(!showRetourPicker)}
-                    className="flex items-start gap-3 px-4 py-3 sm:px-6 sm:py-4 w-full text-left hover:bg-gray-50 transition-colors"
-                  >
-                    <CalendarDays
-                      className="w-5 h-5 flex-shrink-0 mt-0.5"
-                      style={{ color: "#43B0E6" }}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[11px] font-bold text-gray-900 uppercase tracking-widest mb-1.5">
-                        Date et heure de retour
-                      </p>
-                      <p
-                        className={cn(
-                          "font-semibold text-[15px]",
-                          retourDate ? "text-gray-900" : "text-gray-400"
-                        )}
-                      >
-                        {fmtDisplay(retourDate, retourTime)}
-                      </p>
-                    </div>
-                  </button>
-
-                  {/* Retour picker dropdown */}
-                  {showRetourPicker && (
-                    <div className="absolute left-0 right-0 lg:right-auto lg:w-80 top-full mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 z-[100] p-4">
-                      <div className="space-y-3">
-                        <div>
-                          <label className="text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">
-                            Date
-                          </label>
-                          <input
-                            type="date"
-                            min={departDate || today}
-                            value={retourDate}
-                            onChange={(e) => setRetourDate(e.target.value)}
-                            className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#43B0E6]/30 focus:border-[#43B0E6]"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">
-                            Heure
-                          </label>
-                          <div className="grid grid-cols-4 gap-1 max-h-36 overflow-y-auto">
-                            {timeSlots.map((time) => (
-                              <button
-                                key={time}
-                                type="button"
-                                onClick={() => {
-                                  setRetourTime(time);
-                                  setShowRetourPicker(false);
-                                }}
-                                className={cn(
-                                  "px-2 py-1.5 rounded-lg text-xs font-medium transition-colors",
-                                  retourTime === time
-                                    ? "bg-[#43B0E6] text-white"
-                                    : "bg-gray-50 text-gray-700 hover:bg-gray-100"
-                                )}
-                              >
-                                {time}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Submit */}
-                <div className="px-4 py-3 sm:px-5 sm:py-4 flex items-center justify-center">
-                  <a
-                    href="#vehicules"
-                    className="w-full lg:w-auto px-8 py-3 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90 whitespace-nowrap inline-flex items-center justify-center gap-2"
-                    style={{ backgroundColor: "#43B0E6" }}
-                  >
-                    Voir les véhicules
-                    <ArrowRight className="w-4 h-4" />
-                  </a>
-                </div>
-              </div>
-
-              {/* ── Pickup detail (address for domicile) ── */}
-              {pickupType === "domicile" && (
-                <div className="border-t border-gray-100 px-4 py-3 sm:px-6 bg-gray-50/50">
-                  <p className="text-[11px] font-bold uppercase tracking-widest mb-1.5 text-gray-500">
-                    Adresse de retrait
-                  </p>
-                  <input
-                    type="text"
-                    placeholder="Saisissez votre adresse"
-                    value={pickupAddress}
-                    onChange={(e) => setPickupAddress(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-900 placeholder:font-normal placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#43B0E6]/30 focus:border-[#43B0E6]"
-                  />
-                </div>
-              )}
-
-              {/* ── Different return checkbox ── */}
-              <div className="border-t border-gray-100 px-4 py-3 flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
-                <button
-                  type="button"
-                  onClick={() => setDifferentReturn(!differentReturn)}
-                  className="flex items-center gap-1.5 text-sm font-semibold transition-colors flex-shrink-0"
-                  style={{ color: "#9ca3af" }}
-                >
-                  <span
-                    className={cn(
-                      "w-4 h-4 rounded border-2 flex items-center justify-center transition-all flex-shrink-0",
-                      differentReturn
-                        ? "border-[#43B0E6] bg-[#43B0E6]"
-                        : "border-gray-300 bg-transparent"
-                    )}
-                  >
-                    {differentReturn && (
-                      <svg
-                        className="w-3 h-3 text-white"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={3}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M4.5 12.75l6 6 9-13.5"
-                        />
-                      </svg>
-                    )}
-                  </span>
-                  Retour dans un lieu différent
-                </button>
-              </div>
-
-              {/* ── Return location detail ── */}
-              {differentReturn && (
-                <div className="border-t border-gray-100 px-4 py-3 sm:px-6 bg-gray-50/50">
-                  <p className="text-[11px] font-bold uppercase tracking-widest mb-2 text-gray-500">
-                    Lieu de retour
-                  </p>
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setReturnType("agence")}
-                        className={cn(
-                          "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors",
-                          returnType === "agence"
-                            ? "bg-[#43B0E6] text-white"
-                            : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
-                        )}
-                      >
-                        <Building2 className="w-3 h-3" />
-                        En agence
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setReturnType("domicile")}
-                        className={cn(
-                          "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors",
-                          returnType === "domicile"
-                            ? "bg-[#43B0E6] text-white"
-                            : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
-                        )}
-                      >
-                        <Home className="w-3 h-3" />
-                        À domicile
-                      </button>
-                    </div>
-                    {returnType === "agence" ? (
-                      <select
-                        value={returnAgency}
-                        onChange={(e) => setReturnAgency(e.target.value)}
-                        className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#43B0E6]/30 focus:border-[#43B0E6] bg-white"
-                      >
-                        {agencies.map((a) => (
-                          <option key={a} value={a}>
-                            {a}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <input
-                        type="text"
-                        placeholder="Adresse de retour"
-                        value={returnAddress}
-                        onChange={(e) => setReturnAddress(e.target.value)}
-                        className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-900 placeholder:font-normal placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#43B0E6]/30 focus:border-[#43B0E6]"
-                      />
-                    )}
-                  </div>
-                </div>
-              )}
-            </form>
+          <div className="float-slow absolute right-0 top-10 flex h-24 w-24 flex-col items-center justify-center rounded-full bg-sea text-center text-sand lg:-right-4 lg:h-28 lg:w-28">
+            <span className="font-display text-2xl font-semibold italic leading-none lg:text-3xl">2 min</span>
+            <span className="mt-1 text-[10px] font-bold uppercase tracking-wide lg:text-[11px]">pour réserver</span>
           </div>
         </div>
       </div>
 
-      {/* ── Feature cards ── */}
-      <div className="mx-3 sm:mx-4 mt-6 pb-3">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {features.map((feature) => {
-            const Icon = feature.icon;
-            return (
-              <div
-                key={feature.title}
-                className="rounded-2xl px-4 py-5 cursor-default transition-all duration-500 flex flex-col items-center text-center"
-                style={{
-                  backgroundColor: feature.active
-                    ? "rgba(255,255,255,0.22)"
-                    : "rgba(255,255,255,0.10)",
-                  border: feature.active
-                    ? "1px solid rgba(255,255,255,0.45)"
-                    : "1px solid rgba(255,255,255,0.14)",
-                  transform: feature.active ? "translateY(-3px)" : "none",
-                  boxShadow: feature.active
-                    ? "0 10px 30px rgba(0,0,0,0.10)"
-                    : "none",
-                }}
-              >
-                <div
-                  className="w-8 h-8 rounded-xl flex items-center justify-center mb-3 transition-all duration-500"
-                  style={{
-                    backgroundColor: feature.active
-                      ? "#43B0E6"
-                      : "rgba(255,255,255,0.18)",
-                  }}
+      {/* ── Formulaire de recherche ── */}
+      <div className="relative z-20 mx-auto mt-10 max-w-7xl px-4 sm:px-6 lg:-mt-6 lg:px-8">
+        <form
+          onSubmit={handleSubmit}
+          aria-label="Rechercher un véhicule"
+          className="rounded-[28px] bg-white p-2 shadow-[0_30px_60px_-28px_rgba(22,34,46,0.35)] lg:p-3"
+        >
+          <div className="flex flex-col lg:flex-row lg:items-stretch">
+            <label className="flex flex-col gap-1.5 rounded-2xl px-5 py-4 focus-within:bg-sand/60 lg:flex-[1.5] lg:px-6">
+              <span className={fieldLabel}>Retrait</span>
+              <select className={fieldInput} value={pickup} onChange={(e) => setPickup(e.target.value)}>
+                {site.agencies.map((a) => (
+                  <option key={a}>{a}</option>
+                ))}
+                <option value={HOME}>Livraison à domicile</option>
+              </select>
+              {pickup === HOME && (
+                <input
+                  type="text"
+                  value={pickupAddress}
+                  onChange={(e) => setPickupAddress(e.target.value)}
+                  placeholder="Votre adresse"
+                  aria-label="Adresse de livraison"
+                  className={`${fieldInput} mt-1 border-b border-sand-deep pb-1 text-sm`}
+                />
+              )}
+            </label>
+
+            <span className="mx-5 h-px bg-sand-deep lg:mx-0 lg:my-3 lg:h-auto lg:w-px" />
+
+            <div className="grid grid-cols-2 lg:flex lg:flex-[2]">
+              <label className="flex flex-col gap-1.5 rounded-2xl px-5 py-4 focus-within:bg-sand/60 lg:flex-1 lg:px-6">
+                <span className={fieldLabel}>Départ</span>
+                <input
+                  type="date"
+                  min={today}
+                  value={departDate}
+                  onChange={(e) => setDepartDate(e.target.value)}
+                  className={fieldInput}
+                />
+              </label>
+              <label className="flex flex-col gap-1.5 rounded-2xl border-l border-sand-deep px-5 py-4 focus-within:bg-sand/60 lg:flex-1 lg:px-6">
+                <span className={fieldLabel}>Retour</span>
+                <input
+                  type="date"
+                  min={departDate || today}
+                  value={retourDate}
+                  onChange={(e) => setRetourDate(e.target.value)}
+                  className={fieldInput}
+                />
+              </label>
+            </div>
+
+            <span className="mx-5 h-px bg-sand-deep lg:mx-0 lg:my-3 lg:h-auto lg:w-px" />
+
+            <label className="flex flex-col gap-1.5 rounded-2xl px-5 py-4 focus-within:bg-sand/60 lg:flex-1 lg:px-6">
+              <span className={fieldLabel}>Catégorie</span>
+              <select className={fieldInput} value={category} onChange={(e) => setCategory(e.target.value)}>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <button
+              type="submit"
+              className="m-1 mt-2 flex h-14 items-center justify-center gap-2.5 rounded-[20px] bg-terra px-8 text-base font-bold text-white transition-colors hover:bg-terra-dark lg:m-0 lg:ml-2 lg:h-auto lg:self-stretch"
+            >
+              <Search className="h-[18px] w-[18px]" />
+              Rechercher
+            </button>
+          </div>
+
+          <div className="flex flex-col gap-3 border-t border-sand-deep px-5 pb-2 pt-3 sm:flex-row sm:items-center lg:mt-2 lg:px-6">
+            <label className="flex cursor-pointer items-center gap-2.5 text-sm font-semibold text-muted">
+              <input
+                type="checkbox"
+                checked={differentReturn}
+                onChange={(e) => setDifferentReturn(e.target.checked)}
+                className="h-[18px] w-[18px] accent-terra"
+              />
+              Retour dans un autre lieu
+            </label>
+            {differentReturn && (
+              <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
+                <select
+                  aria-label="Lieu de retour"
+                  value={returnPlace}
+                  onChange={(e) => setReturnPlace(e.target.value)}
+                  className="h-10 rounded-xl bg-sand px-3 text-sm font-semibold text-ink outline-none"
                 >
-                  <Icon
-                    className="w-4 h-4 transition-all duration-500"
-                    style={{
-                      color: feature.active
-                        ? "#fff"
-                        : "rgba(255,255,255,0.75)",
-                    }}
+                  {site.agencies.map((a) => (
+                    <option key={a}>{a}</option>
+                  ))}
+                  <option value={HOME}>Récupération à domicile</option>
+                </select>
+                {returnPlace === HOME && (
+                  <input
+                    type="text"
+                    value={returnAddress}
+                    onChange={(e) => setReturnAddress(e.target.value)}
+                    placeholder="Adresse de récupération"
+                    aria-label="Adresse de récupération"
+                    className="h-10 flex-1 rounded-xl bg-sand px-3 text-sm font-semibold text-ink outline-none placeholder:text-muted/70"
                   />
-                </div>
-                <p className="font-black text-white text-sm sm:text-base leading-tight mb-1">
-                  {feature.title}
-                </p>
-                <p className="text-white/60 text-xs leading-snug hidden sm:block">
-                  {feature.desc}
-                </p>
+                )}
               </div>
-            );
-          })}
-        </div>
+            )}
+          </div>
+        </form>
       </div>
     </section>
   );

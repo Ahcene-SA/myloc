@@ -1,124 +1,95 @@
-"use client";
-
-import { motion } from "framer-motion";
-import { Phone, Mail, MapPin, MessageCircle, Clock } from "lucide-react";
+import { Phone, Mail, MapPin, UserPlus } from "lucide-react";
+import { Star8 } from "./Zellige";
+import { WhatsAppIcon } from "./FloatingWhatsApp";
+import { site } from "@/lib/site";
 
 const contacts = [
-  {
-    icon: Phone,
-    label: "Téléphone",
-    value: "+213 555 00 00 00",
-    href: "tel:+213555000000",
-  },
-  {
-    icon: MessageCircle,
-    label: "WhatsApp",
-    value: "+213 555 00 00 00",
-    href: "https://wa.me/213555000000",
-  },
-  {
-    icon: Mail,
-    label: "Email",
-    value: "contact@myloc.dz",
-    href: "mailto:contact@myloc.dz",
-  },
-  {
-    icon: MapPin,
-    label: "Adresse",
-    value: "Alger, Algérie",
-    href: "#",
-  },
+  { label: "Téléphone", value: site.phoneDisplay, href: site.phoneHref, icon: Phone },
+  { label: "WhatsApp", value: site.phoneDisplay, href: site.whatsappHref, icon: WhatsAppIcon },
+  { label: "Email", value: site.email, href: `mailto:${site.email}`, icon: Mail },
+  { label: "Adresse", value: site.address, href: undefined, icon: MapPin },
 ];
 
 export function Contact() {
   return (
-    <section id="contact" className="mx-3 sm:mx-4 mt-6 bg-white rounded-[2.5rem] overflow-hidden shadow-2xl py-20 lg:py-28">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-14"
-        >
-          <span className="inline-block rounded-full bg-brand/10 px-4 py-1.5 text-sm font-bold uppercase tracking-wider text-brand">
-            Contactez-nous
-          </span>
-          <h2 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
-            Prêt à prendre la route ?
+    <section id="contact" className="px-4 pb-20 pt-8 sm:px-6 lg:px-8 lg:pb-28">
+      <div className="mx-auto flex max-w-7xl flex-col gap-10 rounded-[40px] bg-cream p-6 sm:p-10 lg:flex-row lg:gap-14 lg:p-16">
+        <div className="flex flex-1 flex-col gap-7">
+          <span className="eyebrow text-terra">Contactez-nous</span>
+          <h2 className="font-display text-[40px] font-semibold leading-none tracking-[-0.03em] text-ink sm:text-5xl lg:text-[56px]">
+            Prêt à prendre
+            <br />
+            <span className="font-normal italic">la route&nbsp;?</span>
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-lg text-slate-600">
-            Notre équipe vous répond en quelques minutes. Appelez, envoyez un message
-            ou réservez directement en ligne.
+          <p className="max-w-md text-base leading-relaxed text-ink-soft">
+            Notre équipe vous répond en quelques minutes. Appelez, envoyez un message ou réservez directement en ligne.
           </p>
-        </motion.div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {contacts.map(({ label, value, href, icon: Icon }) => {
+              const inner = (
+                <>
+                  <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-cream text-terra">
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <span className="flex min-w-0 flex-col gap-0.5">
+                    <span className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-muted">{label}</span>
+                    <span className="truncate text-base font-bold text-ink">{value}</span>
+                  </span>
+                </>
+              );
+              const cls = "flex items-center gap-4 rounded-[20px] bg-sand p-4";
+              return href ? (
+                <a
+                  key={label}
+                  href={href}
+                  target={href.startsWith("http") ? "_blank" : undefined}
+                  rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
+                  className={`${cls} transition-colors hover:bg-sand-deep`}
+                >
+                  {inner}
+                </a>
+              ) : (
+                <div key={label} className={cls}>
+                  {inner}
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Contact Cards */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="space-y-4"
-          >
-            {contacts.map((contact, index) => (
-              <motion.a
-                key={contact.label}
-                href={contact.href}
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: 0.1 * index }}
-                className="flex items-center gap-4 rounded-2xl bg-slate-50 p-5 transition-all duration-300 hover:bg-slate-100"
-              >
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand transition-colors">
-                  <contact.icon className="h-6 w-6" />
-                </div>
-                <div>
-                  <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                    {contact.label}
-                  </div>
-                  <div className="font-semibold text-slate-800">{contact.value}</div>
-                </div>
-              </motion.a>
+        <div className="relative flex flex-col gap-6 overflow-hidden rounded-[28px] bg-terra p-7 text-white sm:p-10 lg:w-[440px] lg:flex-shrink-0">
+          <Star8 className="absolute -right-24 -top-24 h-60 w-60 opacity-15" color="#fff" strokeWidth={0.6} />
+          <h3 className="relative font-display text-3xl font-semibold">Horaires d&apos;ouverture</h3>
+          <dl className="relative flex flex-col gap-3.5 text-base">
+            {site.hours.map((h) => (
+              <div key={h.label} className="flex justify-between gap-4">
+                <dt>{h.label}</dt>
+                <dd className="font-extrabold">{h.value}</dd>
+              </div>
             ))}
-          </motion.div>
-
-          {/* Hours Card */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="rounded-[2rem] bg-brand p-8 sm:p-12"
-          >
-            <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white/20 text-white">
-              <Clock className="h-7 w-7" />
+            <div className="flex justify-between gap-4 border-t border-white/30 pt-3.5">
+              <dt>Assistance</dt>
+              <dd className="font-extrabold">24h/24 – 7j/7</dd>
             </div>
-            <h3 className="mt-6 text-2xl font-bold text-white">Horaires d'ouverture</h3>
-            <ul className="mt-6 space-y-3 text-white/90">
-              <li className="flex justify-between">
-                <span>Lundi – Samedi</span>
-                <span className="font-semibold">08h00 – 20h00</span>
-              </li>
-              <li className="flex justify-between">
-                <span>Dimanche</span>
-                <span className="font-semibold">09h00 – 18h00</span>
-              </li>
-              <li className="flex justify-between border-t border-white/20 pt-3">
-                <span>Assistance</span>
-                <span className="font-semibold">24h/24 – 7j/7</span>
-              </li>
-            </ul>
-
+          </dl>
+          <div className="relative mt-auto flex flex-col gap-3 pt-4">
             <a
-              href="#vehicules"
-              className="mt-8 inline-flex w-full items-center justify-center rounded-2xl bg-white px-6 py-4 text-center text-lg font-bold text-brand shadow-lg transition-transform hover:scale-[1.02]"
+              href={site.whatsappHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex h-14 items-center justify-center gap-2.5 rounded-full bg-white text-base font-extrabold text-ink transition-colors hover:bg-cream"
             >
-              Créer un compte pour réserver
+              <WhatsAppIcon className="h-5 w-5 text-olive" />
+              Écrire sur WhatsApp
             </a>
-          </motion.div>
+            <a
+              href="register.html"
+              className="flex h-14 items-center justify-center gap-2.5 rounded-full border-[1.5px] border-white/70 text-base font-bold text-white transition-colors hover:bg-white/10"
+            >
+              <UserPlus className="h-5 w-5" />
+              Créer mon compte client
+            </a>
+          </div>
         </div>
       </div>
     </section>

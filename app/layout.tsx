@@ -1,11 +1,25 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Fraunces, Manrope, Reem_Kufi } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/AuthContext";
 
-const inter = Inter({
-  variable: "--font-inter",
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
   subsets: ["latin"],
+  style: ["normal", "italic"],
+  axes: ["opsz"],
+  display: "swap",
+});
+
+const manrope = Manrope({
+  variable: "--font-manrope",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const reemKufi = Reem_Kufi({
+  variable: "--font-reem-kufi",
+  subsets: ["arabic"],
   display: "swap",
 });
 
@@ -21,7 +35,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={`${inter.variable} h-full antialiased`}>
+    <html
+      lang="fr"
+      className={`${fraunces.variable} ${manrope.variable} ${reemKufi.variable} h-full antialiased`}
+    >
       <head>
         <script
           dangerouslySetInnerHTML={{
