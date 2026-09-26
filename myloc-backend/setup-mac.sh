@@ -24,9 +24,21 @@ for pkg in php composer mysql; do
 done
 
 say "Démarrage de MySQL"
-brew services start mysql >/dev/null
-for i in {1..20}; do mysqladmin ping --silent 2>/dev/null && break; sleep 1; done
-ok "MySQL tourne"
+if mysqladmin ping --silent 2>/dev/null; then
+  ok "MySQL tourne déjà"
+else
+  # "Bootstrap failed: 5" = service mal enregistré : on le réinitialise, sinon on démarre MySQL à la main.
+  brew services stop mysql >/dev/null 2>&1 || true
+  brew services start mysql >/dev/null 2>&1 || mysql.server start || true
+  for i in {1..30}; do mysqladmin ping --silent 2>/dev/null && break; sleep 1; done
+  if ! mysqladmin ping --silent 2>/dev/null; then
+    echo "MySQL ne démarre pas. Envoie ces infos à Claude :"
+    echo "--- port 3306 :"; lsof -nP -iTCP:3306 -sTCP:LISTEN || echo "(libre)"
+    echo "--- journal MySQL :"; tail -n 25 "$(brew --prefix)"/var/mysql/*.err 2>/dev/null || true
+    exit 1
+  fi
+  ok "MySQL tourne"
+fi
 
 # 3. Dépendances PHP
 say "Installation des dépendances PHP (composer install)"
