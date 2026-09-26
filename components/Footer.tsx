@@ -1,7 +1,10 @@
+"use client";
+
 import { Phone, Mail } from "lucide-react";
 import { AlgiersSkyline, Logo } from "./Brand";
 import { WhatsAppIcon } from "./FloatingWhatsApp";
 import { site } from "@/lib/site";
+import { useLang } from "@/lib/i18n";
 
 function InstagramIcon({ className }: { className?: string }) {
   return (
@@ -30,6 +33,7 @@ const socials = [
 
 export function Footer() {
   const year = new Date().getFullYear();
+  const { t } = useLang();
 
   return (
     <footer className="relative overflow-hidden bg-navy text-white/70">
@@ -39,15 +43,16 @@ export function Footer() {
           <div className="flex flex-col gap-5">
             <Logo light />
             <p className="text-sm leading-relaxed">
-              Agence de location de voitures à Alger. Citadines, compactes et SUV : réservez simplement et roulez en toute
-              sérénité, partout en Algérie.
+              {t(
+                "Agence de location de voitures à Alger. Citadines, compactes et SUV : réservez simplement et roulez en toute sérénité, partout en Algérie."
+              )}
             </p>
             <div className="flex gap-2.5">
               {socials.map(({ label, href, icon: Icon }) => (
                 <a
                   key={label}
                   href={href}
-                  aria-label={label}
+                  aria-label={t(label)}
                   target={href.startsWith("http") ? "_blank" : undefined}
                   rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
                   className="flex h-11 w-11 items-center justify-center rounded-full bg-white/5 text-white transition-colors hover:bg-sky hover:text-navy"
@@ -60,22 +65,22 @@ export function Footer() {
 
           <div className="grid grid-cols-2 gap-10 text-sm sm:grid-cols-3 lg:justify-items-end">
             <div className="flex flex-col gap-3">
-              <span className="text-xs font-extrabold uppercase tracking-[0.2em] text-white">Liens</span>
+              <span className="text-xs font-extrabold uppercase tracking-[0.2em] text-white">{t("Liens")}</span>
               {footerLinks.map((l) => (
                 <a key={l.href} href={l.href} className="transition-colors hover:text-sky">
-                  {l.label}
+                  {t(l.label)}
                 </a>
               ))}
             </div>
             <div className="flex flex-col gap-3">
-              <span className="text-xs font-extrabold uppercase tracking-[0.2em] text-white">Points de retrait</span>
+              <span className="text-xs font-extrabold uppercase tracking-[0.2em] text-white">{t("Points de retrait")}</span>
               {site.agencies.map((a) => (
-                <span key={a}>{a.replace(/^Agence\s+/, "")}</span>
+                <span key={a}>{t(a).replace(/^(Agence|وكالة)\s+/, "")}</span>
               ))}
             </div>
             <div className="flex flex-col gap-3">
-              <span className="text-xs font-extrabold uppercase tracking-[0.2em] text-white">Contact</span>
-              <a href={site.phoneHref} className="transition-colors hover:text-sky">
+              <span className="text-xs font-extrabold uppercase tracking-[0.2em] text-white">{t("Contact")}</span>
+              <a href={site.phoneHref} dir="ltr" className="transition-colors hover:text-sky">
                 {site.phoneDisplay}
               </a>
               <a href={`mailto:${site.email}`} className="transition-colors hover:text-sky">
@@ -84,14 +89,14 @@ export function Footer() {
               <a href={site.instagram} target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-sky">
                 {site.instagramHandle}
               </a>
-              <span>Service 24/7</span>
+              <span>{t("Service 24/7")}</span>
             </div>
           </div>
         </div>
 
         <div className="flex flex-col justify-between gap-3 border-t border-white/10 pt-6 text-xs sm:flex-row">
-          <span>© {year} MYLOC.DZ Car Rental. Tous droits réservés.</span>
-          <span className="font-semibold uppercase tracking-[0.2em]">Alger, Algérie</span>
+          <span>{t("© {year} MYLOC.DZ Car Rental. Tous droits réservés.", { year })}</span>
+          <span className="font-semibold uppercase tracking-[0.2em]">{t("Alger, Algérie")}</span>
         </div>
       </div>
     </footer>

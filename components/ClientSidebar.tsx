@@ -3,6 +3,7 @@
 import { useClient } from "./ClientContext";
 import { Home, PlusCircle, CalendarRange, Wallet, UserRound } from "lucide-react";
 import { DashboardSidebar } from "./DashboardSidebar";
+import { useLang } from "@/lib/i18n";
 
 export type ClientTab = "accueil" | "reserver" | "reservations" | "paiements" | "profil";
 
@@ -16,5 +17,16 @@ const menuItems: { label: string; tab: ClientTab; icon: React.ElementType }[] = 
 
 export function ClientSidebar() {
   const { activeTab, setActiveTab } = useClient();
-  return <DashboardSidebar<ClientTab> title="Espace client" items={menuItems} activeTab={activeTab} onSelect={setActiveTab} />;
+  const { t } = useLang();
+  // Libellés traduits au rendu (la langue peut changer à tout moment)
+  const items = menuItems.map((item) => ({ ...item, label: t(item.label) }));
+  return (
+    <DashboardSidebar<ClientTab>
+      title={t("Espace client")}
+      items={items}
+      activeTab={activeTab}
+      onSelect={setActiveTab}
+      showLangSwitch
+    />
+  );
 }

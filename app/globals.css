@@ -226,6 +226,19 @@ body {
   }
 }
 
+/* ── Version arabe ── */
+html[lang="ar"] body {
+  font-family: var(--font-cairo), "Segoe UI", Tahoma, var(--font-montserrat), sans-serif;
+}
+/* L'espacement des lettres casse les liaisons de l'écriture arabe */
+html[lang="ar"] * {
+  letter-spacing: 0 !important;
+}
+/* Flèches et chevrons pointent dans le sens de lecture */
+html[dir="rtl"] .flip-rtl {
+  transform: scaleX(-1);
+}
+
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   *,

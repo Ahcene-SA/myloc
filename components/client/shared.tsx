@@ -5,17 +5,18 @@ import { Loader2, RefreshCw } from "lucide-react";
 import { categoryInfo, site, whatsappLink } from "@/lib/site";
 import type { PaymentMethod, ReservationFromApi } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { dateLocale, t } from "@/lib/i18n";
 
 /* ─────────────── Formats ─────────────── */
 
 export function formatPrice(value: number | string | undefined | null): string {
   const n = typeof value === "string" ? parseFloat(value) : value ?? 0;
-  return `${(Number.isFinite(n) ? n : 0).toLocaleString("fr-FR", { maximumFractionDigits: 2 })} ${site.currency}`;
+  return `${(Number.isFinite(n) ? n : 0).toLocaleString(dateLocale(), { maximumFractionDigits: 2 })} ${site.currency}`;
 }
 
 export function formatDate(date?: string | null, withWeekday = false): string {
   if (!date) return "—";
-  return new Date(`${date}T00:00:00`).toLocaleDateString("fr-FR", {
+  return new Date(`${date}T00:00:00`).toLocaleDateString(dateLocale(), {
     weekday: withWeekday ? "short" : undefined,
     day: "numeric",
     month: "short",
@@ -40,13 +41,19 @@ export function todayIso(offsetDays = 0): string {
   return new Date(d.getTime() - tz).toISOString().slice(0, 10);
 }
 
+/** Durée lisible : « 1 jour » / « 3 jours ». */
+export function daysLabel(n: number): string {
+  return `${n} ${t(n > 1 ? "jours" : "jour")}`;
+}
+
 /** Référence lisible d'une réservation : MYL-000042 */
 export function reservationRef(id: number): string {
   return `MYL-${String(id).padStart(6, "0")}`;
 }
 
 export function categoryLabel(cat?: string | null): string {
-  return (cat && categoryInfo[cat.toLowerCase()]?.label) || cat || "";
+  const label = (cat && categoryInfo[cat.toLowerCase()]?.label) || cat || "";
+  return label ? t(label) : "";
 }
 
 export function splitCarName(name?: string | null) {
@@ -54,6 +61,7 @@ export function splitCarName(name?: string | null) {
   return { brand, model: rest.join(" ") };
 }
 
+/** Libellés en français : les traduire avec t() à l'affichage. */
 export const paymentLabels: Record<PaymentMethod, string> = {
   especes: "Espèces à la remise des clés",
   carte: "Carte bancaire à la remise des clés",
@@ -74,7 +82,7 @@ export const statusMeta: Record<ReservationStatus, { label: string; className: s
 export function StatusBadge({ status }: { status?: ReservationFromApi["status"] }) {
   const meta = statusMeta[status || "pending"];
   return (
-    <span className={cn("inline-flex items-center rounded-full px-3 py-1 text-xs font-bold", meta.className)}>{meta.label}</span>
+    <span className={cn("inline-flex items-center rounded-full px-3 py-1 text-xs font-bold", meta.className)}>{t(meta.label)}</span>
   );
 }
 
@@ -93,9 +101,12 @@ export function canCancel(r: ReservationFromApi): boolean {
 
 export function reservationWhatsApp(r: ReservationFromApi): string {
   return whatsappLink(
-    `Bonjour MYLOC.DZ, au sujet de ma réservation ${reservationRef(r.id)} (${r.car_name}, du ${formatDate(
-      r.start_date
-    )} au ${formatDate(r.end_date)}).`
+    t("Bonjour MYLOC.DZ, au sujet de ma réservation {ref} ({car}, du {start} au {end}).", {
+      ref: reservationRef(r.id),
+      car: r.car_name || "",
+      start: formatDate(r.start_date),
+      end: formatDate(r.end_date),
+    })
   );
 }
 
@@ -118,11 +129,11 @@ export function Card({ className, children }: { className?: string; children: Re
   return <div className={cn("rounded-3xl border border-line bg-white", className)}>{children}</div>;
 }
 
-export function LoadingBlock({ label = "Chargement…" }: { label?: string }) {
+export function LoadingBlock({ label }: { label?: string }) {
   return (
     <div className="flex h-64 items-center justify-center gap-3 text-muted" role="status">
       <Loader2 className="h-5 w-5 animate-spin text-sky" />
-      <span className="text-sm font-semibold">{label}</span>
+      <span className="text-sm font-semibold">{label ?? t("Chargement…")}</span>
     </div>
   );
 }
@@ -130,7 +141,7 @@ export function LoadingBlock({ label = "Chargement…" }: { label?: string }) {
 export function ErrorBlock({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return (
     <Card className="flex flex-col items-center gap-4 p-10 text-center">
-      <p className="font-bold text-navy">Impossible de charger vos données</p>
+      <p className="font-bold text-navy">{t("Impossible de charger vos données")}</p>
       <p className="max-w-md text-sm text-muted">{message}</p>
       {onRetry && (
         <button
@@ -139,7 +150,7 @@ export function ErrorBlock({ message, onRetry }: { message: string; onRetry?: ()
           className="inline-flex h-11 items-center gap-2 rounded-full bg-navy px-5 text-sm font-bold text-white hover:bg-navy-soft"
         >
           <RefreshCw className="h-4 w-4" />
-          Réessayer
+          {t("Réessayer")}
         </button>
       )}
     </Card>
@@ -170,7 +181,7 @@ export function DiscountLine({ r }: { r: ReservationFromApi }) {
   if (discount <= 0) return null;
   return (
     <span className="block text-xs font-semibold text-emerald-700">
-      <span className="text-muted line-through">{formatPrice(r.base_price)}</span> · {r.discount_label || "Remise"} (-{formatPrice(discount)})
+      <span className="text-muted line-through">{formatPrice(r.base_price)}</span> · {r.discount_label ? t(r.discount_label) : t("Remise")} (-{formatPrice(discount)})
     </span>
   );
 }

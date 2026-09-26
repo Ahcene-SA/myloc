@@ -7,9 +7,11 @@ import { ClientContent } from "./ClientContent";
 import { useAuth } from "./AuthContext";
 import { LoadingBlock } from "./client/shared";
 import { pageUrl } from "@/lib/routes";
+import { useLang } from "@/lib/i18n";
 
 export function ClientLayout() {
   const { token, user, isLoading } = useAuth();
+  const { t } = useLang();
   // true seulement côté navigateur (évite un décalage avec la page pré-générée)
   const mounted = useSyncExternalStore(
     () => () => {},
@@ -27,7 +29,7 @@ export function ClientLayout() {
   if (!mounted || isLoading || !token || user?.role === "admin") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-mist">
-        <LoadingBlock label="Vérification de votre session…" />
+        <LoadingBlock label={t("Vérification de votre session…")} />
       </div>
     );
   }
@@ -36,7 +38,7 @@ export function ClientLayout() {
     <ClientProvider>
       <div className="min-h-screen bg-mist">
         <ClientSidebar />
-        <main className="transition-all duration-300 md:pl-72">
+        <main className="transition-all duration-300 md:ps-72">
           <div className="p-4 pt-20 sm:p-6 sm:pt-22 md:pt-8 lg:p-10">
             <ClientContent />
           </div>

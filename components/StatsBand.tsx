@@ -5,6 +5,7 @@ import { animate, motion, useInView, useReducedMotion } from "framer-motion";
 import { Car, Clock3, Headphones, MapPin } from "lucide-react";
 import { fetchCars } from "@/lib/api";
 import { site } from "@/lib/site";
+import { useLang } from "@/lib/i18n";
 
 /** Nombre qui défile de 0 à sa valeur quand il apparaît à l'écran. */
 function Counter({ to, suffix = "" }: { to: number; suffix?: string }) {
@@ -38,6 +39,7 @@ function Counter({ to, suffix = "" }: { to: number; suffix?: string }) {
 
 export function StatsBand() {
   const [fleet, setFleet] = useState(7);
+  const { t } = useLang();
 
   useEffect(() => {
     let cancelled = false;
@@ -50,14 +52,14 @@ export function StatsBand() {
   }, []);
 
   const stats = [
-    { icon: Car, value: fleet, suffix: "", label: "véhicules récents" },
-    { icon: MapPin, value: site.agencies.length, suffix: "", label: "points de retrait" },
-    { icon: Headphones, value: 24, suffix: "/7", label: "assistance" },
-    { icon: Clock3, value: 2, suffix: " min", label: "pour réserver" },
+    { icon: Car, value: fleet, suffix: "", label: t("véhicules récents") },
+    { icon: MapPin, value: site.agencies.length, suffix: "", label: t("points de retrait") },
+    { icon: Headphones, value: 24, suffix: "/7", label: t("assistance") },
+    { icon: Clock3, value: 2, suffix: ` ${t("min")}`, label: t("pour réserver") },
   ];
 
   return (
-    <section aria-label="MYLOC.DZ en chiffres" className="relative overflow-hidden bg-navy py-12 text-white lg:py-16">
+    <section aria-label={t("MYLOC.DZ en chiffres")} className="relative overflow-hidden bg-navy py-12 text-white lg:py-16">
       <div aria-hidden="true" className="absolute -left-40 top-1/2 h-80 w-80 -translate-y-1/2 rounded-full bg-sky/20 blur-3xl" />
       <div aria-hidden="true" className="absolute -right-32 -top-20 h-64 w-64 rounded-full bg-sky/10 blur-3xl" />
       <ul className="relative mx-auto grid max-w-7xl grid-cols-2 gap-y-10 px-4 sm:px-6 lg:grid-cols-4 lg:px-8">
@@ -68,7 +70,7 @@ export function StatsBand() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-40px" }}
             transition={{ duration: 0.6, delay: i * 0.1 }}
-            className="flex flex-col items-center gap-2 text-center lg:border-l lg:border-white/10 lg:first:border-0"
+            className="flex flex-col items-center gap-2 text-center lg:border-s lg:border-white/10 lg:first:border-0"
           >
             <Icon className="h-6 w-6 text-sky" strokeWidth={1.8} />
             <p className="text-4xl font-extrabold tracking-tight sm:text-5xl">

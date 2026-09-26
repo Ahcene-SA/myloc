@@ -7,6 +7,7 @@ import { WhatsAppIcon } from "./FloatingWhatsApp";
 import { site } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import { pageUrl } from "@/lib/routes";
+import { LangSwitch, useLang } from "@/lib/i18n";
 
 const mainLinks = [
   { href: "#vehicules", label: "Véhicules" },
@@ -20,6 +21,7 @@ export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState("accueil");
+  const { t } = useLang();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 24);
@@ -59,11 +61,11 @@ export function Navbar() {
       )}
     >
       <div className="mx-auto flex h-18 max-w-7xl items-center justify-between px-4 sm:px-6 lg:h-22 lg:px-8">
-        <a href="#accueil" aria-label="MYLOC.DZ, retour à l'accueil" className="flex-shrink-0">
+        <a href="#accueil" aria-label={t("MYLOC.DZ, retour à l'accueil")} className="flex-shrink-0">
           <Logo />
         </a>
 
-        <nav className="hidden items-center gap-8 lg:flex" aria-label="Navigation principale">
+        <nav className="hidden items-center gap-8 lg:flex" aria-label={t("Navigation principale")}>
           {mainLinks.map((link) => {
             const isActive = activeSection === link.href.slice(1);
             return (
@@ -76,10 +78,10 @@ export function Navbar() {
                   isActive ? "text-sky-text" : "text-navy"
                 )}
               >
-                {link.label}
+                {t(link.label)}
                 <span
                   className={cn(
-                    "absolute -bottom-2 left-0 h-[3px] rounded-full bg-sky transition-all duration-300",
+                    "absolute -bottom-2 start-0 h-[3px] rounded-full bg-sky transition-all duration-300",
                     isActive ? "w-6" : "w-0"
                   )}
                 />
@@ -89,12 +91,13 @@ export function Navbar() {
         </nav>
 
         <div className="hidden items-center gap-2 lg:flex">
+          <LangSwitch />
           <a
             href={pageUrl("client")}
             className="flex h-11 items-center gap-2 rounded-full px-4 text-[13px] font-bold text-navy transition-colors hover:text-sky-text"
           >
             <UserRound className="h-4 w-4" />
-            Mon espace
+            {t("Mon espace")}
           </a>
           <a
             href={site.whatsappHref}
@@ -103,19 +106,22 @@ export function Navbar() {
             className="flex h-11 items-center gap-2 rounded-full bg-sky px-5 text-[13px] font-bold text-navy transition-colors hover:bg-sky-mid hover:text-white"
           >
             <WhatsAppIcon className="h-4 w-4" />
-            Réserver
+            {t("Réserver")}
           </a>
         </div>
 
+        <div className="flex items-center gap-2 lg:hidden">
+        <LangSwitch />
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
           className="flex h-11 w-11 items-center justify-center rounded-full bg-navy text-white lg:hidden"
-          aria-label={isOpen ? "Fermer le menu" : "Ouvrir le menu"}
+          aria-label={isOpen ? t("Fermer le menu") : t("Ouvrir le menu")}
           aria-expanded={isOpen}
         >
           {isOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
+        </div>
       </div>
 
       <div
@@ -124,7 +130,7 @@ export function Navbar() {
           isOpen ? "max-h-[36rem] opacity-100" : "pointer-events-none max-h-0 opacity-0"
         )}
       >
-        <nav className="flex flex-col px-4 pb-6 pt-2" aria-label="Navigation mobile">
+        <nav className="flex flex-col px-4 pb-6 pt-2" aria-label={t("Navigation mobile")}>
           {mainLinks.map((link) => (
             <a
               key={link.href}
@@ -132,7 +138,7 @@ export function Navbar() {
               onClick={() => setIsOpen(false)}
               className="border-b border-line py-4 text-lg font-extrabold uppercase tracking-wide text-navy"
             >
-              {link.label}
+              {t(link.label)}
             </a>
           ))}
           <div className="mt-5 grid grid-cols-2 gap-2">
@@ -142,7 +148,7 @@ export function Navbar() {
               className="flex h-12 items-center justify-center gap-2 rounded-full border-2 border-navy text-sm font-bold text-navy"
             >
               <UserRound className="h-4 w-4" />
-              Mon espace
+              {t("Mon espace")}
             </a>
             <a
               href={pageUrl("admin")}
@@ -161,7 +167,7 @@ export function Navbar() {
             className="mt-2 flex h-13 items-center justify-center gap-2 rounded-full bg-sky text-base font-bold text-navy"
           >
             <WhatsAppIcon className="h-5 w-5" />
-            Réserver sur WhatsApp
+            {t("Réserver sur WhatsApp")}
           </a>
         </nav>
       </div>

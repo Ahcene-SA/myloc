@@ -1,5 +1,7 @@
 "use client";
 
+import { translate } from "./i18n";
+
 export function getApiBase(): string {
   if (typeof window === "undefined") {
     return "http://localhost:8000";
@@ -122,7 +124,7 @@ async function request<T>(
   if (!response.ok || data.success === false) {
     const message = data.error || `Erreur HTTP ${response.status}`;
     if (response.status === 401 && auth) handleExpiredSession();
-    throw new Error(message);
+    throw new Error(translate(message));
   }
 
   return data;
@@ -323,7 +325,7 @@ export async function uploadCarImage(file: File): Promise<string> {
   }))) as { success?: boolean; image_url?: string; error?: string };
 
   if (!response.ok || data.success === false) {
-    throw new Error(data.error || `Erreur HTTP ${response.status}`);
+    throw new Error(translate(data.error || `Erreur HTTP ${response.status}`));
   }
 
   if (!data.image_url) {

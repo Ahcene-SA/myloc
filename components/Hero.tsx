@@ -8,6 +8,7 @@ import { WhatsAppIcon } from "./FloatingWhatsApp";
 import { HeroCars } from "./HeroCars";
 import { FILTER_EVENT, categoryInfo, site, whatsappLink } from "@/lib/site";
 import { AVAILABILITY_EVENT, type AvailabilitySearch } from "@/lib/booking";
+import { dateLocale, useLang } from "@/lib/i18n";
 
 const HOME = "__domicile__";
 /** Libellé attendu par le formulaire de réservation de l'espace client */
@@ -48,10 +49,11 @@ const fieldInput = "w-full appearance-none bg-transparent p-0 text-[15px] font-b
 
 function formatDate(d: string) {
   if (!d) return "";
-  return new Date(d + "T00:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
+  return new Date(d + "T00:00:00").toLocaleDateString(dateLocale(), { day: "numeric", month: "long" });
 }
 
 export function Hero() {
+  const { t, lang } = useLang();
   const today = new Date().toISOString().split("T")[0];
 
   const [pickup, setPickup] = useState<string>(site.agencies[0]);
@@ -77,8 +79,8 @@ export function Hero() {
     e.preventDefault();
     setFormError("");
     if (departDate || retourDate) {
-      if (!departDate || !retourDate) return setFormError("Choisissez une date de départ et une date de retour.");
-      if (retourDate <= departDate) return setFormError("La date de retour doit être après la date de départ.");
+      if (!departDate || !retourDate) return setFormError(t("Choisissez une date de départ et une date de retour."));
+      if (retourDate <= departDate) return setFormError(t("La date de retour doit être après la date de départ."));
       const toLabel = (p: string) => (p === HOME ? HOME_LABEL : p);
       const detail: AvailabilitySearch = {
         start: departDate,
@@ -97,13 +99,18 @@ export function Hero() {
   };
 
   // Message WhatsApp pré-rempli avec la recherche du visiteur
-  const place = (p: string, addr: string) => (p === HOME ? `à domicile (${addr || "adresse à préciser"})` : p);
+  const place = (p: string, addr: string) =>
+    p === HOME ? t("à domicile ({address})", { address: addr || t("adresse à préciser") }) : t(p);
   const waMessage = [
-    "Bonjour MYLOC.DZ, je souhaite louer un véhicule.",
-    `Retrait : ${place(pickup, pickupAddress)}`,
-    differentReturn ? `Retour : ${place(returnPlace, returnAddress)}` : "",
-    departDate ? `Du ${formatDate(departDate)}${retourDate ? ` au ${formatDate(retourDate)}` : ""}` : "",
-    category !== "all" ? `Catégorie : ${categoryInfo[category]?.label}` : "",
+    t("Bonjour MYLOC.DZ, je souhaite louer un véhicule."),
+    t("Retrait : {place}", { place: place(pickup, pickupAddress) }),
+    differentReturn ? t("Retour : {place}", { place: place(returnPlace, returnAddress) }) : "",
+    departDate
+      ? retourDate
+        ? t("Du {start} au {end}", { start: formatDate(departDate), end: formatDate(retourDate) })
+        : t("À partir du {start}", { start: formatDate(departDate) })
+      : "",
+    category !== "all" ? t("Catégorie : {category}", { category: t(categoryInfo[category]?.label ?? category) }) : "",
   ]
     .filter(Boolean)
     .join("\n");
@@ -129,16 +136,26 @@ export function Hero() {
         {/* ── Texte ── */}
         <motion.div className="relative z-10 flex flex-col gap-6 pt-6 lg:pt-10" style={{ y: textY, opacity: textOpacity }}>
           <span className="fade-up kicker text-navy/80" style={{ animationDelay: "0.05s" }}>
-            Location de véhicules en <strong className="font-extrabold text-navy">Algérie</strong>
+            {t("Location de véhicules en")} <strong className="font-extrabold text-navy">{t("Algérie")}</strong>
           </span>
           <h1 className="text-[42px] font-extrabold uppercase leading-[1] tracking-[-0.015em] text-navy sm:text-6xl lg:text-[68px]">
-            <RevealWords text="Votre" reduce={reduce} delay={0.1} />
-            <RevealWords text="mobilité," className="text-sky-shimmer" reduce={reduce} delay={0.18} />
-            <br />
-            <RevealWords text="notre priorité" reduce={reduce} delay={0.32} />
+            {lang === "ar" ? (
+              <>
+                <RevealWords text={t("Votre mobilité,")} className="text-sky-shimmer" reduce={reduce} delay={0.1} />
+                <br />
+                <RevealWords text={t("notre priorité")} reduce={reduce} delay={0.26} />
+              </>
+            ) : (
+              <>
+                <RevealWords text="Votre" reduce={reduce} delay={0.1} />
+                <RevealWords text="mobilité," className="text-sky-shimmer" reduce={reduce} delay={0.18} />
+                <br />
+                <RevealWords text="notre priorité" reduce={reduce} delay={0.32} />
+              </>
+            )}
           </h1>
           <motion.span
-            className="block origin-left"
+            className="block origin-left rtl:origin-right"
             initial={reduce ? false : { scaleX: 0 }}
             animate={{ scaleX: 1 }}
             transition={{ duration: 0.8, delay: 0.6, ease }}
@@ -149,7 +166,7 @@ export function Hero() {
             className="fade-up max-w-lg text-[15px] font-semibold uppercase leading-relaxed tracking-[0.06em] text-ink-soft sm:text-base"
             style={{ animationDelay: "0.25s" }}
           >
-            Une équipe professionnelle à votre service, partout en Algérie.
+            {t("Une équipe professionnelle à votre service, partout en Algérie.")}
           </p>
 
           <div className="fade-up flex flex-wrap items-center gap-3" style={{ animationDelay: "0.35s" }}>
@@ -160,24 +177,24 @@ export function Hero() {
               className="inline-flex h-14 items-center gap-2.5 rounded-full bg-sky px-7 text-[15px] font-bold text-navy shadow-[0_14px_30px_-12px_rgba(67,176,230,0.8)] transition-colors hover:bg-sky-mid hover:text-white"
             >
               <WhatsAppIcon className="h-5 w-5" />
-              Réserver sur WhatsApp
+              {t("Réserver sur WhatsApp")}
             </a>
             <a
               href="#vehicules"
               className="inline-flex h-14 items-center gap-2 rounded-full border-2 border-navy px-6 text-[15px] font-bold text-navy transition-colors hover:bg-navy hover:text-white"
             >
-              Voir la flotte
+              {t("Voir la flotte")}
               <ArrowDown className="h-4 w-4" />
             </a>
           </div>
 
           <ul className="fade-up flex flex-wrap gap-x-6 gap-y-2 text-[13px] font-semibold text-muted" style={{ animationDelay: "0.45s" }}>
-            {trust.map((t) => (
-              <li key={t} className="flex items-center gap-2">
+            {trust.map((item) => (
+              <li key={item} className="flex items-center gap-2">
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-sky-soft">
                   <Check className="h-3 w-3 text-sky-text" strokeWidth={3} />
                 </span>
-                {t}
+                {t(item)}
               </li>
             ))}
           </ul>
@@ -194,25 +211,27 @@ export function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, delay: 0.9, ease }}
           onSubmit={handleSubmit}
-          aria-label="Rechercher un véhicule"
+          aria-label={t("Rechercher un véhicule")}
           className="rounded-3xl border border-line bg-white p-2 shadow-[0_30px_60px_-30px_rgba(15,27,45,0.3)] lg:p-3"
         >
           <div className="flex flex-col lg:flex-row lg:items-stretch">
             <label className="flex flex-col gap-1.5 rounded-2xl px-5 py-4 focus-within:bg-mist lg:flex-[1.5] lg:px-6">
-              <span className={fieldLabel}>Retrait</span>
+              <span className={fieldLabel}>{t("Retrait")}</span>
               <select className={fieldInput} value={pickup} onChange={(e) => setPickup(e.target.value)}>
                 {site.agencies.map((a) => (
-                  <option key={a}>{a}</option>
+                  <option key={a} value={a}>
+                    {t(a)}
+                  </option>
                 ))}
-                <option value={HOME}>Livraison à domicile</option>
+                <option value={HOME}>{t("Livraison à domicile")}</option>
               </select>
               {pickup === HOME && (
                 <input
                   type="text"
                   value={pickupAddress}
                   onChange={(e) => setPickupAddress(e.target.value)}
-                  placeholder="Votre adresse"
-                  aria-label="Adresse de livraison"
+                  placeholder={t("Votre adresse")}
+                  aria-label={t("Adresse de livraison")}
                   className={`${fieldInput} mt-1 border-b border-line pb-1 text-sm`}
                 />
               )}
@@ -222,11 +241,11 @@ export function Hero() {
 
             <div className="grid grid-cols-2 lg:flex lg:flex-[2]">
               <label className="flex flex-col gap-1.5 rounded-2xl px-5 py-4 focus-within:bg-mist lg:flex-1 lg:px-6">
-                <span className={fieldLabel}>Départ</span>
+                <span className={fieldLabel}>{t("Départ")}</span>
                 <input type="date" min={today} value={departDate} onChange={(e) => setDepartDate(e.target.value)} className={fieldInput} />
               </label>
-              <label className="flex flex-col gap-1.5 rounded-2xl border-l border-line px-5 py-4 focus-within:bg-mist lg:flex-1 lg:px-6">
-                <span className={fieldLabel}>Retour</span>
+              <label className="flex flex-col gap-1.5 rounded-2xl border-s border-line px-5 py-4 focus-within:bg-mist lg:flex-1 lg:px-6">
+                <span className={fieldLabel}>{t("Retour||date")}</span>
                 <input
                   type="date"
                   min={departDate || today}
@@ -240,11 +259,11 @@ export function Hero() {
             <span className="mx-5 h-px bg-line lg:mx-0 lg:my-3 lg:h-auto lg:w-px" />
 
             <label className="flex flex-col gap-1.5 rounded-2xl px-5 py-4 focus-within:bg-mist lg:flex-1 lg:px-6">
-              <span className={fieldLabel}>Catégorie</span>
+              <span className={fieldLabel}>{t("Catégorie")}</span>
               <select className={fieldInput} value={category} onChange={(e) => setCategory(e.target.value)}>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.label}
+                    {t(c.label)}
                   </option>
                 ))}
               </select>
@@ -252,10 +271,10 @@ export function Hero() {
 
             <button
               type="submit"
-              className="shine m-1 mt-2 flex h-14 items-center justify-center gap-2.5 rounded-2xl bg-navy px-8 text-[15px] font-bold text-white transition-colors hover:bg-navy-soft lg:m-0 lg:ml-2 lg:h-auto lg:self-stretch"
+              className="shine m-1 mt-2 flex h-14 items-center justify-center gap-2.5 rounded-2xl bg-navy px-8 text-[15px] font-bold text-white transition-colors hover:bg-navy-soft lg:m-0 lg:ms-2 lg:h-auto lg:self-stretch"
             >
               <Search className="h-[18px] w-[18px]" />
-              {departDate && retourDate ? "Voir les dispos" : "Rechercher"}
+              {departDate && retourDate ? t("Voir les dispos") : t("Rechercher")}
             </button>
           </div>
           {formError && (
@@ -272,28 +291,30 @@ export function Hero() {
                 onChange={(e) => setDifferentReturn(e.target.checked)}
                 className="h-[18px] w-[18px] accent-sky"
               />
-              Retour dans un autre lieu
+              {t("Retour dans un autre lieu")}
             </label>
             {differentReturn && (
               <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
                 <select
-                  aria-label="Lieu de retour"
+                  aria-label={t("Lieu de retour")}
                   value={returnPlace}
                   onChange={(e) => setReturnPlace(e.target.value)}
                   className="h-10 rounded-xl bg-mist px-3 text-sm font-semibold text-navy outline-none"
                 >
                   {site.agencies.map((a) => (
-                    <option key={a}>{a}</option>
+                    <option key={a} value={a}>
+                      {t(a)}
+                    </option>
                   ))}
-                  <option value={HOME}>Récupération à domicile</option>
+                  <option value={HOME}>{t("Récupération à domicile")}</option>
                 </select>
                 {returnPlace === HOME && (
                   <input
                     type="text"
                     value={returnAddress}
                     onChange={(e) => setReturnAddress(e.target.value)}
-                    placeholder="Adresse de récupération"
-                    aria-label="Adresse de récupération"
+                    placeholder={t("Adresse de récupération")}
+                    aria-label={t("Adresse de récupération")}
                     className="h-10 flex-1 rounded-xl bg-mist px-3 text-sm font-semibold text-navy outline-none placeholder:text-muted/70"
                   />
                 )}
@@ -303,10 +324,10 @@ export function Hero() {
               href={whatsappLink(waMessage)}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-sm font-bold text-whatsapp hover:underline sm:ml-auto"
+              className="inline-flex items-center gap-2 text-sm font-bold text-whatsapp hover:underline sm:ms-auto"
             >
               <WhatsAppIcon className="h-4 w-4" />
-              Envoyer ma demande sur WhatsApp
+              {t("Envoyer ma demande sur WhatsApp")}
             </a>
           </div>
         </motion.form>

@@ -5,6 +5,7 @@ import { useAuth } from "../AuthContext";
 import { useClient } from "../ClientContext";
 import { apiImageUrl } from "@/lib/api";
 import { WhatsAppIcon } from "../FloatingWhatsApp";
+import { useLang } from "@/lib/i18n";
 import {
   Card,
   EmptyState,
@@ -13,6 +14,7 @@ import {
   PageTitle,
   StatusBadge,
   daysBetween,
+  daysLabel,
   formatDate,
   formatPrice,
   formatTime,
@@ -28,6 +30,7 @@ import {
 export function AccueilView() {
   const { user } = useAuth();
   const { reservations, loading, error, refresh, setActiveTab, goReserve } = useClient();
+  const { t } = useLang();
   const firstName = (user?.full_name || "").split(" ")[0];
 
   if (loading) return <LoadingBlock />;
@@ -43,17 +46,17 @@ export function AccueilView() {
     .reduce((sum, r) => sum + (parseFloat(String(r.total_price ?? 0)) || 0), 0);
 
   const stats = [
-    { icon: CalendarClock, label: "Locations à venir", value: String(upcoming.length) },
-    { icon: Clock3, label: "En attente de confirmation", value: String(pending) },
-    { icon: Wallet, label: "Total des locations confirmées", value: formatPrice(spent) },
+    { icon: CalendarClock, label: t("Locations à venir"), value: String(upcoming.length) },
+    { icon: Clock3, label: t("En attente de confirmation"), value: String(pending) },
+    { icon: Wallet, label: t("Total des locations confirmées"), value: formatPrice(spent) },
   ];
 
   return (
     <div>
-      <PageTitle kicker="Espace client" title={<>Bonjour{firstName ? `, ${firstName}` : ""}</>}>
+      <PageTitle kicker={t("Espace client")} title={firstName ? t("Bonjour, {name}", { name: firstName }) : t("Bonjour")}>
         <button type="button" onClick={() => goReserve()} className={primaryBtn}>
           <PlusCircle className="h-4 w-4" />
-          Nouvelle réservation
+          {t("Nouvelle réservation")}
         </button>
       </PageTitle>
 
@@ -79,11 +82,11 @@ export function AccueilView() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={apiImageUrl(next.car_image_url)}
-                alt={next.car_name || "Véhicule"}
+                alt={next.car_name || t("Véhicule")}
                 className="car-reflect mx-auto w-56 max-w-full object-contain sm:mx-0"
               />
               <div className="flex-1">
-                <span className="kicker text-[11px] text-sky-text">Prochaine location</span>
+                <span className="kicker text-[11px] text-sky-text">{t("Prochaine location")}</span>
                 <p className="mt-2 text-2xl font-extrabold uppercase text-navy">
                   {splitCarName(next.car_name).brand}{" "}
                   <span className="text-sky-gradient">{splitCarName(next.car_name).model}</span>
@@ -96,51 +99,51 @@ export function AccueilView() {
             </div>
             <div className="grid gap-4 p-6 sm:grid-cols-2">
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted">Départ</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted">{t("Départ")}</p>
                 <p className="mt-1 font-bold text-navy">
                   {formatDate(next.start_date, true)} {formatTime(next.pickup_time) && `· ${formatTime(next.pickup_time)}`}
                 </p>
                 {next.pickup_place && (
                   <p className="mt-1 flex items-center gap-1.5 text-sm text-muted">
                     <MapPin className="h-3.5 w-3.5" />
-                    {next.pickup_place}
+                    {t(next.pickup_place)}
                   </p>
                 )}
               </div>
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted">Retour</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted">{t("Retour")}</p>
                 <p className="mt-1 font-bold text-navy">
                   {formatDate(next.end_date, true)} {formatTime(next.return_time) && `· ${formatTime(next.return_time)}`}
                 </p>
                 {next.return_place && (
                   <p className="mt-1 flex items-center gap-1.5 text-sm text-muted">
                     <MapPin className="h-3.5 w-3.5" />
-                    {next.return_place}
+                    {t(next.return_place)}
                   </p>
                 )}
               </div>
               <div className="flex items-end justify-between gap-4 border-t border-line pt-4 sm:col-span-2">
                 <p>
                   <span className="block text-xs font-semibold text-muted">
-                    {daysBetween(next.start_date || "", next.end_date || "")} jour(s)
+                    {daysLabel(daysBetween(next.start_date || "", next.end_date || ""))}
                   </span>
                   <span className="text-2xl font-extrabold text-navy">{formatPrice(next.total_price)}</span>
                 </p>
                 <a href={reservationWhatsApp(next)} target="_blank" rel="noopener noreferrer" className={secondaryBtn}>
                   <WhatsAppIcon className="h-4 w-4 text-whatsapp" />
-                  Contacter l&apos;agence
+                  {t("Contacter l'agence")}
                 </a>
               </div>
             </div>
           </Card>
         ) : (
           <EmptyState
-            title="Aucune location prévue"
-            text="Choisissez un véhicule, vos dates et votre point de retrait : votre demande est envoyée à l'agence en quelques clics."
+            title={t("Aucune location prévue")}
+            text={t("Choisissez un véhicule, vos dates et votre point de retrait : votre demande est envoyée à l'agence en quelques clics.")}
             action={
               <button type="button" onClick={() => goReserve()} className={primaryBtn}>
-                Réserver un véhicule
-                <ArrowRight className="h-4 w-4" />
+                {t("Réserver un véhicule")}
+                <ArrowRight className="flip-rtl h-4 w-4" />
               </button>
             }
           />
@@ -149,15 +152,15 @@ export function AccueilView() {
         {/* Dernières réservations */}
         <Card className="p-6">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-extrabold uppercase tracking-wide text-navy">Dernières réservations</p>
+            <p className="text-sm font-extrabold uppercase tracking-wide text-navy">{t("Dernières réservations")}</p>
             {reservations.length > 0 && (
               <button type="button" onClick={() => setActiveTab("reservations")} className="text-sm font-bold text-sky-text hover:underline">
-                Tout voir
+                {t("Tout voir")}
               </button>
             )}
           </div>
           {reservations.length === 0 ? (
-            <p className="mt-6 text-sm text-muted">Vous n&apos;avez pas encore de réservation.</p>
+            <p className="mt-6 text-sm text-muted">{t("Vous n'avez pas encore de réservation.")}</p>
           ) : (
             <ul className="mt-4 divide-y divide-line">
               {reservations.slice(0, 4).map((r) => (
@@ -167,7 +170,7 @@ export function AccueilView() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-bold text-navy">{r.car_name}</p>
                     <p className="text-xs text-muted">
-                      {formatDate(r.start_date)} → {formatDate(r.end_date)}
+                      {formatDate(r.start_date)} {t("→")} {formatDate(r.end_date)}
                     </p>
                   </div>
                   <StatusBadge status={r.status} />

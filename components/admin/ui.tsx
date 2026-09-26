@@ -5,6 +5,7 @@ import { Search, X } from "lucide-react";
 import type { ReservationFromApi } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { todayIso } from "../client/shared";
+import { useLang } from "@/lib/i18n";
 
 /* ─────────────── Dates & phases d'une location ─────────────── */
 
@@ -134,6 +135,7 @@ function useEscape(onClose: () => void) {
 /** Panneau latéral (détail d'une réservation). */
 export function Drawer({ title, onClose, children }: { title: ReactNode; onClose: () => void; children: ReactNode }) {
   useEscape(onClose);
+  const { t } = useLang();
   return (
     <div className="fixed inset-0 z-[60]" role="dialog" aria-modal="true">
       <div className="absolute inset-0 bg-navy/40 backdrop-blur-sm" onClick={onClose} />
@@ -143,7 +145,7 @@ export function Drawer({ title, onClose, children }: { title: ReactNode; onClose
           <button
             type="button"
             onClick={onClose}
-            aria-label="Fermer"
+            aria-label={t("Fermer")}
             className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-mist text-navy hover:bg-line"
           >
             <X className="h-5 w-5" />
@@ -168,6 +170,7 @@ export function Modal({
   wide?: boolean;
 }) {
   useEscape(onClose);
+  const { t } = useLang();
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center sm:p-6" role="dialog" aria-modal="true" aria-label={title}>
       <div className="absolute inset-0 bg-navy/40 backdrop-blur-sm" onClick={onClose} />
@@ -182,7 +185,7 @@ export function Modal({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Fermer"
+            aria-label={t("Fermer")}
             className="flex h-10 w-10 items-center justify-center rounded-full bg-mist text-navy hover:bg-line"
           >
             <X className="h-5 w-5" />

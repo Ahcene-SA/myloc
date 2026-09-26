@@ -5,6 +5,7 @@ import { Check, Loader2, LogOut } from "lucide-react";
 import { useAuth } from "../AuthContext";
 import { changePassword, updateProfile } from "@/lib/api";
 import { pageUrl } from "@/lib/routes";
+import { useLang } from "@/lib/i18n";
 import { Card, PageTitle, formatDate, inputClass, labelClass, primaryBtn, secondaryBtn } from "./shared";
 
 function Feedback({ ok, error }: { ok: string; error: string }) {
@@ -26,6 +27,7 @@ function Feedback({ ok, error }: { ok: string; error: string }) {
 
 export function ProfilView() {
   const { user, updateUser, logout } = useAuth();
+  const { t } = useLang();
 
   const [fullName, setFullName] = useState(user?.full_name || "");
   const [phone, setPhone] = useState(user?.phone || "");
@@ -45,9 +47,9 @@ export function ProfilView() {
     try {
       const updated = await updateProfile(fullName.trim(), phone.trim());
       if (updated) updateUser(updated);
-      setProfileMsg({ ok: "Profil mis à jour.", error: "" });
+      setProfileMsg({ ok: t("Profil mis à jour."), error: "" });
     } catch (err) {
-      setProfileMsg({ ok: "", error: err instanceof Error ? err.message : "Enregistrement impossible." });
+      setProfileMsg({ ok: "", error: err instanceof Error ? err.message : t("Enregistrement impossible.") });
     } finally {
       setSaving(false);
     }
@@ -56,17 +58,17 @@ export function ProfilView() {
   const savePassword = async (e: FormEvent) => {
     e.preventDefault();
     setPwdMsg({ ok: "", error: "" });
-    if (next.length < 8) return setPwdMsg({ ok: "", error: "Le nouveau mot de passe doit contenir au moins 8 caractères." });
-    if (next !== confirm) return setPwdMsg({ ok: "", error: "Les deux mots de passe ne correspondent pas." });
+    if (next.length < 8) return setPwdMsg({ ok: "", error: t("Le nouveau mot de passe doit contenir au moins 8 caractères.") });
+    if (next !== confirm) return setPwdMsg({ ok: "", error: t("Les deux mots de passe ne correspondent pas.") });
     setChanging(true);
     try {
       await changePassword(current, next);
       setCurrent("");
       setNext("");
       setConfirm("");
-      setPwdMsg({ ok: "Mot de passe modifié.", error: "" });
+      setPwdMsg({ ok: t("Mot de passe modifié."), error: "" });
     } catch (err) {
-      setPwdMsg({ ok: "", error: err instanceof Error ? err.message : "Modification impossible." });
+      setPwdMsg({ ok: "", error: err instanceof Error ? err.message : t("Modification impossible.") });
     } finally {
       setChanging(false);
     }
@@ -81,14 +83,14 @@ export function ProfilView() {
 
   return (
     <div>
-      <PageTitle kicker="Compte" title="Mon profil" />
+      <PageTitle kicker={t("Compte")} title={t("Mon profil")} />
 
       <div className="grid gap-6 xl:grid-cols-[320px_1fr]">
         <Card className="flex flex-col items-center gap-3 p-8 text-center xl:self-start">
           <span className="flex h-20 w-20 items-center justify-center rounded-full bg-sky text-2xl font-extrabold text-navy">{initials}</span>
           <p className="text-lg font-extrabold text-navy">{user?.full_name}</p>
           <p className="text-sm text-muted">{user?.email}</p>
-          {user?.created_at && <p className="text-xs text-muted">Client depuis le {formatDate(user.created_at.slice(0, 10))}</p>}
+          {user?.created_at && <p className="text-xs text-muted">{t("Client depuis le {date}", { date: formatDate(user.created_at.slice(0, 10)) })}</p>}
           <button
             type="button"
             onClick={() => {
@@ -97,58 +99,58 @@ export function ProfilView() {
             }}
             className={`${secondaryBtn} mt-3 w-full`}
           >
-            <LogOut className="h-4 w-4" />
-            Se déconnecter
+            <LogOut className="flip-rtl h-4 w-4" />
+            {t("Se déconnecter")}
           </button>
         </Card>
 
         <div className="flex flex-col gap-6">
           <Card className="p-6 sm:p-8">
-            <p className="mb-5 text-sm font-extrabold uppercase tracking-wide text-navy">Informations personnelles</p>
+            <p className="mb-5 text-sm font-extrabold uppercase tracking-wide text-navy">{t("Informations personnelles")}</p>
             <form onSubmit={saveProfile} className="grid gap-5 sm:grid-cols-2">
               <label className="sm:col-span-2">
-                <span className={labelClass}>Nom et prénom</span>
+                <span className={labelClass}>{t("Nom et prénom")}</span>
                 <input className={inputClass} value={fullName} onChange={(e) => setFullName(e.target.value)} autoComplete="name" required minLength={2} />
               </label>
               <label>
-                <span className={labelClass}>Email</span>
+                <span className={labelClass}>{t("Email")}</span>
                 <input className={inputClass} value={user?.email || ""} disabled />
-                <span className="mt-1.5 block text-xs text-muted">Pour changer d&apos;email, contactez l&apos;agence.</span>
+                <span className="mt-1.5 block text-xs text-muted">{t("Pour changer d'email, contactez l'agence.")}</span>
               </label>
               <label>
-                <span className={labelClass}>Téléphone</span>
+                <span className={labelClass}>{t("Téléphone")}</span>
                 <input className={inputClass} value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" required minLength={5} />
               </label>
               <div className="flex flex-col gap-3 sm:col-span-2">
                 <Feedback {...profileMsg} />
                 <button type="submit" disabled={saving} className={`${primaryBtn} sm:self-start`}>
                   {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                  Enregistrer
+                  {t("Enregistrer")}
                 </button>
               </div>
             </form>
           </Card>
 
           <Card className="p-6 sm:p-8">
-            <p className="mb-5 text-sm font-extrabold uppercase tracking-wide text-navy">Mot de passe</p>
+            <p className="mb-5 text-sm font-extrabold uppercase tracking-wide text-navy">{t("Mot de passe")}</p>
             <form onSubmit={savePassword} className="grid gap-5 sm:grid-cols-3">
               <label>
-                <span className={labelClass}>Actuel</span>
+                <span className={labelClass}>{t("Actuel")}</span>
                 <input type="password" className={inputClass} value={current} onChange={(e) => setCurrent(e.target.value)} autoComplete="current-password" required />
               </label>
               <label>
-                <span className={labelClass}>Nouveau</span>
+                <span className={labelClass}>{t("Nouveau")}</span>
                 <input type="password" className={inputClass} value={next} onChange={(e) => setNext(e.target.value)} autoComplete="new-password" required minLength={8} />
               </label>
               <label>
-                <span className={labelClass}>Confirmation</span>
+                <span className={labelClass}>{t("Confirmation")}</span>
                 <input type="password" className={inputClass} value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" required minLength={8} />
               </label>
               <div className="flex flex-col gap-3 sm:col-span-3">
                 <Feedback {...pwdMsg} />
                 <button type="submit" disabled={changing} className={`${secondaryBtn} sm:self-start`}>
                   {changing && <Loader2 className="h-4 w-4 animate-spin" />}
-                  Changer le mot de passe
+                  {t("Changer le mot de passe")}
                 </button>
               </div>
             </form>

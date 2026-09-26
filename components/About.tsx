@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 import { AlgiersSkyline, BrandHeading, Sky, SkyCircle } from "./Brand";
 import { site } from "@/lib/site";
+import { useLang } from "@/lib/i18n";
 
 const points = [
   "Flotte moderne et entretenue",
@@ -13,6 +14,7 @@ const points = [
 ];
 
 export function About() {
+  const { t, lang } = useLang();
   return (
     <section id="a-propos" className="relative overflow-hidden bg-white py-20 lg:py-28">
       <div className="mx-auto grid max-w-7xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-2 lg:gap-20 lg:px-8">
@@ -22,12 +24,22 @@ export function About() {
           <AlgiersSkyline className="inset-x-0 bottom-0 h-44 w-full text-navy opacity-[0.07]" />
           <div className="relative flex h-full flex-col items-center px-6 pt-12 text-center">
             <span className="kicker text-[11px] text-navy/80">
-              Location de véhicules en <strong className="font-extrabold text-navy">Algérie</strong>
+              {t("Location de véhicules en")} <strong className="font-extrabold text-navy">{t("Algérie")}</strong>
             </span>
             <p className="mt-4 text-[30px] font-extrabold uppercase leading-[1.02] text-navy sm:text-4xl">
-              Votre <Sky>mobilité</Sky>,
-              <br />
-              notre priorité
+              {lang === "ar" ? (
+                <>
+                  <Sky>{t("Votre mobilité,")}</Sky>
+                  <br />
+                  {t("notre priorité")}
+                </>
+              ) : (
+                <>
+                  Votre <Sky>mobilité</Sky>,
+                  <br />
+                  notre priorité
+                </>
+              )}
             </p>
             <span className="mt-4 block h-[3px] w-14 rounded-full bg-sky" />
             <motion.div
@@ -45,17 +57,18 @@ export function About() {
 
         {/* Texte */}
         <div className="flex flex-col gap-6">
-          <BrandHeading overline={`À propos de ${site.name}`}>
-            Votre partenaire <Sky>mobilité</Sky> en Algérie
+          <BrandHeading overline={t("À propos de {name}", { name: site.name })}>
+            {t("Votre partenaire")} <Sky>{t("mobilité")}</Sky> {t("en Algérie")}
           </BrandHeading>
           <p className="text-base leading-[1.8] text-ink-soft">
-            MYLOC.DZ est une agence de location de voitures basée à Alger, dédiée à offrir une expérience simple, fiable
-            et accessible. Que vous soyez en voyage d&apos;affaires, en vacances ou que vous ayez besoin d&apos;un
-            véhicule au quotidien, nous mettons à votre disposition des citadines, compactes et SUV récents.
+            {t(
+              "MYLOC.DZ est une agence de location de voitures basée à Alger, dédiée à offrir une expérience simple, fiable et accessible. Que vous soyez en voyage d'affaires, en vacances ou que vous ayez besoin d'un véhicule au quotidien, nous mettons à votre disposition des citadines, compactes et SUV récents."
+            )}
           </p>
           <p className="text-base leading-[1.8] text-ink-soft">
-            Notre équipe travaille chaque jour pour vous garantir des tarifs justes, une prise en charge rapide et un
-            service client disponible à tout moment.
+            {t(
+              "Notre équipe travaille chaque jour pour vous garantir des tarifs justes, une prise en charge rapide et un service client disponible à tout moment."
+            )}
           </p>
           <ul className="mt-2 grid gap-3.5 sm:grid-cols-2">
             {points.map((p) => (
@@ -63,7 +76,7 @@ export function About() {
                 <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-sky-soft">
                   <Check className="h-3.5 w-3.5 text-sky-text" strokeWidth={3} />
                 </span>
-                {p}
+                {t(p)}
               </li>
             ))}
           </ul>

@@ -6,6 +6,7 @@ import { useClient } from "../ClientContext";
 import { WhatsAppIcon } from "../FloatingWhatsApp";
 import { apiImageUrl, cancelReservation, type ReservationFromApi } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { useLang } from "@/lib/i18n";
 import {
   Card,
   EmptyState,
@@ -17,6 +18,7 @@ import {
   canCancel,
   categoryLabel,
   daysBetween,
+  daysLabel,
   formatDate,
   formatPrice,
   formatTime,
@@ -49,6 +51,7 @@ function matches(r: ReservationFromApi, f: Filter) {
 export function ReservationsView() {
   const { reservations, loading, error, refresh, goReserve } = useClient();
   const [filter, setFilter] = useState<Filter>("upcoming");
+  const { t } = useLang();
 
   if (loading) return <LoadingBlock />;
   if (error) return <ErrorBlock message={error} onRetry={refresh} />;
@@ -63,14 +66,14 @@ export function ReservationsView() {
 
   return (
     <div>
-      <PageTitle kicker="Suivi" title="Mes réservations">
+      <PageTitle kicker={t("Suivi")} title={t("Mes réservations")}>
         <button type="button" onClick={() => goReserve()} className={primaryBtn}>
           <PlusCircle className="h-4 w-4" />
-          Nouvelle réservation
+          {t("Nouvelle réservation")}
         </button>
       </PageTitle>
 
-      <div className="no-scrollbar -mx-1 mb-6 flex gap-2 overflow-x-auto px-1" role="group" aria-label="Filtrer">
+      <div className="no-scrollbar -mx-1 mb-6 flex gap-2 overflow-x-auto px-1" role="group" aria-label={t("Filtrer")}>
         {filters.map((f) => {
           const count = reservations.filter((r) => matches(r, f.id)).length;
           return (
@@ -84,7 +87,7 @@ export function ReservationsView() {
                 filter === f.id ? "border-navy bg-navy text-white" : "border-line bg-white text-navy hover:border-navy"
               )}
             >
-              {f.label}
+              {t(f.label)}
               <span className={filter === f.id ? "text-sky" : "text-muted"}>{count}</span>
             </button>
           );
@@ -93,16 +96,16 @@ export function ReservationsView() {
 
       {list.length === 0 ? (
         <EmptyState
-          title={reservations.length === 0 ? "Aucune réservation" : "Rien ici"}
+          title={reservations.length === 0 ? t("Aucune réservation") : t("Rien ici")}
           text={
             reservations.length === 0
-              ? "Vos demandes de location apparaîtront ici, avec leur statut."
-              : "Aucune réservation ne correspond à ce filtre."
+              ? t("Vos demandes de location apparaîtront ici, avec leur statut.")
+              : t("Aucune réservation ne correspond à ce filtre.")
           }
           action={
             reservations.length === 0 ? (
               <button type="button" onClick={() => goReserve()} className={primaryBtn}>
-                Réserver un véhicule
+                {t("Réserver un véhicule")}
               </button>
             ) : undefined
           }
@@ -120,6 +123,7 @@ export function ReservationsView() {
 
 function ReservationCard({ r }: { r: ReservationFromApi }) {
   const { upsertReservation } = useClient();
+  const { t } = useLang();
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
@@ -134,7 +138,7 @@ function ReservationCard({ r }: { r: ReservationFromApi }) {
       upsertReservation({ ...r, ...(updated || {}), status: "cancelled" });
       setConfirming(false);
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Annulation impossible.");
+      setErr(e instanceof Error ? e.message : t("Annulation impossible."));
     } finally {
       setBusy(false);
     }
@@ -169,11 +173,9 @@ function ReservationCard({ r }: { r: ReservationFromApi }) {
                   {formatDate(r.start_date, true)} {formatTime(r.pickup_time) && `· ${formatTime(r.pickup_time)}`}
                 </p>
                 <p className="font-bold text-navy">
-                  → {formatDate(r.end_date, true)} {formatTime(r.return_time) && `· ${formatTime(r.return_time)}`}
+                  {t("→")} {formatDate(r.end_date, true)} {formatTime(r.return_time) && `· ${formatTime(r.return_time)}`}
                 </p>
-                <p className="text-muted">
-                  {days} jour{days > 1 ? "s" : ""}
-                </p>
+                <p className="text-muted">{daysLabel(days)}</p>
               </div>
             </div>
             {(r.pickup_place || r.return_place) && (
@@ -182,13 +184,13 @@ function ReservationCard({ r }: { r: ReservationFromApi }) {
                 <div className="text-ink-soft">
                   {r.pickup_place && (
                     <p>
-                      <span className="text-muted">Retrait :</span> {r.pickup_place}
+                      <span className="text-muted">{t("Retrait :")}</span> {t(r.pickup_place)}
                       {r.delivery_address ? ` (${r.delivery_address})` : ""}
                     </p>
                   )}
                   {r.return_place && (
                     <p>
-                      <span className="text-muted">Retour :</span> {r.return_place}
+                      <span className="text-muted">{t("Retour :")}</span> {t(r.return_place)}
                     </p>
                   )}
                 </div>
@@ -200,7 +202,7 @@ function ReservationCard({ r }: { r: ReservationFromApi }) {
             <div className="flex gap-2.5 rounded-2xl bg-sky-soft/60 p-4 text-sm text-navy">
               <MessageSquareText className="mt-0.5 h-4 w-4 flex-shrink-0 text-sky-text" />
               <p>
-                <span className="font-bold">Message de l&apos;agence : </span>
+                <span className="font-bold">{t("Message de l'agence :")} </span>
                 {r.admin_note}
               </p>
             </div>
@@ -209,7 +211,7 @@ function ReservationCard({ r }: { r: ReservationFromApi }) {
           <div className="mt-auto flex flex-col gap-3 border-t border-line pt-4 sm:flex-row sm:items-center sm:justify-between">
             <p>
               <span className="text-2xl font-extrabold text-navy">{formatPrice(r.total_price)}</span>
-              {r.payment_method && <span className="ml-2 text-xs font-semibold text-muted">{paymentLabels[r.payment_method]}</span>}
+              {r.payment_method && <span className="ms-2 text-xs font-semibold text-muted">{t(paymentLabels[r.payment_method])}</span>}
               <DiscountLine r={r} />
             </p>
             <div className="flex flex-wrap gap-2">
@@ -220,7 +222,7 @@ function ReservationCard({ r }: { r: ReservationFromApi }) {
                 className="inline-flex h-10 items-center gap-2 rounded-full border-2 border-line px-4 text-xs font-bold text-navy hover:border-navy"
               >
                 <WhatsAppIcon className="h-4 w-4 text-whatsapp" />
-                Contacter l&apos;agence
+                {t("Contacter l'agence")}
               </a>
               {r.status === "confirmed" && (r.start_date || "") <= todayIso() && <InspectionButton r={r} />}
               {canCancel(r) && !confirming && (
@@ -230,7 +232,7 @@ function ReservationCard({ r }: { r: ReservationFromApi }) {
                   className="inline-flex h-10 items-center gap-2 rounded-full px-4 text-xs font-bold text-red-700 hover:bg-red-50"
                 >
                   <XCircle className="h-4 w-4" />
-                  Annuler
+                  {t("Annuler")}
                 </button>
               )}
             </div>
@@ -238,10 +240,10 @@ function ReservationCard({ r }: { r: ReservationFromApi }) {
 
           {confirming && (
             <div className="flex flex-col gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm sm:flex-row sm:items-center sm:justify-between">
-              <p className="font-semibold text-red-800">Annuler cette réservation ? Cette action est définitive.</p>
+              <p className="font-semibold text-red-800">{t("Annuler cette réservation ? Cette action est définitive.")}</p>
               <div className="flex gap-2">
                 <button type="button" onClick={() => setConfirming(false)} className="h-10 rounded-full px-4 text-xs font-bold text-navy hover:bg-white">
-                  Garder
+                  {t("Garder")}
                 </button>
                 <button
                   type="button"
@@ -250,7 +252,7 @@ function ReservationCard({ r }: { r: ReservationFromApi }) {
                   className="inline-flex h-10 items-center gap-2 rounded-full bg-red-700 px-4 text-xs font-bold text-white hover:bg-red-800 disabled:opacity-60"
                 >
                   {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                  Oui, annuler
+                  {t("Oui, annuler")}
                 </button>
               </div>
             </div>

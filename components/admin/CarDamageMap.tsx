@@ -2,6 +2,7 @@
 
 import { zoneLabels, type DamageZone } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { useLang } from "@/lib/i18n";
 
 /**
  * Voiture vue de dessus : on touche une zone pour signaler un dommage.
@@ -37,6 +38,7 @@ export function CarDamageMap({
   onToggle?: (z: DamageZone) => void;
   className?: string;
 }) {
+  const { t } = useLang();
   const isOn = (z: DamageZone) => marked.includes(z);
   const fill = (z: DamageZone) => (highlight.includes(z) ? "#f59e0b" : isOn(z) ? "#ef4444" : "#e8eef5");
   const interactive = !!onToggle;
@@ -47,7 +49,7 @@ export function CarDamageMap({
           role: "button" as const,
           tabIndex: 0,
           "aria-pressed": isOn(z),
-          "aria-label": `${zoneLabels[z]}${isOn(z) ? " : dommage signalé" : ""}`,
+          "aria-label": `${t(zoneLabels[z])}${isOn(z) ? ` : ${t("dommage signalé")}` : ""}`,
           onClick: () => onToggle?.(z),
           onKeyDown: (e: React.KeyboardEvent) => {
             if (e.key === "Enter" || e.key === " ") {
@@ -61,9 +63,9 @@ export function CarDamageMap({
 
   return (
     <div className={cn("flex flex-col items-center gap-3", className)}>
-      <svg viewBox="0 0 200 390" className="h-72 w-auto select-none" role="group" aria-label="Carrosserie vue de dessus">
+      <svg viewBox="0 0 200 390" className="h-72 w-auto select-none" role="group" aria-label={t("Carrosserie vue de dessus")}>
         <text x="100" y="0" dy="-2" textAnchor="middle" className="fill-muted text-[10px] font-bold" style={{ letterSpacing: 2 }}>
-          AVANT
+          {t("AVANT")}
         </text>
         {wheels.map((w, i) => (
           <rect
@@ -97,19 +99,20 @@ export function CarDamageMap({
             isOn("interieur") ? "border-red-500 bg-red-50 text-red-700" : "border-line text-navy hover:border-navy"
           )}
         >
-          Intérieur {isOn("interieur") ? "· dommage signalé" : ""}
+          {t("Intérieur")} {isOn("interieur") ? `· ${t("dommage signalé")}` : ""}
         </button>
       )}
-      {!interactive && isOn("interieur") && <p className="text-xs font-bold text-red-700">Dommage intérieur signalé</p>}
+      {!interactive && isOn("interieur") && <p className="text-xs font-bold text-red-700">{t("Dommage intérieur signalé")}</p>}
     </div>
   );
 }
 
 /** Jauge de carburant en huitièmes. */
 export function FuelGauge({ value, onChange }: { value: number | null; onChange?: (v: number) => void }) {
+  const { t } = useLang();
   return (
-    <div className="flex items-center gap-2" role={onChange ? "radiogroup" : undefined} aria-label="Niveau de carburant">
-      <span className="text-xs font-bold text-muted">V</span>
+    <div className="flex items-center gap-2" role={onChange ? "radiogroup" : undefined} aria-label={t("Niveau de carburant")}>
+      <span className="text-xs font-bold text-muted">{t("V")}</span>
       <div className="flex gap-1">
         {Array.from({ length: 8 }, (_, i) => {
           const level = i + 1;
@@ -130,8 +133,8 @@ export function FuelGauge({ value, onChange }: { value: number | null; onChange?
           );
         })}
       </div>
-      <span className="text-xs font-bold text-muted">P</span>
-      <span className="ml-2 text-sm font-extrabold text-navy">{value !== null ? `${value}/8` : "—"}</span>
+      <span className="text-xs font-bold text-muted">{t("P")}</span>
+      <span className="ms-2 text-sm font-extrabold text-navy">{value !== null ? `${value}/8` : "—"}</span>
     </div>
   );
 }

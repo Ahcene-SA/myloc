@@ -1,10 +1,11 @@
 "use client";
 
-import type { ReactNode, InputHTMLAttributes, ElementType } from "react";
+import { useId, type ReactNode, type InputHTMLAttributes, type ElementType } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { AlgiersSkyline, BlueBar, Logo, PalmShadow, SkyCircle } from "./Brand";
 import { cn } from "@/lib/utils";
+import { LangSwitch, useLang } from "@/lib/i18n";
 
 interface AuthShellProps {
   eyebrow: string;
@@ -17,47 +18,59 @@ interface AuthShellProps {
 
 /** Mise en page commune connexion / inscription : arc photo à gauche, formulaire à droite. */
 export function AuthShell({ eyebrow, title, subtitle, image, imageAlt, children }: AuthShellProps) {
+  const { t, lang } = useLang();
   return (
     <div className="flex min-h-screen bg-white">
       {/* Panneau visuel (desktop), style des posts Instagram */}
-      <aside className="bg-brand-mist relative hidden w-[46%] max-w-[680px] flex-col justify-between overflow-hidden border-r border-line p-10 lg:flex">
+      <aside className="bg-brand-mist relative hidden w-[46%] max-w-[680px] flex-col justify-between overflow-hidden border-e border-line p-10 lg:flex">
         <PalmShadow className="-left-24 -top-10 w-[520px] opacity-25" />
         <SkyCircle className="-right-40 top-1/3 h-[520px] w-[520px]" />
         <AlgiersSkyline className="inset-x-0 bottom-0 h-48 w-full text-navy opacity-[0.04]" />
-        <a href="./" className="relative" aria-label="Retour au site">
+        <a href="./" className="relative" aria-label={t("Retour au site")}>
           <Logo />
         </a>
         <div className="relative flex flex-col items-center text-center">
           <span className="kicker text-navy/80">
-            Location de véhicules en <strong className="font-extrabold text-navy">Algérie</strong>
+            {t("Location de véhicules en")} <strong className="font-extrabold text-navy">{t("Algérie")}</strong>
           </span>
           <p className="mt-4 text-4xl font-extrabold uppercase leading-[1.02] text-navy xl:text-5xl">
-            Votre <span className="text-sky-gradient">mobilité</span>,
+            {lang === "ar" ? (
+              <>
+                <span className="text-sky-gradient">{t("Votre mobilité")}</span>،
+              </>
+            ) : (
+              <>
+                Votre <span className="text-sky-gradient">mobilité</span>,
+              </>
+            )}
             <br />
-            notre priorité
+            {t("notre priorité")}
           </p>
           <BlueBar className="mt-5" />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={image} alt={imageAlt} className="car-reflect mt-10 w-[88%] max-w-[460px]" />
         </div>
         <p className="relative text-center text-xs font-semibold uppercase tracking-[0.2em] text-muted">
-          Infos &amp; réservation via WhatsApp
+          {t("Infos & réservation via WhatsApp")}
         </p>
       </aside>
 
       {/* Formulaire */}
       <main className="flex flex-1 flex-col px-4 py-6 sm:px-10 lg:px-16">
         <div className="flex items-center justify-between">
-          <a href="./" aria-label="Retour au site" className="lg:hidden">
+          <a href="./" aria-label={t("Retour au site")} className="lg:hidden">
             <Logo compact />
           </a>
-          <a
-            href="./"
-            className="ml-auto inline-flex h-11 items-center gap-2 rounded-full px-3 text-sm font-bold text-muted transition-colors hover:text-navy"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Retour au site
-          </a>
+          <div className="ms-auto flex items-center gap-2">
+            <a
+              href="./"
+              className="inline-flex h-11 items-center gap-2 rounded-full px-3 text-sm font-bold text-muted transition-colors hover:text-navy"
+            >
+              <ArrowLeft className="flip-rtl h-4 w-4" />
+              {t("Retour au site")}
+            </a>
+            <LangSwitch />
+          </div>
         </div>
 
         <motion.div
@@ -73,7 +86,7 @@ export function AuthShell({ eyebrow, title, subtitle, image, imageAlt, children 
           <div className="mt-8">{children}</div>
         </motion.div>
 
-        <p className="text-center text-xs text-muted">© {new Date().getFullYear()} MYLOC.DZ Car Rental. Tous droits réservés.</p>
+        <p className="text-center text-xs text-muted">© {new Date().getFullYear()} MYLOC.DZ Car Rental. {t("Tous droits réservés.")}</p>
       </main>
     </div>
   );
@@ -87,24 +100,26 @@ interface AuthFieldProps extends InputHTMLAttributes<HTMLInputElement> {
 
 /** Champ de formulaire avec étiquette visible et icône. */
 export function AuthField({ label, icon: Icon, trailing, className, id, ...props }: AuthFieldProps) {
-  const inputId = id ?? `field-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+  // useId : l'étiquette peut être en arabe, on ne peut pas en dériver un id fiable.
+  const autoId = useId();
+  const inputId = id ?? autoId;
   return (
     <div className="flex flex-col gap-2">
       <label htmlFor={inputId} className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted">
         {label}
       </label>
       <div className="relative">
-        <Icon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted" />
+        <Icon className="pointer-events-none absolute start-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted" />
         <input
           id={inputId}
           {...props}
           className={cn(
-            "h-14 w-full rounded-2xl border-2 border-line bg-mist pl-12 pr-4 text-[15px] font-semibold text-navy outline-none transition-colors placeholder:font-medium placeholder:text-muted/60 focus:border-sky focus:bg-white",
-            trailing && "pr-12",
+            "h-14 w-full rounded-2xl border-2 border-line bg-mist ps-12 pe-4 text-[15px] font-semibold text-navy outline-none transition-colors placeholder:font-medium placeholder:text-muted/60 focus:border-sky focus:bg-white",
+            trailing && "pe-12",
             className
           )}
         />
-        {trailing && <div className="absolute right-3 top-1/2 -translate-y-1/2">{trailing}</div>}
+        {trailing && <div className="absolute end-3 top-1/2 -translate-y-1/2">{trailing}</div>}
       </div>
     </div>
   );

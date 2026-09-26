@@ -5,6 +5,7 @@ import { interpolate, motion, useReducedMotion, useScroll, useTransform, type Mo
 import { Armchair, ArrowDown, CalendarDays, Cog } from "lucide-react";
 import { apiImageUrl, fetchCars, formatTransmission, type CarFromApi } from "@/lib/api";
 import { categoryInfo, site } from "@/lib/site";
+import { useLang } from "@/lib/i18n";
 
 interface ShowCar {
   id: string;
@@ -75,15 +76,16 @@ function PinnedShowroom({ cars }: { cars: ShowCar[] }) {
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
   const n = cars.length;
   const roadX = useTransform(scrollYProgress, [0, 1], ["0%", "-50%"]);
+  const { t } = useLang();
 
   return (
-    <section ref={ref} aria-label="La flotte en scène" className="relative bg-navy" style={{ height: `${n * 90 + 40}vh` }}>
+    <section ref={ref} aria-label={t("La flotte en scène")} className="relative bg-navy" style={{ height: `${n * 90 + 40}vh` }}>
       <div className="sticky top-0 flex h-[100svh] flex-col overflow-hidden text-white">
         <div aria-hidden="true" className="absolute left-1/2 top-[38%] h-[70vmin] w-[70vmin] -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky/15 blur-3xl" />
 
         <div className="relative z-10 mx-auto w-full max-w-7xl px-4 pt-24 sm:px-6 lg:px-8 lg:pt-28">
-          <p className="kicker text-sky">La flotte en scène</p>
-          <p className="mt-2 max-w-md text-sm font-semibold uppercase tracking-[0.08em] text-white/60">Faites défiler pour découvrir nos modèles</p>
+          <p className="kicker text-sky">{t("La flotte en scène")}</p>
+          <p className="mt-2 max-w-md text-sm font-semibold uppercase tracking-[0.08em] text-white/60">{t("Faites défiler pour découvrir nos modèles")}</p>
         </div>
 
         <div className="relative flex-1">
@@ -177,6 +179,7 @@ function Slide({ car, i, n, progress }: { car: ShowCar; i: number; n: number; pr
   const wordX = useKeys(progress, [c - span, c, c + span], ["25%", "0%", "-25%"]);
 
   const cat = categoryInfo[car.category?.toLowerCase()];
+  const { t } = useLang();
 
   return (
     <div className="pointer-events-none absolute inset-0">
@@ -201,16 +204,16 @@ function Slide({ car, i, n, progress }: { car: ShowCar; i: number; n: number; pr
         style={{ opacity: info, y: infoY }}
       >
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-sky">{cat?.label ?? car.category}</p>
+          <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-sky">{t(cat?.label ?? car.category)}</p>
           <p className="text-4xl font-extrabold uppercase leading-none sm:text-5xl">
             {car.brand} <span className="text-sky-gradient">{car.model}</span>
           </p>
           <ul className="mt-3 flex flex-wrap gap-4 text-xs font-bold uppercase tracking-wide text-white/70">
             <li className="flex items-center gap-1.5">
-              <Cog className="h-4 w-4 text-sky" /> {car.transmission}
+              <Cog className="h-4 w-4 text-sky" /> {t(car.transmission)}
             </li>
             <li className="flex items-center gap-1.5">
-              <Armchair className="h-4 w-4 text-sky" /> {car.seats} places
+              <Armchair className="h-4 w-4 text-sky" /> {car.seats} {t("places")}
             </li>
             <li className="flex items-center gap-1.5">
               <CalendarDays className="h-4 w-4 text-sky" /> {car.year}
@@ -219,17 +222,17 @@ function Slide({ car, i, n, progress }: { car: ShowCar; i: number; n: number; pr
         </div>
         <div className="flex items-center gap-5">
           <p className="leading-none">
-            <span className="block text-[11px] font-semibold uppercase tracking-[0.16em] text-white/50">À partir de</span>
+            <span className="block text-[11px] font-semibold uppercase tracking-[0.16em] text-white/50">{t("À partir de")}</span>
             <span className="mt-1 block text-4xl font-extrabold">
               {car.price} {site.currency}
-              <span className="ml-1 text-sm font-semibold text-white/50">/ jour</span>
+              <span className="ms-1 text-sm font-semibold text-white/50">/ {t("jour")}</span>
             </span>
           </p>
           <a
             href="#vehicules"
             className="inline-flex h-12 items-center gap-2 rounded-full bg-sky px-5 text-sm font-bold text-navy transition-colors hover:bg-white"
           >
-            Réserver <ArrowDown className="h-4 w-4" />
+            {t("Réserver")} <ArrowDown className="h-4 w-4" />
           </a>
         </div>
       </motion.div>
@@ -246,10 +249,11 @@ function Dot({ i, n, progress }: { i: number; n: number; progress: MotionValue<n
 
 /** Version sans animation (réglage « réduire les animations » du téléphone). */
 function StaticShowroom({ cars }: { cars: ShowCar[] }) {
+  const { t } = useLang();
   return (
-    <section aria-label="La flotte en scène" className="bg-navy py-20 text-white">
+    <section aria-label={t("La flotte en scène")} className="bg-navy py-20 text-white">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <p className="kicker text-sky">La flotte en scène</p>
+        <p className="kicker text-sky">{t("La flotte en scène")}</p>
         <div className="no-scrollbar mt-8 flex gap-6 overflow-x-auto pb-4">
           {cars.map((car) => (
             <div key={car.id} className="w-72 flex-shrink-0">
@@ -259,7 +263,7 @@ function StaticShowroom({ cars }: { cars: ShowCar[] }) {
                 {car.brand} <span className="text-sky-gradient">{car.model}</span>
               </p>
               <p className="text-white/60">
-                {car.price} {site.currency} / jour
+                {car.price} {site.currency} / {t("jour")}
               </p>
             </div>
           ))}

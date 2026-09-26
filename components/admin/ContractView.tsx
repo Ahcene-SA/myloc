@@ -14,6 +14,7 @@ import {
   type ReservationFromApi,
 } from "@/lib/api";
 import { pageUrl } from "@/lib/routes";
+import { setLang, useLang } from "@/lib/i18n";
 import { site } from "@/lib/site";
 import { LoadingBlock, categoryLabel, daysBetween, formatDate, formatPrice, formatTime, paymentLabels, reservationRef } from "../client/shared";
 import { CarDamageMap } from "./CarDamageMap";
@@ -73,6 +74,12 @@ export function ContractView() {
     () => Number(new URLSearchParams(window.location.search).get("id")) || 0,
     () => 0
   );
+  // L'administration et le contrat sont en français
+  const { lang } = useLang();
+  useEffect(() => {
+    if (lang !== "fr") setLang("fr");
+  }, [lang]);
+
   const [data, setData] = useState<{ r: ReservationFromApi | null; insp: InspectionSet; error: string } | null>(null);
 
   useEffect(() => {

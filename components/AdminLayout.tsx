@@ -7,6 +7,7 @@ import { AdminContent } from "./AdminContent";
 import { useAuth } from "./AuthContext";
 import { LoadingBlock } from "./client/shared";
 import { pageUrl } from "@/lib/routes";
+import { setLang, useLang } from "@/lib/i18n";
 
 export function AdminLayout() {
   const { token, user, isLoading } = useAuth();
@@ -15,6 +16,12 @@ export function AdminLayout() {
     () => true,
     () => false
   );
+
+  // L'administration et le contrat sont en français
+  const { lang } = useLang();
+  useEffect(() => {
+    if (lang !== "fr") setLang("fr");
+  }, [lang]);
 
   // Accès réservé aux administrateurs
   useEffect(() => {

@@ -7,6 +7,7 @@ import {
   useEffect,
   ReactNode,
 } from "react";
+import { t } from "@/lib/i18n";
 import { login as apiLogin, register as apiRegister, fetchCurrentUser, UserFromApi } from "@/lib/api";
 
 interface AuthContextValue {
@@ -72,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const res = await apiLogin(email, password);
       if (!res.success || !res.token) {
-        return { ok: false, error: res.error || "Identifiants invalides." };
+        return { ok: false, error: res.error || t("Identifiants invalides.") };
       }
       localStorage.setItem("myloc_token", res.token);
       setToken(res.token);
@@ -85,10 +86,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem("myloc_token");
         localStorage.removeItem("myloc_user");
         setToken(null);
-        return { ok: false, error: e instanceof Error ? e.message : "Impossible de charger le profil." };
+        return { ok: false, error: e instanceof Error ? e.message : t("Impossible de charger le profil.") };
       }
     } catch (e) {
-      return { ok: false, error: e instanceof Error ? e.message : "Erreur de connexion." };
+      return { ok: false, error: e instanceof Error ? e.message : t("Erreur de connexion.") };
     }
   };
 
@@ -101,7 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const res = await apiRegister(fullName, email, password, phone, "client");
       if (!res.success || !res.token) {
-        return { ok: false, error: res.error || "Inscription échouée." };
+        return { ok: false, error: res.error || t("Inscription échouée.") };
       }
       localStorage.setItem("myloc_token", res.token);
       setToken(res.token);
@@ -113,10 +114,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem("myloc_token");
         localStorage.removeItem("myloc_user");
         setToken(null);
-        return { ok: false, error: e instanceof Error ? e.message : "Impossible de charger le profil." };
+        return { ok: false, error: e instanceof Error ? e.message : t("Impossible de charger le profil.") };
       }
     } catch (e) {
-      return { ok: false, error: e instanceof Error ? e.message : "Erreur d'inscription." };
+      return { ok: false, error: e instanceof Error ? e.message : t("Erreur d'inscription.") };
     }
   };
 

@@ -5,6 +5,7 @@ import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 import { useAuth } from "@/components/AuthContext";
 import { AuthShell, AuthField, AuthError, authSubmitClass } from "@/components/AuthShell";
 import { pageUrl } from "@/lib/routes";
+import { useLang } from "@/lib/i18n";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -19,6 +20,7 @@ export default function LoginPage() {
     () => false
   );
   const { login } = useAuth();
+  const { t } = useLang();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,7 +46,7 @@ export default function LoginPage() {
       type="button"
       onClick={() => setShowPassword(!showPassword)}
       className="flex h-9 w-9 items-center justify-center rounded-full text-muted hover:bg-mist hover:text-navy"
-      aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+      aria-label={showPassword ? t("Masquer le mot de passe") : t("Afficher le mot de passe")}
     >
       {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
     </button>
@@ -52,35 +54,35 @@ export default function LoginPage() {
 
   return (
     <AuthShell
-      eyebrow="Espace client"
+      eyebrow={t("Espace client")}
       title={
         <>
-          Bon retour <br />
-          <span className="text-sky-gradient">parmi nous.</span>
+          {t("Bon retour")} <br />
+          <span className="text-sky-gradient">{t("parmi nous.")}</span>
         </>
       }
-      subtitle="Connectez-vous pour gérer vos réservations MYLOC.DZ."
+      subtitle={t("Connectez-vous pour gérer vos réservations MYLOC.DZ.")}
       image="images/cars/jetour-x70-plus.png"
       imageAlt="Jetour X70 Plus"
     >
-      <AuthError message={error || (expired ? "Votre session a expiré : reconnectez-vous." : "")} />
+      <AuthError message={error ? t(error) : expired ? t("Votre session a expiré : reconnectez-vous.") : ""} />
       <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
         <AuthField
-          label="Adresse email"
+          label={t("Adresse email")}
           icon={Mail}
           type="email"
           autoComplete="email"
-          placeholder="vous@exemple.com"
+          placeholder={t("vous@exemple.com")}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
         <AuthField
-          label="Mot de passe"
+          label={t("Mot de passe")}
           icon={Lock}
           type={showPassword ? "text" : "password"}
           autoComplete="current-password"
-          placeholder="8 caractères minimum"
+          placeholder={t("8 caractères minimum")}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
@@ -91,23 +93,23 @@ export default function LoginPage() {
         <div className="flex items-center justify-between text-sm">
           <label className="flex cursor-pointer items-center gap-2 font-semibold text-ink-soft">
             <input type="checkbox" className="h-4 w-4 accent-sky" />
-            Se souvenir de moi
+            {t("Se souvenir de moi")}
           </label>
           <a href="#" className="font-bold text-sky-text hover:underline">
-            Mot de passe oublié ?
+            {t("Mot de passe oublié ?")}
           </a>
         </div>
 
         <button type="submit" disabled={loading} className={`${authSubmitClass} mt-2`}>
-          {loading ? "Connexion..." : "Se connecter"}
-          <ArrowRight className="h-5 w-5" />
+          {loading ? t("Connexion...") : t("Se connecter")}
+          <ArrowRight className="flip-rtl h-5 w-5" />
         </button>
       </form>
 
       <p className="mt-8 text-center text-[15px] text-ink-soft">
-        Pas encore de compte ?{" "}
+        {t("Pas encore de compte ?")}{" "}
         <a href={pageUrl("register")} className="font-bold text-sky-text hover:underline">
-          Créer un compte
+          {t("Créer un compte")}
         </a>
       </p>
     </AuthShell>

@@ -5,6 +5,7 @@ import { Cog, Car as CarIcon, Armchair, CalendarDays } from "lucide-react";
 import { WhatsAppIcon } from "./FloatingWhatsApp";
 import { categoryInfo, site, whatsappLink } from "@/lib/site";
 import { cn } from "@/lib/utils";
+import { dateLocale, useLang } from "@/lib/i18n";
 
 export interface Car {
   id: string;
@@ -35,13 +36,14 @@ function splitName(name: string) {
 }
 
 export function CarCard({ car, index = 0, quote, onBook }: CarCardProps) {
+  const { t } = useLang();
   const cat = categoryInfo[car.category?.toLowerCase()];
   const { brand, model } = splitName(car.name);
 
   const specs = [
-    { icon: Cog, label: car.transmission === "Automatique" ? "Boîte auto" : `Boîte ${car.transmission.toLowerCase()}` },
-    { icon: CarIcon, label: cat?.label ?? car.category },
-    { icon: Armchair, label: `${car.seats} places` },
+    { icon: Cog, label: car.transmission === "Automatique" ? t("Boîte auto") : t(`Boîte ${car.transmission.toLowerCase()}`) },
+    { icon: CarIcon, label: t(cat?.label ?? car.category) },
+    { icon: Armchair, label: `${car.seats} ${t("places")}` },
     { icon: CalendarDays, label: String(car.year) },
   ];
 
@@ -60,8 +62,8 @@ export function CarCard({ car, index = 0, quote, onBook }: CarCardProps) {
       <div className="bg-brand-mist relative flex h-[200px] items-center justify-center overflow-hidden px-6 pt-4">
         <span aria-hidden="true" className="absolute -right-16 -top-16 h-48 w-48 rounded-full border-[26px] border-sky/10" />
         {car.featured && (
-          <span className="absolute left-4 top-4 rounded-full bg-navy px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-white">
-            Coup de cœur
+          <span className="absolute start-4 top-4 rounded-full bg-navy px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-white">
+            {t("Coup de cœur")}
           </span>
         )}
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -93,26 +95,26 @@ export function CarCard({ car, index = 0, quote, onBook }: CarCardProps) {
             <div className="flex items-end justify-between gap-3 rounded-2xl bg-sky-soft/70 px-4 py-3">
               <p className="leading-none">
                 <span className="block text-[11px] font-bold uppercase tracking-[0.14em] text-sky-text">
-                  Total · {quote.days} jour{quote.days > 1 ? "s" : ""}
+                  {t(quote.days > 1 ? "Total · {days} jours" : "Total · {days} jour", { days: quote.days })}
                 </span>
                 <span className="mt-1.5 block text-[26px] font-extrabold text-navy">
-                  {quote.total.toLocaleString("fr-FR")} {site.currency}
+                  {quote.total.toLocaleString(dateLocale())} {site.currency}
                   {!!quote.base && quote.base > quote.total && (
-                    <span className="ml-2 text-sm font-semibold text-muted line-through">
-                      {quote.base.toLocaleString("fr-FR")} {site.currency}
+                    <span className="ms-2 text-sm font-semibold text-muted line-through">
+                      {quote.base.toLocaleString(dateLocale())} {site.currency}
                     </span>
                   )}
                 </span>
                 {quote.discountLabel && (
                   <span className="mt-1.5 inline-block rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
-                    {quote.discountLabel}
+                    {t(quote.discountLabel)}
                   </span>
                 )}
               </p>
-              <span className="text-right text-[11px] font-semibold leading-tight text-muted">
+              <span className="text-end text-[11px] font-semibold leading-tight text-muted">
                 {quote.label}
                 <br />
-                {car.price} {site.currency}/jour
+                {car.price} {site.currency}/{t("jour")}
               </span>
             </div>
             <div className="flex gap-2">
@@ -121,13 +123,19 @@ export function CarCard({ car, index = 0, quote, onBook }: CarCardProps) {
                 onClick={onBook}
                 className="flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-navy px-4 text-sm font-bold text-white transition-colors hover:bg-navy-soft"
               >
-                Réserver ces dates
+                {t("Réserver ces dates")}
               </button>
               <a
-                href={whatsappLink(`Bonjour MYLOC.DZ, je souhaite réserver la ${car.name} ${quote.label.toLowerCase()} (${quote.days} jours).`)}
+                href={whatsappLink(
+                  t("Bonjour MYLOC.DZ, je souhaite réserver la {car} {period} ({days} jours).", {
+                    car: car.name,
+                    period: quote.label.toLowerCase(),
+                    days: quote.days,
+                  })
+                )}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label={`Demander la ${car.name} sur WhatsApp`}
+                aria-label={t("Demander la {car} sur WhatsApp", { car: car.name })}
                 className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-sky text-navy transition-colors hover:bg-sky-mid hover:text-white"
               >
                 <WhatsAppIcon className="h-5 w-5" />
@@ -137,21 +145,21 @@ export function CarCard({ car, index = 0, quote, onBook }: CarCardProps) {
         ) : (
           <div className="mt-5 flex items-end justify-between gap-3">
             <p className="leading-none">
-              <span className="block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">À partir de</span>
+              <span className="block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">{t("À partir de")}</span>
               <span className="mt-1.5 block text-[28px] font-extrabold text-navy">
                 {car.price} {site.currency}
-                <span className="ml-1 text-xs font-semibold text-muted">/ {car.priceUnit}</span>
+                <span className="ms-1 text-xs font-semibold text-muted">/ {t(car.priceUnit)}</span>
               </span>
             </p>
             <a
-              href={whatsappLink(`Bonjour MYLOC.DZ, je suis intéressé(e) par la ${car.name}. Est-elle disponible ?`)}
+              href={whatsappLink(t("Bonjour MYLOC.DZ, je suis intéressé(e) par la {car}. Est-elle disponible ?", { car: car.name }))}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label={`Réserver la ${car.name} sur WhatsApp`}
+              aria-label={t("Réserver la {car} sur WhatsApp", { car: car.name })}
               className="flex h-12 items-center gap-2 rounded-full bg-sky px-4 text-sm font-bold text-navy transition-colors hover:bg-sky-mid hover:text-white"
             >
               <WhatsAppIcon className="h-4 w-4" />
-              Réserver
+              {t("Réserver")}
             </a>
           </div>
         )}

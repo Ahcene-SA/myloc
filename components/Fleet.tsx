@@ -9,6 +9,7 @@ import { AVAILABILITY_EVENT, saveBookingIntent, type AvailabilitySearch } from "
 import { pageUrl } from "@/lib/routes";
 import { FILTER_EVENT, categoryInfo } from "@/lib/site";
 import { BlueBar, PalmShadow } from "./Brand";
+import { dateLocale, translate, useLang } from "@/lib/i18n";
 
 const fallbackCars: Car[] = [
   {
@@ -92,6 +93,7 @@ const fallbackCars: Car[] = [
 ];
 
 export function Fleet() {
+  const { t } = useLang();
   const [activeCategory, setActiveCategory] = useState("all");
   const [cars, setCars] = useState<Car[]>([]);
   const [loading, setLoading] = useState(true);
@@ -159,7 +161,7 @@ export function Fleet() {
         .then((list) => setFree(list))
         .catch((err) => {
           setFree(null);
-          setSearchError(err instanceof Error ? err.message : "Impossible de vérifier les disponibilités.");
+          setSearchError(err instanceof Error ? err.message : translate("Impossible de vérifier les disponibilités."));
         })
         .finally(() => setSearching(false));
     };
@@ -179,8 +181,8 @@ export function Fleet() {
     return m;
   }, [free]);
 
-  const shortDate = (d: string) => new Date(`${d}T00:00:00`).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
-  const quoteLabel = search ? `Du ${shortDate(search.start)} au ${shortDate(search.end)}` : "";
+  const shortDate = (d: string) => new Date(`${d}T00:00:00`).toLocaleDateString(dateLocale(), { day: "numeric", month: "short" });
+  const quoteLabel = search ? t("Du {start} au {end}", { start: shortDate(search.start), end: shortDate(search.end) }) : "";
 
   const book = (carId: string) => {
     if (!search) return;
@@ -234,24 +236,24 @@ export function Fleet() {
       <PalmShadow flip className="-right-40 -top-20 w-[520px] opacity-[0.12]" />
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center gap-4 text-center">
-          <span className="kicker text-navy/80">Notre sélection de</span>
+          <span className="kicker text-navy/80">{t("Notre sélection de")}</span>
           <h2
             key={activeCategory}
             className="fade-up text-sky-gradient text-5xl font-extrabold uppercase leading-none tracking-[-0.01em] sm:text-6xl lg:text-[84px]"
           >
-            {active ? active.plural : "Véhicules"}
+            {active ? t(active.plural) : t("Véhicules")}
           </h2>
           <BlueBar />
           <p className="max-w-md text-sm font-semibold uppercase tracking-[0.08em] text-ink-soft sm:text-[15px]">
-            {active ? active.tagline : "Citadines, compactes et SUV récents, entretenus avant chaque location"}
+            {active ? t(active.tagline) : t("Citadines, compactes et SUV récents, entretenus avant chaque location")}
           </p>
         </div>
 
         {rules && rules.duration.length > 0 && (
           <p className="mx-auto mt-6 flex w-fit flex-wrap items-center justify-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-center text-xs font-bold uppercase tracking-wide text-emerald-800">
             <span aria-hidden="true">%</span>
-            Remise automatique :{" "}
-            {rules.duration.map((t) => `-${t.percent} % dès ${t.min_days} jours`).join(" · ")}
+            {t("Remise automatique :")}{" "}
+            {rules.duration.map((r) => t("-{percent} % dès {days} jours", { percent: r.percent, days: r.min_days })).join(" · ")}
           </p>
         )}
 
@@ -262,12 +264,12 @@ export function Fleet() {
               <span>
                 <strong className="font-extrabold">{quoteLabel}</strong>
                 {searching
-                  ? " · recherche des véhicules libres…"
+                  ? ` · ${t("recherche des véhicules libres…")}`
                   : searchError
                     ? ` · ${searchError}`
                     : free
-                      ? ` · ${free.length} véhicule${free.length > 1 ? "s" : ""} libre${free.length > 1 ? "s" : ""}${
-                          cars.length > free.length ? `, ${cars.length - free.length} déjà pris` : ""
+                      ? ` · ${t(free.length > 1 ? "{count} véhicules libres" : "{count} véhicule libre", { count: free.length })}${
+                          cars.length > free.length ? t(", {count} déjà pris", { count: cars.length - free.length }) : ""
                         }`
                       : ""}
               </span>
@@ -277,7 +279,7 @@ export function Fleet() {
               onClick={clearSearch}
               className="inline-flex h-9 flex-shrink-0 items-center gap-1.5 rounded-full bg-white px-4 text-xs font-bold uppercase tracking-wide text-navy hover:bg-navy hover:text-white"
             >
-              <X className="h-3.5 w-3.5" /> Toute la flotte
+              <X className="h-3.5 w-3.5" /> {t("Toute la flotte")}
             </button>
           </div>
         )}
@@ -285,7 +287,7 @@ export function Fleet() {
         <div
           className="no-scrollbar -mx-4 mt-10 flex gap-2.5 overflow-x-auto px-4 sm:mx-0 sm:justify-center sm:px-0"
           role="group"
-          aria-label="Filtrer par catégorie"
+          aria-label={t("Filtrer par catégorie")}
         >
           {categories.map((cat) => {
             const isActive = activeCategory === cat.id;
@@ -300,7 +302,7 @@ export function Fleet() {
                   isActive ? "border-navy bg-navy text-white" : "border-line text-navy hover:border-navy"
                 )}
               >
-                {cat.label}
+                {t(cat.label)}
                 <span className={cn("text-[11px]", isActive ? "text-sky" : "text-muted")}>{counts[cat.id] ?? 0}</span>
               </button>
             );
@@ -309,7 +311,7 @@ export function Fleet() {
 
         <div className="mt-12">
           {loading || searching ? (
-            <div className="flex h-72 items-center justify-center" role="status" aria-label="Chargement des véhicules">
+            <div className="flex h-72 items-center justify-center" role="status" aria-label={t("Chargement des véhicules")}>
               <div className="h-9 w-9 animate-spin rounded-full border-4 border-line border-t-sky" />
             </div>
           ) : filteredCars.length > 0 ? (
@@ -338,8 +340,8 @@ export function Fleet() {
           ) : (
             <p className="py-16 text-center font-semibold text-muted">
               {search && free
-                ? "Aucun véhicule libre dans cette catégorie sur ces dates. Essayez d'autres dates ou une autre catégorie."
-                : "Aucun véhicule dans cette catégorie pour le moment."}
+                ? t("Aucun véhicule libre dans cette catégorie sur ces dates. Essayez d'autres dates ou une autre catégorie.")
+                : t("Aucun véhicule dans cette catégorie pour le moment.")}
             </p>
           )}
         </div>

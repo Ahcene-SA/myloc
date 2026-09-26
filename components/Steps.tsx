@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { motion, useReducedMotion, useScroll, useTransform, type MotionValue } from "framer-motion";
 import { BrandHeading, Sky } from "./Brand";
 import { cn } from "@/lib/utils";
+import { useLang } from "@/lib/i18n";
 
 const steps = [
   { title: "Choisissez", desc: "Vos dates et votre point de retrait : les véhicules libres s'affichent avec le prix total." },
@@ -13,6 +14,7 @@ const steps = [
 
 export function Steps() {
   const ref = useRef<HTMLOListElement>(null);
+  const { t } = useLang();
   const reduce = !!useReducedMotion();
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start 85%", "end 45%"] });
   const p = useTransform(scrollYProgress, [0, 1], [reduce ? 1 : 0, 1]);
@@ -22,8 +24,8 @@ export function Steps() {
   return (
     <section className="overflow-hidden bg-white py-20 lg:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <BrandHeading overline="Simple et rapide">
-          Réservez en <Sky>3 étapes</Sky>
+        <BrandHeading overline={t("Simple et rapide")}>
+          {t("Réservez en")} <Sky>{t("3 étapes")}</Sky>
         </BrandHeading>
 
         {/* Route (grand écran) */}
@@ -76,6 +78,7 @@ function StepCard({ s, i, p, last }: { s: (typeof steps)[number]; i: number; p: 
   const at = reachAt(i);
   const opacity = useTransform(p, [Math.max(0, at - 0.25), at], [0.35, 1]);
   const y = useTransform(p, [Math.max(0, at - 0.25), at], [24, 0]);
+  const { t } = useLang();
   return (
     <motion.li
       style={{ opacity, y }}
@@ -98,8 +101,8 @@ function StepCard({ s, i, p, last }: { s: (typeof steps)[number]; i: number; p: 
       >
         {i + 1}
       </span>
-      <h3 className="text-2xl font-extrabold uppercase tracking-wide">{s.title}</h3>
-      <p className={cn("text-[15px] leading-relaxed", last ? "text-white/75" : "text-ink-soft")}>{s.desc}</p>
+      <h3 className="text-2xl font-extrabold uppercase tracking-wide">{t(s.title)}</h3>
+      <p className={cn("text-[15px] leading-relaxed", last ? "text-white/75" : "text-ink-soft")}>{t(s.desc)}</p>
     </motion.li>
   );
 }
