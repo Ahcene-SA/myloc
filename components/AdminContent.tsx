@@ -453,6 +453,7 @@ function CarsView() {
                 className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-brand"
               >
                 <option value="citadine">Citadine</option>
+                <option value="compacte">Compacte</option>
                 <option value="suv">SUV</option>
                 <option value="berline">Berline</option>
               </select>

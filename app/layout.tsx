@@ -22,13 +22,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr" className={`${montserrat.variable} h-full antialiased`}>
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: 'window.MYLOC_API_URL = "https://significant-happiness-allowed-hereby.trycloudflare.com";',
-          }}
-        />
-      </head>
       <body className="min-h-full flex flex-col font-sans">
         <AuthProvider>{children}</AuthProvider>
       </body>

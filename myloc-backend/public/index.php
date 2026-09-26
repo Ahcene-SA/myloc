@@ -69,13 +69,13 @@ $router->get('/api/auth/clients', fn() => $authController->listClients(), 'admin
 $router->get('/api/cars', fn() => $carController->index());
 $router->get('/api/cars/{id}', fn(array $params) => $carController->show($params));
 
-// Car management routes (open for demo — no auth required)
-$router->post('/api/cars', fn() => $carController->create());
-$router->post('/api/cars/upload', fn() => $carController->uploadImage());
-$router->put('/api/cars/{id}', fn(array $params) => $carController->update($params));
-$router->delete('/api/cars/{id}', fn(array $params) => $carController->delete($params));
+// Car management routes (admin only)
+$router->post('/api/cars', fn() => $carController->create(), 'admin');
+$router->post('/api/cars/upload', fn() => $carController->uploadImage(), 'admin');
+$router->put('/api/cars/{id}', fn(array $params) => $carController->update($params), 'admin');
+$router->delete('/api/cars/{id}', fn(array $params) => $carController->delete($params), 'admin');
 
-// Reservation routes (open for demo — no auth required)
+// Reservation routes (role checks are done inside ReservationController)
 $router->post('/api/reservations', fn() => $reservationController->create());
 $router->get('/api/reservations/me', fn() => $reservationController->myReservations());
 $router->get('/api/reservations', fn() => $reservationController->allReservations());

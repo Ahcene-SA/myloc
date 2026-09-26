@@ -43,7 +43,8 @@ export function getApiBase(): string {
     return `${protocol}//${hostname}${port ? `:${port}` : ""}/myloc/myloc-backend/public`;
   }
 
-  return "https://significant-happiness-allowed-hereby.trycloudflare.com";
+  // Par défaut : backend PHP lancé en local (php -S localhost:8000 …).
+  return "http://localhost:8000";
 }
 
 export interface ApiError {
@@ -300,6 +301,14 @@ export async function updateReservationStatus(
   return request<unknown>("PATCH", `/reservations/${id}/status`, { status, admin_note: adminNote }, true);
 }
 
+/** "automatique" / "manuel" (valeurs de l'API) → libellés affichés sur le site. */
+function formatTransmission(value: string): string {
+  const v = (value || "").toLowerCase();
+  if (v.startsWith("auto")) return "Automatique";
+  if (v.startsWith("manu")) return "Manuelle";
+  return value;
+}
+
 export function mapApiCarToCar(car: CarFromApi): {
   id: string;
   name: string;
@@ -321,10 +330,10 @@ export function mapApiCarToCar(car: CarFromApi): {
       ? car.image_url.startsWith("http")
         ? car.image_url
         : `${base}/${car.image_url.replace(/^\/?/, "")}`
-      : `${base}/images/audi-png-auto-car-0.png`,
+      : "images/audi-png-auto-car-0.png",
     price: typeof car.price_per_day === "string" ? parseFloat(car.price_per_day) : car.price_per_day,
     priceUnit: "jour",
-    transmission: car.transmission,
+    transmission: formatTransmission(car.transmission),
     seats: car.seats,
     year: car.year,
     status: car.status,

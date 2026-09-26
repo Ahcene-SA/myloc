@@ -80,7 +80,7 @@ class CarController
     public function uploadImage(): void
     {
         if (empty($_FILES['image'])) {
-            Response::error('No image file provided. FILES=' . json_encode($_FILES), 422);
+            Response::error('No image file provided.', 422);
         }
 
         $file = $_FILES['image'];
@@ -156,8 +156,8 @@ class CarController
 
         if (array_key_exists('category', $input)) {
             $category = Validator::sanitizeString($input['category']);
-            if ($category !== '' && !Validator::inArray($category, ['citadine', 'suv', 'berline'])) {
-                Response::error('Category must be citadine, suv, or berline.', 422);
+            if ($category !== '' && !Validator::inArray($category, ['citadine', 'compacte', 'suv', 'berline'])) {
+                Response::error('Category must be citadine, compacte, suv, or berline.', 422);
             }
             if ($category !== '') {
                 $data['category'] = $category;
