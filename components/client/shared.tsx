@@ -163,3 +163,14 @@ export const secondaryBtn =
 export const inputClass =
   "h-12 w-full rounded-2xl border-2 border-line bg-mist px-4 text-[15px] font-semibold text-navy outline-none transition-colors placeholder:font-medium placeholder:text-muted/60 focus:border-sky focus:bg-white disabled:opacity-60";
 export const labelClass = "mb-2 block text-[11px] font-bold uppercase tracking-[0.16em] text-muted";
+
+/** « Prix de base barré + remise » quand une réservation a bénéficié d'une remise. */
+export function DiscountLine({ r }: { r: ReservationFromApi }) {
+  const discount = parseFloat(String(r.discount_amount ?? 0)) || 0;
+  if (discount <= 0) return null;
+  return (
+    <span className="block text-xs font-semibold text-emerald-700">
+      <span className="text-muted line-through">{formatPrice(r.base_price)}</span> · {r.discount_label || "Remise"} (-{formatPrice(discount)})
+    </span>
+  );
+}

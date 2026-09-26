@@ -15,6 +15,8 @@ use Dotenv\Dotenv;
 use Myloc\Config\Database;
 use Myloc\Controllers\AuthController;
 use Myloc\Controllers\CarController;
+use Myloc\Controllers\InspectionController;
+use Myloc\Controllers\PricingController;
 use Myloc\Controllers\ReservationController;
 use Myloc\Middleware\AuthMiddleware;
 use Myloc\Middleware\CorsMiddleware;
@@ -56,6 +58,8 @@ try {
 $authController = new AuthController($db);
 $carController = new CarController($db);
 $reservationController = new ReservationController($db);
+$pricingController = new PricingController($db);
+$inspectionController = new InspectionController($db);
 
 $router = new Router();
 
@@ -70,6 +74,18 @@ $router->get('/api/auth/clients', fn() => $authController->listClients(), 'admin
 // Administration
 $router->get('/api/admin/cars', fn() => $carController->adminIndex(), 'admin');
 $router->post('/api/admin/reservations', fn() => $reservationController->adminCreate(), 'admin');
+$router->put('/api/admin/pricing-rules', fn() => $pricingController->updateRules(), 'admin');
+$router->get('/api/admin/promos', fn() => $pricingController->listPromos(), 'admin');
+$router->post('/api/admin/promos', fn() => $pricingController->createPromo(), 'admin');
+$router->put('/api/admin/promos/{id}', fn(array $p) => $pricingController->updatePromo($p), 'admin');
+$router->delete('/api/admin/promos/{id}', fn(array $p) => $pricingController->deletePromo($p), 'admin');
+$router->post('/api/admin/inspections/upload', fn() => $inspectionController->upload(), 'admin');
+$router->put('/api/admin/reservations/{id}/inspections/{type}', fn(array $p) => $inspectionController->save($p), 'admin');
+$router->get('/api/reservations/{id}/inspections', fn(array $p) => $inspectionController->show($p));
+
+// Prix et remises (public)
+$router->post('/api/pricing/quote', fn() => $pricingController->quote());
+$router->get('/api/pricing/rules', fn() => $pricingController->publicRules());
 
 // Public car routes
 $router->get('/api/cars', fn() => $carController->index());

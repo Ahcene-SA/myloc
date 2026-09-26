@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { useAdmin, type NewReservationPrefill } from "../AdminContext";
-import { adminCreateReservation, type PaymentMethod } from "@/lib/api";
+import { adminCreateReservation, fetchQuote, type PaymentMethod, type PricingQuote } from "@/lib/api";
 import { site } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import { daysBetween, formatDate, formatPrice, inputClass, labelClass, primaryBtn, secondaryBtn, todayIso } from "../client/shared";
@@ -53,7 +53,24 @@ function Form({ prefill, onClose }: { prefill: NewReservationPrefill; onClose: (
 
   const car = cars.find((c) => String(c.id) === f.carId);
   const days = daysBetween(f.start, f.end);
-  const computed = car ? (parseFloat(String(car.price_per_day)) || 0) * days : 0;
+  const baseComputed = car ? (parseFloat(String(car.price_per_day)) || 0) * days : 0;
+
+  // Remise automatique (durée) calculée par le serveur
+  const quoteKey = car && days > 0 ? `${car.id}|${f.start}|${f.end}` : "";
+  const [quoteState, setQuoteState] = useState<{ key: string; quote: PricingQuote | null }>({ key: "", quote: null });
+  useEffect(() => {
+    if (!quoteKey) return;
+    const [id, start, end] = quoteKey.split("|");
+    let cancelled = false;
+    fetchQuote(Number(id), start, end)
+      .then((q) => !cancelled && setQuoteState({ key: quoteKey, quote: q }))
+      .catch(() => !cancelled && setQuoteState({ key: quoteKey, quote: null }));
+    return () => {
+      cancelled = true;
+    };
+  }, [quoteKey]);
+  const quote = quoteState.key === quoteKey ? quoteState.quote : null;
+  const computed = quote ? quote.total_price : baseComputed;
 
   const conflict = useMemo(
     () =>
@@ -294,6 +311,11 @@ function Form({ prefill, onClose }: { prefill: NewReservationPrefill; onClose: (
                   <>
                     {days} jour{days > 1 ? "s" : ""} × {formatPrice(car.price_per_day)} ={" "}
                     <span className={cn("font-extrabold text-navy", f.customPrice && "line-through opacity-50")}>{formatPrice(computed)}</span>
+                    {quote && quote.discount_amount > 0 && !f.customPrice && (
+                      <span className="ml-2 text-xs font-semibold text-emerald-700">
+                        ({quote.discount_label}, au lieu de {formatPrice(quote.base_price)})
+                      </span>
+                    )}
                   </>
                 ) : (
                   "Choisissez un véhicule et des dates."

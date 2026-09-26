@@ -13,6 +13,7 @@ import {
   LoadingBlock,
   PageTitle,
   StatusBadge,
+  DiscountLine,
   canCancel,
   categoryLabel,
   daysBetween,
@@ -25,7 +26,9 @@ import {
   reservationRef,
   reservationWhatsApp,
   splitCarName,
+  todayIso,
 } from "./shared";
+import { InspectionButton } from "./InspectionReadOnly";
 
 type Filter = "upcoming" | "past" | "cancelled" | "all";
 
@@ -207,6 +210,7 @@ function ReservationCard({ r }: { r: ReservationFromApi }) {
             <p>
               <span className="text-2xl font-extrabold text-navy">{formatPrice(r.total_price)}</span>
               {r.payment_method && <span className="ml-2 text-xs font-semibold text-muted">{paymentLabels[r.payment_method]}</span>}
+              <DiscountLine r={r} />
             </p>
             <div className="flex flex-wrap gap-2">
               <a
@@ -218,6 +222,7 @@ function ReservationCard({ r }: { r: ReservationFromApi }) {
                 <WhatsAppIcon className="h-4 w-4 text-whatsapp" />
                 Contacter l&apos;agence
               </a>
+              {r.status === "confirmed" && (r.start_date || "") <= todayIso() && <InspectionButton r={r} />}
               {canCancel(r) && !confirming && (
                 <button
                   type="button"

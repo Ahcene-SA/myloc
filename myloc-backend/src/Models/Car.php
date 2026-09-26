@@ -50,12 +50,13 @@ class Car
     public function create(array $data): int
     {
         $stmt = $this->pdo->prepare("
-            INSERT INTO cars (category, name, description, price_per_day, transmission, seats, year, image_url, status)
-            VALUES (:category, :name, :description, :price_per_day, :transmission, :seats, :year, :image_url, :status)
+            INSERT INTO cars (category, name, plate, description, price_per_day, transmission, seats, year, image_url, status)
+            VALUES (:category, :name, :plate, :description, :price_per_day, :transmission, :seats, :year, :image_url, :status)
         ");
         $stmt->execute([
             ':category' => $data['category'] ?? 'citadine',
             ':name' => $data['name'],
+            ':plate' => $data['plate'] ?? null,
             ':description' => $data['description'] ?? null,
             ':price_per_day' => $data['price_per_day'],
             ':transmission' => $data['transmission'],
@@ -72,7 +73,7 @@ class Car
         $fields = [];
         $params = [':id' => $id];
 
-        $allowed = ['category', 'name', 'description', 'price_per_day', 'transmission', 'seats', 'year', 'image_url', 'status'];
+        $allowed = ['category', 'name', 'plate', 'description', 'price_per_day', 'transmission', 'seats', 'year', 'image_url', 'status'];
         foreach ($allowed as $key) {
             if (array_key_exists($key, $data)) {
                 $fields[] = "{$key} = :{$key}";

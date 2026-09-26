@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight, Check, CalendarX2, CheckCircle2, Cog, Armchair, Loader2, MapPin } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, CalendarX2, CheckCircle2, Cog, Armchair, Loader2, MapPin, Tag } from "lucide-react";
 import { useAuth } from "../AuthContext";
 import { useClient } from "../ClientContext";
 import { WhatsAppIcon } from "../FloatingWhatsApp";
@@ -9,7 +9,9 @@ import {
   apiImageUrl,
   createReservation,
   fetchBookedRanges,
+  fetchQuote,
   type BookedRange,
+  type PricingQuote,
   type CarFromApi,
   type PaymentMethod,
   type ReservationFromApi,
@@ -123,7 +125,26 @@ export function ReserverView() {
   const booked = useMemo(() => (bookedState.carId === carId ? bookedState.ranges : []), [bookedState, carId]);
 
   const days = daysBetween(form.pickupDate, form.returnDate);
-  const total = days * priceOf(car);
+
+  // Devis serveur : remise durée / fidélité / code promo (la plus avantageuse)
+  const [promoInput, setPromoInput] = useState("");
+  const [appliedCode, setAppliedCode] = useState("");
+  const quoteKey = car && days > 0 ? `${car.id}|${form.pickupDate}|${form.returnDate}|${appliedCode}` : "";
+  const [quoteState, setQuoteState] = useState<{ key: string; quote: PricingQuote | null }>({ key: "", quote: null });
+  useEffect(() => {
+    if (!quoteKey || !car) return;
+    let cancelled = false;
+    fetchQuote(car.id, form.pickupDate, form.returnDate, appliedCode || undefined)
+      .then((q) => !cancelled && setQuoteState({ key: quoteKey, quote: q }))
+      .catch(() => !cancelled && setQuoteState({ key: quoteKey, quote: null }));
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quoteKey]);
+  const quote = quoteState.key === quoteKey ? quoteState.quote : null;
+  const quoting = !!quoteKey && quoteState.key !== quoteKey;
+  const total = quote ? quote.total_price : days * priceOf(car);
   const conflict = useMemo(
     () =>
       !!form.pickupDate &&
@@ -199,6 +220,7 @@ export function ReserverView() {
         license_number: form.license.trim(),
         payment_method: form.payment,
         client_note: form.note.trim() || undefined,
+        promo_code: quote?.promo_code || undefined,
       });
       const saved: ReservationFromApi = {
         ...(res.reservation as ReservationFromApi),
@@ -526,6 +548,47 @@ export function ReserverView() {
                 </div>
               </div>
 
+              <div>
+                <label htmlFor="promo" className="mb-3 flex items-center gap-2 text-sm font-extrabold uppercase tracking-wide text-navy">
+                  <Tag className="h-4 w-4 text-sky-text" /> Code promo
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    id="promo"
+                    value={promoInput}
+                    onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        setAppliedCode(promoInput.trim());
+                      }
+                    }}
+                    placeholder="Ex. : ETE26"
+                    className={cn(inputClass, "uppercase")}
+                    maxLength={40}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setAppliedCode(promoInput.trim())}
+                    disabled={!promoInput.trim() || quoting}
+                    className={cn(secondaryBtn, "flex-shrink-0")}
+                  >
+                    {quoting && appliedCode ? <Loader2 className="h-4 w-4 animate-spin" /> : "Appliquer"}
+                  </button>
+                </div>
+                {appliedCode && quote?.promo && (
+                  <p
+                    role="status"
+                    className={cn(
+                      "mt-2 text-sm font-semibold",
+                      quote.promo.valid && quote.promo_code ? "text-emerald-700" : quote.promo.valid ? "text-amber-700" : "text-red-700"
+                    )}
+                  >
+                    {quote.promo.message}
+                  </p>
+                )}
+              </div>
+
               <dl className="grid gap-3 rounded-2xl bg-mist p-5 text-sm sm:grid-cols-2">
                 <div>
                   <dt className="text-muted">Conducteur</dt>
@@ -634,10 +697,32 @@ export function ReserverView() {
                   <dd className="font-bold text-navy">{days > 0 ? `${days} jour${days > 1 ? "s" : ""}` : "—"}</dd>
                 </div>
               </dl>
+              {quote && quote.discount_amount > 0 && (
+                <dl className="flex flex-col gap-2 rounded-2xl bg-emerald-50 p-3 text-sm">
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-muted">Prix de base</dt>
+                    <dd className="font-bold text-navy line-through decoration-1">{formatPrice(quote.base_price)}</dd>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <dt className="font-semibold text-emerald-800">{quote.discount_label}</dt>
+                    <dd className="font-bold text-emerald-800">-{formatPrice(quote.discount_amount)}</dd>
+                  </div>
+                </dl>
+              )}
               <div className="flex items-end justify-between border-t border-line pt-4">
                 <span className="text-sm font-bold uppercase tracking-wide text-navy">Total</span>
-                <span className="text-3xl font-extrabold text-navy">{days > 0 && car ? formatPrice(total) : "—"}</span>
+                <span className={cn("text-3xl font-extrabold text-navy transition-opacity", quoting && "opacity-40")}>
+                  {days > 0 && car ? formatPrice(total) : "—"}
+                </span>
               </div>
+              {quote?.loyalty && quote.loyalty.rentals < quote.loyalty.needed && (
+                <p className="rounded-2xl bg-sky-soft/60 p-3 text-xs font-semibold text-navy">
+                  Fidélité : encore {quote.loyalty.needed - quote.loyalty.rentals} location
+                  {quote.loyalty.needed - quote.loyalty.rentals > 1 ? "s" : ""} terminée
+                  {quote.loyalty.needed - quote.loyalty.rentals > 1 ? "s" : ""} pour profiter de -{quote.loyalty.percent} % sur vos
+                  prochaines réservations.
+                </p>
+              )}
               <p className="text-xs leading-relaxed text-muted">Prix final, assurance et assistance incluses. Réglé à la remise des clés.</p>
             </div>
           </Card>

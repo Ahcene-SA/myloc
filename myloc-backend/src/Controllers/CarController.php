@@ -12,17 +12,19 @@ use Myloc\Utils\Validator;
 class CarController
 {
     private Car $carModel;
+    private Database $db;
 
     public function __construct(Database $db)
     {
+        $this->db = $db;
         $this->carModel = new Car($db);
     }
 
     public function index(): void
     {
         $category = $_GET['category'] ?? null;
-        $cars = $this->carModel->findAllAvailable($category);
-        Response::success('Cars retrieved.', ['cars' => $cars]);
+        $cars = array_map([$this, 'publicCar'], $this->carModel->findAllAvailable($category));
+        Response::success('Véhicules récupérés.', ['cars' => $cars]);
     }
 
     /** Public : véhicules libres entre deux dates, avec le prix total. */
@@ -49,10 +51,14 @@ class CarController
         if ($days > 90) {
             Response::error('Pour plus de 90 jours, contactez-nous directement.', 422);
         }
-        $cars = array_map(function (array $car) use ($days) {
+        $pricing = new \Myloc\Services\Pricing($this->db);
+        $cars = array_map(function (array $car) use ($days, $pricing) {
+            $q = $pricing->quote((float) $car['price_per_day'], $days);
             $car['days'] = $days;
-            $car['total_price'] = round((float) $car['price_per_day'] * $days, 2);
-            return $car;
+            $car['base_price'] = $q['base_price'];
+            $car['total_price'] = $q['total_price'];
+            $car['discount_label'] = $q['discount_label'];
+            return $this->publicCar($car);
         }, $this->carModel->findFreeBetween($start, $end, $category));
 
         Response::success('Disponibilités calculées.', ['cars' => $cars, 'days' => $days]);
@@ -73,7 +79,7 @@ class CarController
             Response::error('Véhicule introuvable.', 404);
         }
 
-        Response::success('Véhicule récupéré.', ['car' => $car]);
+        Response::success('Véhicule récupéré.', ['car' => $this->publicCar($car)]);
     }
 
     public function create(): void
@@ -191,7 +197,7 @@ class CarController
     private function validateCarInput(array $input, bool $requireAll): array
     {
         $fields = ['name', 'price_per_day', 'transmission', 'seats', 'year'];
-        $optional = ['category', 'description', 'image_url', 'status'];
+        $optional = ['category', 'plate', 'description', 'image_url', 'status'];
 
         if ($requireAll) {
             $missing = Validator::required($input, $fields);
@@ -218,6 +224,14 @@ class CarController
                 Response::error('Le nom doit contenir entre 2 et 100 caractères.', 422);
             }
             $data['name'] = $name;
+        }
+
+        if (array_key_exists('plate', $input)) {
+            $plate = strtoupper(Validator::sanitizeString((string) $input['plate']));
+            if (mb_strlen($plate) > 20) {
+                Response::error('Immatriculation trop longue.', 422);
+            }
+            $data['plate'] = $plate !== '' ? $plate : null;
         }
 
         if (array_key_exists('description', $input)) {
@@ -273,6 +287,13 @@ class CarController
         }
 
         return $data;
+    }
+
+    /** L'immatriculation reste interne à l'agence. */
+    private function publicCar(array $car): array
+    {
+        unset($car['plate']);
+        return $car;
     }
 
     private function getJsonInput(): array

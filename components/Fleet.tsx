@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { CalendarCheck2, X } from "lucide-react";
 import { CarCard, type Car } from "./CarCard";
 import { cn } from "@/lib/utils";
-import { fetchAvailableCars, fetchCars, mapApiCarToCar, type AvailableCar } from "@/lib/api";
+import { fetchAvailableCars, fetchCars, fetchPricingRules, mapApiCarToCar, type AvailableCar, type PricingRules } from "@/lib/api";
 import { AVAILABILITY_EVENT, saveBookingIntent, type AvailabilitySearch } from "@/lib/booking";
 import { pageUrl } from "@/lib/routes";
 import { FILTER_EVENT, categoryInfo } from "@/lib/site";
@@ -100,6 +100,17 @@ export function Fleet() {
   const [free, setFree] = useState<AvailableCar[] | null>(null);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
+  const [rules, setRules] = useState<PricingRules | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchPricingRules()
+      .then((r) => !cancelled && setRules(r))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -236,6 +247,14 @@ export function Fleet() {
           </p>
         </div>
 
+        {rules && rules.duration.length > 0 && (
+          <p className="mx-auto mt-6 flex w-fit flex-wrap items-center justify-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-center text-xs font-bold uppercase tracking-wide text-emerald-800">
+            <span aria-hidden="true">%</span>
+            Remise automatique :{" "}
+            {rules.duration.map((t) => `-${t.percent} % dès ${t.min_days} jours`).join(" · ")}
+          </p>
+        )}
+
         {search && (
           <div className="mx-auto mt-10 flex max-w-3xl flex-col items-center justify-between gap-3 rounded-3xl border-2 border-sky bg-sky-soft/60 px-5 py-4 text-navy sm:flex-row">
             <p className="flex items-center gap-3 text-sm font-semibold">
@@ -302,7 +321,13 @@ export function Fleet() {
                     index={index}
                     quote={
                       search && quotes.has(car.id)
-                        ? { days: quotes.get(car.id)!.days, total: Number(quotes.get(car.id)!.total_price), label: quoteLabel }
+                        ? {
+                            days: quotes.get(car.id)!.days,
+                            total: Number(quotes.get(car.id)!.total_price),
+                            base: Number(quotes.get(car.id)!.base_price),
+                            discountLabel: quotes.get(car.id)!.discount_label,
+                            label: quoteLabel,
+                          }
                         : undefined
                     }
                     onBook={() => book(car.id)}

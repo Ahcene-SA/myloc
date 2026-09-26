@@ -56,6 +56,8 @@ export interface CarFromApi {
   image_url?: string;
   status: string;
   created_at?: string;
+  /** Immatriculation (administration uniquement) */
+  plate?: string | null;
   /** Renvoyé par /admin/cars uniquement */
   reservations_count?: number;
 }
@@ -199,7 +201,84 @@ export async function fetchCars(): Promise<CarFromApi[]> {
 
 export interface AvailableCar extends CarFromApi {
   days: number;
+  base_price: number;
   total_price: number;
+  discount_label?: string | null;
+}
+
+/* ─────────────── Prix et remises ─────────────── */
+
+export interface PricingQuote {
+  days: number;
+  price_per_day: number;
+  base_price: number;
+  discount_amount: number;
+  total_price: number;
+  discount_label: string | null;
+  discount_source: "duration" | "loyalty" | "promo" | null;
+  promo_code: string | null;
+  promo: { valid: boolean; message: string } | null;
+  loyalty: { rentals: number; needed: number; percent: number } | null;
+}
+
+export interface PricingRules {
+  duration: { min_days: number; percent: number }[];
+  loyalty: { enabled: boolean; min_rentals: number; percent: number };
+}
+
+export interface PromoCode {
+  id: number;
+  code: string;
+  description?: string | null;
+  discount_type: "percent" | "fixed";
+  discount_value: string | number;
+  min_days?: number | null;
+  valid_from?: string | null;
+  valid_until?: string | null;
+  max_uses?: number | null;
+  uses: number;
+  active: number | boolean;
+  created_at?: string;
+}
+
+/** Devis avec la meilleure remise (le jeton est envoyé s'il existe, pour la fidélité). */
+export async function fetchQuote(carId: number, start: string, end: string, promoCode?: string): Promise<PricingQuote> {
+  const res = await request<{ success: boolean; quote: PricingQuote }>(
+    "POST",
+    "/pricing/quote",
+    { car_id: carId, start_date: start, end_date: end, promo_code: promoCode || undefined },
+    true
+  );
+  return res.quote;
+}
+
+export async function fetchPricingRules(): Promise<PricingRules> {
+  const res = await request<{ success: boolean; rules: PricingRules }>("GET", "/pricing/rules");
+  return res.rules;
+}
+
+export async function updatePricingRules(rules: PricingRules): Promise<PricingRules> {
+  const res = await request<{ success: boolean; rules: PricingRules }>("PUT", "/admin/pricing-rules", rules, true);
+  return res.rules;
+}
+
+export async function fetchPromos(): Promise<PromoCode[]> {
+  const res = await request<{ success: boolean; promos?: PromoCode[] }>("GET", "/admin/promos", undefined, true);
+  return res.promos || [];
+}
+
+export async function savePromo(promo: Partial<PromoCode>): Promise<PromoCode | undefined> {
+  const res = await request<{ success: boolean; promo?: PromoCode }>(
+    promo.id ? "PUT" : "POST",
+    promo.id ? `/admin/promos/${promo.id}` : "/admin/promos",
+    promo,
+    true
+  );
+  return res.promo;
+}
+
+export async function deletePromo(id: number): Promise<void> {
+  await request<unknown>("DELETE", `/admin/promos/${id}`, undefined, true);
 }
 
 /** Véhicules libres entre deux dates (le jour du retour reste libre), avec le prix total. */
@@ -282,6 +361,7 @@ export interface ReservationInput {
   license_number?: string;
   payment_method?: PaymentMethod;
   client_note?: string;
+  promo_code?: string;
 }
 
 export interface ReservationFromApi {
@@ -308,6 +388,8 @@ export interface ReservationFromApi {
   car_price_per_day?: string | number;
   car_transmission?: string;
   car_seats?: number;
+  car_plate?: string | null;
+  car_year?: number;
   pickup_place?: string | null;
   pickup_time?: string | null;
   return_place?: string | null;
@@ -316,6 +398,10 @@ export interface ReservationFromApi {
   license_number?: string | null;
   payment_method?: PaymentMethod | null;
   client_note?: string | null;
+  base_price?: string | number | null;
+  discount_amount?: string | number | null;
+  discount_label?: string | null;
+  promo_code?: string | null;
 }
 
 export interface BookedRange {
@@ -417,8 +503,9 @@ export interface AdminReservationInput extends Omit<ReservationInput, "email"> {
   /** Rattache la réservation à un compte client existant */
   user_id?: number;
   status?: "pending" | "confirmed";
-  /** Montant négocié ; vide = prix/jour × nombre de jours */
+  /** Montant négocié ; vide = prix/jour × nombre de jours (avec remises) */
   total_price?: number | string;
+  promo_code?: string;
   admin_note?: string;
 }
 
@@ -465,4 +552,94 @@ export function mapApiCarToCar(car: CarFromApi): {
     year: car.year,
     status: car.status,
   };
+}
+
+/* ─────────────── États des lieux ─────────────── */
+
+export type InspectionType = "depart" | "retour";
+
+export const DAMAGE_ZONES = [
+  "avant",
+  "capot",
+  "pare-brise",
+  "toit",
+  "arriere",
+  "coffre",
+  "flanc-gauche",
+  "flanc-droit",
+  "jantes",
+  "interieur",
+] as const;
+export type DamageZone = (typeof DAMAGE_ZONES)[number];
+
+export const zoneLabels: Record<DamageZone, string> = {
+  avant: "Pare-chocs avant",
+  capot: "Capot",
+  "pare-brise": "Pare-brise",
+  toit: "Toit",
+  arriere: "Pare-chocs arrière",
+  coffre: "Coffre",
+  "flanc-gauche": "Côté gauche",
+  "flanc-droit": "Côté droit",
+  jantes: "Jantes / pneus",
+  interieur: "Intérieur",
+};
+
+export interface Inspection {
+  id?: number;
+  type: InspectionType;
+  mileage: number | null;
+  fuel_level: number | null;
+  damages: { zone: DamageZone; note: string }[];
+  photos: string[];
+  notes: string | null;
+  created_at?: string;
+  updated_at?: string | null;
+}
+
+export type InspectionSet = Partial<Record<InspectionType, Inspection>>;
+
+export async function fetchInspections(reservationId: number): Promise<InspectionSet> {
+  const res = await request<{ success: boolean; inspections: InspectionSet }>("GET", `/reservations/${reservationId}/inspections`, undefined, true);
+  return res.inspections || {};
+}
+
+export async function saveInspection(
+  reservationId: number,
+  type: InspectionType,
+  data: Omit<Inspection, "type" | "id">
+): Promise<InspectionSet> {
+  const res = await request<{ success: boolean; inspections: InspectionSet }>(
+    "PUT",
+    `/admin/reservations/${reservationId}/inspections/${type}`,
+    data,
+    true
+  );
+  return res.inspections || {};
+}
+
+/** Réduit une photo de téléphone (souvent 4-8 Mo) avant l'envoi : 1600 px, JPEG. */
+async function shrinkPhoto(file: File, max = 1600): Promise<Blob> {
+  if (!file.type.startsWith("image/") || typeof createImageBitmap === "undefined") return file;
+  try {
+    const bmp = await createImageBitmap(file);
+    const scale = Math.min(1, max / Math.max(bmp.width, bmp.height));
+    if (scale === 1 && file.size < 1.5 * 1024 * 1024) return file;
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bmp.width * scale);
+    canvas.height = Math.round(bmp.height * scale);
+    canvas.getContext("2d")?.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/jpeg", 0.82));
+    return blob || file;
+  } catch {
+    return file;
+  }
+}
+
+export async function uploadInspectionPhoto(file: File): Promise<string> {
+  const form = new FormData();
+  form.append("image", await shrinkPhoto(file), "photo.jpg");
+  const res = await request<{ success: boolean; path?: string }>("POST", "/admin/inspections/upload", form, true);
+  if (!res.path) throw new Error("Photo non enregistrée.");
+  return res.path;
 }

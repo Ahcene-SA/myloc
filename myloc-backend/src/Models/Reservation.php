@@ -46,14 +46,14 @@ class Reservation
     /**
      * @param array<string, mixed> $details pickup_place, pickup_time, return_place, return_time,
      *                                      delivery_address, license_number, payment_method, client_note
-     * @param array{status?: string, source?: string, admin_note?: ?string} $options
+     * @param array{status?: string, source?: string, admin_note?: ?string, pricing?: array} $options
      */
     public function create(?int $userId, int $carId, string $startDate, string $endDate, string $fullName, ?string $email, string $phone, float $totalPrice, array $details = [], array $options = []): int
     {
         $stmt = $this->pdo->prepare("
-            INSERT INTO reservations (user_id, car_id, start_date, end_date, full_name, email, phone, status, source, admin_note, total_price,
+            INSERT INTO reservations (user_id, car_id, start_date, end_date, full_name, email, phone, status, source, admin_note, total_price, base_price, discount_amount, discount_label, promo_code,
                 pickup_place, pickup_time, return_place, return_time, delivery_address, license_number, payment_method, client_note)
-            VALUES (:user_id, :car_id, :start_date, :end_date, :full_name, :email, :phone, :status, :source, :admin_note, :total_price,
+            VALUES (:user_id, :car_id, :start_date, :end_date, :full_name, :email, :phone, :status, :source, :admin_note, :total_price, :base_price, :discount_amount, :discount_label, :promo_code,
                 :pickup_place, :pickup_time, :return_place, :return_time, :delivery_address, :license_number, :payment_method, :client_note)
         ");
         $stmt->execute([
@@ -68,6 +68,10 @@ class Reservation
             ':source' => $options['source'] ?? 'site',
             ':admin_note' => $options['admin_note'] ?? null,
             ':total_price' => $totalPrice,
+            ':base_price' => $options['pricing']['base_price'] ?? $totalPrice,
+            ':discount_amount' => $options['pricing']['discount_amount'] ?? 0,
+            ':discount_label' => $options['pricing']['discount_label'] ?? null,
+            ':promo_code' => $options['pricing']['promo_code'] ?? null,
             ':pickup_place' => $details['pickup_place'] ?? null,
             ':pickup_time' => $details['pickup_time'] ?? null,
             ':return_place' => $details['return_place'] ?? null,
@@ -114,7 +118,7 @@ class Reservation
         $stmt = $this->pdo->query("
             SELECT r.*, c.name AS car_name, c.category AS car_category, c.image_url AS car_image_url,
                    c.price_per_day AS car_price_per_day, c.transmission AS car_transmission, c.seats AS car_seats,
-                   u.full_name AS user_full_name, u.email AS user_email
+                   c.plate AS car_plate, c.year AS car_year, u.full_name AS user_full_name, u.email AS user_email
             FROM reservations r
             JOIN cars c ON r.car_id = c.id
             LEFT JOIN users u ON r.user_id = u.id
@@ -137,7 +141,7 @@ class Reservation
         $stmt = $this->pdo->prepare("
             SELECT r.*, c.name AS car_name, c.category AS car_category, c.image_url AS car_image_url,
                    c.price_per_day AS car_price_per_day, c.transmission AS car_transmission, c.seats AS car_seats,
-                   u.full_name AS user_full_name, u.email AS user_email
+                   c.plate AS car_plate, c.year AS car_year, u.full_name AS user_full_name, u.email AS user_email
             FROM reservations r
             JOIN cars c ON r.car_id = c.id
             LEFT JOIN users u ON r.user_id = u.id

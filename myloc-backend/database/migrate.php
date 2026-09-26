@@ -76,6 +76,81 @@ try {
         $changes++;
     }
 
+    // 4. Remises : codes promo, règles (durée, fidélité), détail du prix sur la réservation
+    $pricingColumns = [
+        'base_price'      => 'DECIMAL(10, 2) NULL',
+        'discount_amount' => 'DECIMAL(10, 2) NOT NULL DEFAULT 0',
+        'discount_label'  => 'VARCHAR(120) NULL',
+        'promo_code'      => 'VARCHAR(40) NULL',
+    ];
+    foreach ($pricingColumns as $column => $definition) {
+        if (!$hasColumn('reservations', $column)) {
+            $pdo->exec("ALTER TABLE reservations ADD COLUMN {$column} {$definition}");
+            echo "✓ reservations.{$column} ajoutée\n";
+            $changes++;
+        }
+    }
+    $hasTable = function (string $table) use ($pdo, $dbName): bool {
+        $stmt = $pdo->prepare('SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?');
+        $stmt->execute([$dbName, $table]);
+        return (bool) $stmt->fetchColumn();
+    };
+    if (!$hasTable('promo_codes')) {
+        $pdo->exec("CREATE TABLE promo_codes (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            code VARCHAR(40) NOT NULL UNIQUE,
+            description VARCHAR(160) NULL,
+            discount_type ENUM('percent', 'fixed') NOT NULL DEFAULT 'percent',
+            discount_value DECIMAL(10, 2) NOT NULL,
+            min_days INT NULL,
+            valid_from DATE NULL,
+            valid_until DATE NULL,
+            max_uses INT NULL,
+            uses INT NOT NULL DEFAULT 0,
+            active TINYINT(1) NOT NULL DEFAULT 1,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        echo "✓ table promo_codes créée\n";
+        $changes++;
+    }
+    if (!$hasTable('settings')) {
+        $pdo->exec("CREATE TABLE settings (
+            name VARCHAR(60) PRIMARY KEY,
+            value TEXT NOT NULL,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        echo "✓ table settings créée\n";
+        $changes++;
+    }
+
+    // 5b. Immatriculation (pour le contrat)
+    if (!$hasColumn('cars', 'plate')) {
+        $pdo->exec("ALTER TABLE cars ADD COLUMN plate VARCHAR(20) NULL AFTER name");
+        echo "✓ cars.plate ajoutée\n";
+        $changes++;
+    }
+
+    // 5. États des lieux (départ / retour)
+    if (!$hasTable('inspections')) {
+        $pdo->exec("CREATE TABLE inspections (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    reservation_id INT NOT NULL,
+    type ENUM('depart', 'retour') NOT NULL,
+    mileage INT NULL,
+    fuel_level TINYINT NULL,
+    damages TEXT NULL,
+    photos TEXT NULL,
+    notes TEXT NULL,
+    created_by INT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_reservation_type (reservation_id, type),
+    CONSTRAINT fk_inspections_reservation FOREIGN KEY (reservation_id) REFERENCES reservations(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        echo "✓ table inspections créée\n";
+        $changes++;
+    }
+
     echo $changes === 0 ? "Schéma déjà à jour.\n" : "Schéma mis à jour ({$changes} changement(s)).\n";
 } catch (Throwable $e) {
     fwrite(STDERR, 'Migration error: ' . $e->getMessage() . "\n");

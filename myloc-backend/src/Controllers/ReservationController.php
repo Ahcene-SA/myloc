@@ -9,6 +9,7 @@ use Myloc\Middleware\AuthMiddleware;
 use Myloc\Models\Car;
 use Myloc\Models\Reservation;
 use Myloc\Models\User;
+use Myloc\Services\Pricing;
 use Myloc\Utils\Response;
 use Myloc\Utils\Validator;
 
@@ -20,9 +21,11 @@ class ReservationController
     private Reservation $reservationModel;
     private Car $carModel;
     private User $userModel;
+    private Pricing $pricing;
 
     public function __construct(Database $db)
     {
+        $this->pricing = new Pricing($db);
         $this->userModel = new User($db);
         $this->reservationModel = new Reservation($db);
         $this->carModel = new Car($db);
@@ -87,7 +90,12 @@ class ReservationController
             Response::error('Ce véhicule est déjà réservé sur ces dates. Choisissez d\'autres dates ou un autre véhicule.', 409);
         }
 
-        $totalPrice = round((float) $car['price_per_day'] * $days, 2);
+        $promoCode = isset($input['promo_code']) ? Validator::sanitizeString((string) $input['promo_code']) : '';
+        $quote = $this->pricing->quote((float) $car['price_per_day'], $days, (int) $user['user_id'], $promoCode !== '' ? $promoCode : null);
+        if ($promoCode !== '' && $quote['promo'] && !$quote['promo']['valid']) {
+            Response::error($quote['promo']['message'], 422);
+        }
+        $totalPrice = $quote['total_price'];
 
         $reservationId = $this->reservationModel->create(
             (int) $user['user_id'],
@@ -98,8 +106,12 @@ class ReservationController
             $email,
             $phone,
             $totalPrice,
-            $details
+            $details,
+            ['pricing' => $quote]
         );
+        if ($quote['promo_code']) {
+            $this->pricing->usePromo($quote['promo_code']);
+        }
 
         $reservation = $this->reservationModel->findById($reservationId);
 
@@ -107,6 +119,7 @@ class ReservationController
             'reservation' => $reservation,
             'total_price' => $totalPrice,
             'days' => $days,
+            'quote' => $quote,
         ], 201);
     }
 
@@ -256,14 +269,25 @@ class ReservationController
             Response::error('Ce véhicule est déjà réservé sur ces dates.', 409);
         }
 
-        $totalPrice = round((float) $car['price_per_day'] * $days, 2);
+        $linkedUser = !empty($input['user_id']) ? (int) $input['user_id'] : null;
+        $promoCode = Validator::sanitizeString((string) ($input['promo_code'] ?? ''));
+        $quote = $this->pricing->quote((float) $car['price_per_day'], $days, $linkedUser, $promoCode !== '' ? $promoCode : null);
+        if ($promoCode !== '' && $quote['promo'] && !$quote['promo']['valid']) {
+            Response::error($quote['promo']['message'], 422);
+        }
         if (isset($input['total_price']) && $input['total_price'] !== '' && $input['total_price'] !== null) {
             $custom = filter_var($input['total_price'], FILTER_VALIDATE_FLOAT);
             if ($custom === false || $custom < 0) {
                 Response::error('Montant invalide.', 422);
             }
-            $totalPrice = round((float) $custom, 2);
+            // Prix négocié : la différence avec le tarif est notée comme remise agence
+            $custom = round((float) $custom, 2);
+            $quote['discount_amount'] = max(0, round($quote['base_price'] - $custom, 2));
+            $quote['discount_label'] = $custom < $quote['base_price'] ? 'Prix négocié par l\'agence' : null;
+            $quote['promo_code'] = null;
+            $quote['total_price'] = $custom;
         }
+        $totalPrice = $quote['total_price'];
 
         // Rattacher à un compte client existant (il la verra dans son espace)
         $userId = null;
@@ -286,8 +310,11 @@ class ReservationController
             $phone,
             $totalPrice,
             $this->readDetails($input),
-            ['status' => $status, 'source' => 'agence', 'admin_note' => $adminNote !== '' ? $adminNote : null]
+            ['status' => $status, 'source' => 'agence', 'admin_note' => $adminNote !== '' ? $adminNote : null, 'pricing' => $quote]
         );
+        if ($quote['promo_code']) {
+            $this->pricing->usePromo($quote['promo_code']);
+        }
 
         Response::success('Réservation enregistrée.', [
             'reservation' => $this->reservationModel->findDetailedById($id),

@@ -24,7 +24,7 @@ interface CarCardProps {
   car: Car;
   index?: number;
   /** Prix total pour les dates recherchées sur l'accueil */
-  quote?: { days: number; total: number; label: string };
+  quote?: { days: number; total: number; label: string; base?: number; discountLabel?: string | null };
   onBook?: () => void;
 }
 
@@ -97,7 +97,17 @@ export function CarCard({ car, index = 0, quote, onBook }: CarCardProps) {
                 </span>
                 <span className="mt-1.5 block text-[26px] font-extrabold text-navy">
                   {quote.total.toLocaleString("fr-FR")} {site.currency}
+                  {!!quote.base && quote.base > quote.total && (
+                    <span className="ml-2 text-sm font-semibold text-muted line-through">
+                      {quote.base.toLocaleString("fr-FR")} {site.currency}
+                    </span>
+                  )}
                 </span>
+                {quote.discountLabel && (
+                  <span className="mt-1.5 inline-block rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                    {quote.discountLabel}
+                  </span>
+                )}
               </p>
               <span className="text-right text-[11px] font-semibold leading-tight text-muted">
                 {quote.label}

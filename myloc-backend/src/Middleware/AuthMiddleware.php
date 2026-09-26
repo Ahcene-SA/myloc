@@ -38,6 +38,24 @@ class AuthMiddleware
         ];
     }
 
+    /** Utilisateur connecté s'il y en a un (sans bloquer les visiteurs). */
+    public static function optionalUser(): ?array
+    {
+        $header = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+        if (!str_starts_with($header, 'Bearer ') || strlen($header) < 12) {
+            return null;
+        }
+        try {
+            $decoded = JwtHelper::decode(substr($header, 7));
+        } catch (\RuntimeException $e) {
+            return null;
+        }
+        if (!isset($decoded->sub, $decoded->role)) {
+            return null;
+        }
+        return ['user_id' => (int) $decoded->sub, 'role' => $decoded->role];
+    }
+
     public static function requireAdmin(): array
     {
         $user = self::requireAuth();

@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   CalendarDays,
   Check,
+  ClipboardCheck,
+  FileText,
   CreditCard,
   IdCard,
   Loader2,
@@ -17,9 +19,20 @@ import {
 } from "lucide-react";
 import { useAdmin } from "../AdminContext";
 import { WhatsAppIcon } from "../FloatingWhatsApp";
-import { apiImageUrl, updateReservationStatus, type ReservationFromApi } from "@/lib/api";
+import {
+  apiImageUrl,
+  fetchInspections,
+  updateReservationStatus,
+  zoneLabels,
+  type InspectionSet,
+  type InspectionType,
+  type ReservationFromApi,
+} from "@/lib/api";
+import { pageUrl } from "@/lib/routes";
+import { InspectionModal } from "./InspectionModal";
 import { cn } from "@/lib/utils";
 import {
+  DiscountLine,
   StatusBadge,
   categoryLabel,
   daysBetween,
@@ -223,11 +236,14 @@ function DrawerBody({ r, onClose }: { r: ReservationFromApi; onClose: () => void
               <CreditCard className="mt-0.5 h-4 w-4 flex-shrink-0 text-sky-text" />
               <div>
                 <p className="text-lg font-extrabold text-navy">{formatPrice(r.total_price)}</p>
+                <DiscountLine r={r} />
                 <p className="text-ink-soft">{r.payment_method ? paymentLabels[r.payment_method] : "Moyen de paiement non précisé"}</p>
               </div>
             </div>
           </div>
         </section>
+
+        {(r.status === "confirmed" || r.status === "pending") && <InspectionSection r={r} />}
 
         {r.client_note && (
           <section>
@@ -347,5 +363,101 @@ function ActionButton({
       {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : Icon && <Icon className="h-4 w-4" />}
       {children}
     </button>
+  );
+}
+
+/** États des lieux (départ / retour) et accès au contrat imprimable. */
+function InspectionSection({ r }: { r: ReservationFromApi }) {
+  const [state, setState] = useState<{ set: InspectionSet; loaded: boolean; error: string }>({ set: {}, loaded: false, error: "" });
+  const [editing, setEditing] = useState<InspectionType | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchInspections(r.id)
+      .then((set) => !cancelled && setState({ set, loaded: true, error: "" }))
+      .catch((e) => !cancelled && setState({ set: {}, loaded: true, error: e instanceof Error ? e.message : "Erreur" }));
+    return () => {
+      cancelled = true;
+    };
+  }, [r.id]);
+
+  const { set } = state;
+  const dep = set.depart;
+  const ret = set.retour;
+  const driven = dep?.mileage != null && ret?.mileage != null ? ret.mileage - dep.mileage : null;
+  const newDamages = ret ? ret.damages.filter((d) => !dep?.damages.some((x) => x.zone === d.zone)) : [];
+
+  const card = (type: InspectionType) => {
+    const i = set[type];
+    return (
+      <button
+        type="button"
+        onClick={() => setEditing(type)}
+        disabled={!state.loaded}
+        className={cn(
+          "flex flex-1 flex-col items-start gap-1 rounded-2xl border-2 p-4 text-left transition-colors hover:border-navy disabled:opacity-50",
+          i ? "border-emerald-200 bg-emerald-50/60" : "border-dashed border-line"
+        )}
+      >
+        <span className="flex items-center gap-2 text-sm font-extrabold uppercase text-navy">
+          <ClipboardCheck className={cn("h-4 w-4", i ? "text-emerald-700" : "text-muted")} />
+          {type === "depart" ? "Départ" : "Retour"}
+        </span>
+        {i ? (
+          <span className="text-xs text-ink-soft">
+            {i.mileage != null ? `${i.mileage.toLocaleString("fr-FR")} km` : "km —"} · carburant {i.fuel_level ?? "—"}/8 ·{" "}
+            {i.damages.length} dommage{i.damages.length > 1 ? "s" : ""} · {i.photos.length} photo{i.photos.length > 1 ? "s" : ""}
+          </span>
+        ) : (
+          <span className="text-xs font-semibold text-sky-text">À faire à la {type === "depart" ? "remise" : "restitution"} des clés</span>
+        )}
+      </button>
+    );
+  };
+
+  return (
+    <section>
+      <p className={labelClass}>État des lieux & contrat</p>
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row">
+          {card("depart")}
+          {card("retour")}
+        </div>
+        {driven !== null && (
+          <p className="text-sm font-semibold text-navy">
+            {driven.toLocaleString("fr-FR")} km parcourus
+            {dep?.fuel_level != null && ret?.fuel_level != null && ret.fuel_level < dep.fuel_level && (
+              <span className="text-amber-700"> · carburant rendu {ret.fuel_level}/8 (départ {dep.fuel_level}/8)</span>
+            )}
+          </p>
+        )}
+        {newDamages.length > 0 && (
+          <p className="rounded-2xl bg-amber-50 p-3 text-sm font-semibold text-amber-900">
+            Nouveaux dommages au retour : {newDamages.map((d) => zoneLabels[d.zone] + (d.note ? ` (${d.note})` : "")).join(", ")}
+          </p>
+        )}
+        {state.error && <p className="text-sm font-semibold text-red-700">{state.error}</p>}
+        <a
+          href={`${pageUrl("contrat")}?id=${r.id}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex h-11 w-fit items-center gap-2 rounded-full bg-navy px-5 text-xs font-bold text-white hover:bg-navy-soft"
+        >
+          <FileText className="h-4 w-4" /> Contrat de location (PDF)
+        </a>
+      </div>
+      {editing && (
+        <InspectionModal
+          r={r}
+          type={editing}
+          inspections={set}
+          onClose={() => setEditing(null)}
+          onSaved={(next) => {
+            setState({ set: next, loaded: true, error: "" });
+            setEditing(null);
+          }}
+        />
+      )}
+    </section>
   );
 }

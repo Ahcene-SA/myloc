@@ -21,7 +21,10 @@ const nextConfig: NextConfig = {
             beforeFiles: [{ source: "/api/:path*", destination: `${devApi}/api/:path*` }],
             afterFiles: [],
             // Images envoyées depuis l'admin : servies par l'API si le front ne les a pas
-            fallback: [{ source: "/images/:path*", destination: `${devApi}/images/:path*` }],
+            fallback: [
+              { source: "/images/:path*", destination: `${devApi}/images/:path*` },
+              { source: "/uploads/:path*", destination: `${devApi}/uploads/:path*` },
+            ],
           };
         },
       }),

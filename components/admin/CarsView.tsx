@@ -165,6 +165,7 @@ function CarAdminCard({ car, onEdit }: { car: CarFromApi; onEdit: () => void }) 
           </p>
         </div>
         <p className="text-sm text-ink-soft">
+          {car.plate && <span className="mr-1 rounded-md border border-line px-1.5 py-0.5 font-mono text-xs font-bold text-navy">{car.plate}</span>}
           {formatTransmission(car.transmission)} · {car.seats} places · {car.year}
           {car.reservations_count !== undefined && (
             <span className="text-muted">
@@ -244,6 +245,7 @@ function CarFormModal({ car, onClose }: { car: CarFromApi | null; onClose: () =>
   const fileRef = useRef<HTMLInputElement>(null);
   const [f, setF] = useState({
     name: car?.name || "",
+    plate: car?.plate || "",
     category: car?.category || "citadine",
     price: car ? String(parseFloat(String(car.price_per_day)) || "") : "",
     transmission: (car?.transmission || "manuel").toLowerCase().startsWith("auto") ? "automatique" : "manuel",
@@ -279,6 +281,7 @@ function CarFormModal({ car, onClose }: { car: CarFromApi | null; onClose: () =>
     setErr("");
     const payload: Partial<CarFromApi> = {
       name: f.name.trim(),
+      plate: f.plate.trim(),
       category: f.category,
       price_per_day: f.price,
       transmission: f.transmission,
@@ -347,6 +350,20 @@ function CarFormModal({ car, onClose }: { car: CarFromApi | null; onClose: () =>
             maxLength={100}
           />
           <p className="mt-1.5 text-xs text-muted">Le premier mot est affiché comme la marque, le reste en bleu.</p>
+        </div>
+        <div>
+          <label htmlFor="car-plate" className={labelClass}>
+            Immatriculation
+          </label>
+          <input
+            id="car-plate"
+            value={f.plate}
+            onChange={(e) => set("plate", e.target.value.toUpperCase())}
+            className={cn(inputClass, "uppercase")}
+            placeholder="Ex. : 12345-124-16"
+            maxLength={20}
+          />
+          <p className="mt-1.5 text-xs text-muted">Interne : figure sur le contrat, jamais sur le site.</p>
         </div>
         <div>
           <label htmlFor="car-cat" className={labelClass}>
