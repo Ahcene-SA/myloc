@@ -7,4 +7,4 @@ if ! mysqladmin ping --silent 2>/dev/null; then
   echo "MySQL ne répond pas : démarre-le (comme pour tes autres projets) puis relance."; exit 1
 fi
 echo "API MYLOC.DZ → http://localhost:8000/api/cars   (Ctrl + C pour arrêter)"
-php -S localhost:8000 -t public public/index.php
+php -S 127.0.0.1:8000 -t public public/index.php

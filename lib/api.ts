@@ -5,6 +5,12 @@ export function getApiBase(): string {
     return "http://localhost:8000";
   }
 
+  // En développement (npm run dev), Next relaie /api vers l'API PHP locale :
+  // on appelle donc la même adresse que le site (voir next.config.ts).
+  if (process.env.NODE_ENV !== "production") {
+    return "";
+  }
+
   // Runtime overrides (no rebuild needed).
   if (typeof (window as unknown as Record<string, string>).MYLOC_API_URL === "string") {
     return (window as unknown as Record<string, string>).MYLOC_API_URL.replace(/\/$/, "");
@@ -17,30 +23,9 @@ export function getApiBase(): string {
     // localStorage may be unavailable (private mode, file://, etc.)
   }
 
-  // Allow overriding via query parameter.
-  // Example: https://example.com/?apiUrl=https://api.example.com
-  const params = new URLSearchParams(window.location.search);
-  const queryUrl = params.get("apiUrl");
-  if (queryUrl) {
-    try {
-      const parsed = new URL(queryUrl);
-      return parsed.origin;
-    } catch {
-      // ignore invalid URL
-    }
-  }
-
   const envUrl = process.env.NEXT_PUBLIC_API_URL;
   if (envUrl) {
     return envUrl.replace(/\/$/, "");
-  }
-
-  // WAMP fallback: when the frontend is served from anywhere under /myloc/ on localhost,
-  // the backend is reachable under /myloc/myloc-backend/public (default WAMP directory layout).
-  // When served via the PHP built-in server, it usually runs on port 8000.
-  const { hostname, port, pathname, protocol } = window.location;
-  if ((hostname === "localhost" || hostname === "127.0.0.1") && pathname.startsWith("/myloc/")) {
-    return `${protocol}//${hostname}${port ? `:${port}` : ""}/myloc/myloc-backend/public`;
   }
 
   // Par défaut : backend PHP lancé en local (php -S localhost:8000 …).
