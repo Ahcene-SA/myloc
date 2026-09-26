@@ -33,8 +33,13 @@ try {
     $stmt = $db->prepare("SELECT id FROM users WHERE email = :email LIMIT 1");
     $stmt->execute([':email' => $email]);
 
-    if ($stmt->fetch()) {
-        echo "Admin account already exists: {$email}\n";
+    $existing = $stmt->fetch();
+    if ($existing) {
+        // Le compte existe déjà (ex. inscrit comme client) : on le passe admin
+        // et on aligne son mot de passe sur celui du .env.
+        $stmt = $db->prepare("UPDATE users SET role = 'admin', password_hash = :hash WHERE id = :id");
+        $stmt->execute([':hash' => password_hash($plainPassword, PASSWORD_BCRYPT), ':id' => $existing['id']]);
+        echo "Admin account updated (role admin + password from .env): {$email}\n";
     } else {
         $hash = password_hash($plainPassword, PASSWORD_BCRYPT);
         $stmt = $db->prepare("

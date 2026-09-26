@@ -102,7 +102,10 @@ GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '${DB_USER}'@'127.0.0.1';
 FLUSH PRIVILEGES;
 SQL
 "${SQL_ROOT[@]}" < database/migrations.sql
-ok "Tables créées"
+# Mises à jour d'une base déjà existante (sans risque si déjà appliquées)
+"${SQL_ROOT[@]}" "${DB_NAME}" < database/migrations/003_add_compacte_category.sql
+"${SQL_ROOT[@]}" "${DB_NAME}" < database/migrations/004_demo_fleet_new_images.sql
+ok "Tables créées / mises à jour"
 
 # 6. Admin + flotte de démo
 say "Création du compte admin et de la flotte de démo"
