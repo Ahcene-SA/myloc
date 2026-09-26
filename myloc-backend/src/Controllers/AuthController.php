@@ -29,7 +29,7 @@ class AuthController
 
         $required = Validator::required($input, ['full_name', 'email', 'phone', 'password']);
         if (!empty($required)) {
-            Response::error('Missing required fields.', 422, ['missing' => $required]);
+            Response::error('Champs obligatoires manquants.', 422, ['missing' => $required]);
         }
 
         $fullName = Validator::sanitizeString($input['full_name']);
@@ -38,20 +38,20 @@ class AuthController
         $password = $input['password'];
 
         if (!Validator::email($email)) {
-            Response::error('Invalid email format.', 422);
+            Response::error('Adresse email invalide.', 422);
         }
         if (!Validator::stringLength($fullName, 2, 100)) {
-            Response::error('Full name must be between 2 and 100 characters.', 422);
+            Response::error('Le nom doit contenir entre 2 et 100 caractères.', 422);
         }
         if (!Validator::stringLength($phone, 5, 20)) {
-            Response::error('Phone must be between 5 and 20 characters.', 422);
+            Response::error('Le téléphone doit contenir entre 5 et 20 caractères.', 422);
         }
         if (!Validator::stringLength($password, 8, 128)) {
-            Response::error('Password must be at least 8 characters.', 422);
+            Response::error('Le mot de passe doit contenir au moins 8 caractères.', 422);
         }
 
         if ($this->userModel->emailExists($email)) {
-            Response::error('Email already registered.', 409);
+            Response::error('Un compte existe déjà avec cet email.', 409);
         }
 
         $hash = password_hash($password, PASSWORD_BCRYPT);
@@ -72,7 +72,7 @@ class AuthController
 
         $required = Validator::required($input, ['email', 'password']);
         if (!empty($required)) {
-            Response::error('Missing required fields.', 422, ['missing' => $required]);
+            Response::error('Champs obligatoires manquants.', 422, ['missing' => $required]);
         }
 
         $email = strtolower(Validator::sanitizeString($input['email']));
@@ -81,14 +81,14 @@ class AuthController
         $identifier = $email;
         if (!$this->rateLimiter->isAllowed($identifier)) {
             $remaining = $this->rateLimiter->remainingLockoutSeconds($identifier);
-            Response::error("Too many failed login attempts. Please try again in {$remaining} seconds.", 429);
+            Response::error("Trop de tentatives. Réessayez dans {$remaining} secondes.", 429);
         }
 
         $user = $this->userModel->findByEmail($email);
         if (!$user || !password_verify($password, $user['password_hash'])) {
             $this->rateLimiter->recordFailure($identifier);
             $remaining = $this->maxAttemptsRemaining($identifier);
-            Response::error("Invalid email or password. {$remaining} attempts remaining.", 401);
+            Response::error("Email ou mot de passe incorrect ({$remaining} essai(s) restant(s)).", 401);
         }
 
         $this->rateLimiter->reset($identifier);
@@ -108,11 +108,50 @@ class AuthController
         $profile = $this->userModel->findById($user['user_id']);
 
         if (!$profile) {
-            Response::error('User not found.', 404);
+            Response::error('Utilisateur introuvable.', 404);
         }
 
         unset($profile['password_hash']);
         Response::success('User profile.', ['user' => $profile]);
+    }
+
+    /** Mise à jour du profil (nom, téléphone) de l'utilisateur connecté. */
+    public function updateMe(): void
+    {
+        $user = AuthMiddleware::requireAuth();
+        $input = $this->getJsonInput();
+
+        $fullName = Validator::sanitizeString((string) ($input['full_name'] ?? ''));
+        $phone = Validator::sanitizeString((string) ($input['phone'] ?? ''));
+        if (!Validator::stringLength($fullName, 2, 100)) {
+            Response::error('Le nom doit contenir entre 2 et 100 caractères.', 422);
+        }
+        if (!Validator::stringLength($phone, 5, 20)) {
+            Response::error('Le téléphone doit contenir entre 5 et 20 caractères.', 422);
+        }
+
+        $this->userModel->updateProfile($user['user_id'], $fullName, $phone);
+        Response::success('Profil mis à jour.', ['user' => $this->userModel->findById($user['user_id'])]);
+    }
+
+    /** Changement de mot de passe (mot de passe actuel requis). */
+    public function changePassword(): void
+    {
+        $user = AuthMiddleware::requireAuth();
+        $input = $this->getJsonInput();
+
+        $current = (string) ($input['current_password'] ?? '');
+        $new = (string) ($input['new_password'] ?? '');
+        $hash = $this->userModel->getPasswordHash($user['user_id']);
+        if ($hash === null || !password_verify($current, $hash)) {
+            Response::error('Mot de passe actuel incorrect.', 422);
+        }
+        if (!Validator::stringLength($new, 8, 128)) {
+            Response::error('Le nouveau mot de passe doit contenir au moins 8 caractères.', 422);
+        }
+
+        $this->userModel->updatePassword($user['user_id'], password_hash($new, PASSWORD_BCRYPT));
+        Response::success('Mot de passe modifié.');
     }
 
     public function listClients(): void

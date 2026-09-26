@@ -75,4 +75,24 @@ class User
         $stmt->execute([':role' => $role]);
         return $stmt->fetchAll();
     }
+
+    public function updateProfile(int $id, string $fullName, string $phone): void
+    {
+        $stmt = $this->pdo->prepare("UPDATE users SET full_name = :full_name, phone = :phone WHERE id = :id");
+        $stmt->execute([':full_name' => $fullName, ':phone' => $phone, ':id' => $id]);
+    }
+
+    public function getPasswordHash(int $id): ?string
+    {
+        $stmt = $this->pdo->prepare("SELECT password_hash FROM users WHERE id = :id LIMIT 1");
+        $stmt->execute([':id' => $id]);
+        $hash = $stmt->fetchColumn();
+        return $hash === false ? null : (string) $hash;
+    }
+
+    public function updatePassword(int $id, string $passwordHash): void
+    {
+        $stmt = $this->pdo->prepare("UPDATE users SET password_hash = :hash WHERE id = :id");
+        $stmt->execute([':hash' => $passwordHash, ':id' => $id]);
+    }
 }

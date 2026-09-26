@@ -63,11 +63,14 @@ $router = new Router();
 $router->post('/api/auth/register', fn() => $authController->register());
 $router->post('/api/auth/login', fn() => $authController->login());
 $router->get('/api/auth/me', fn() => $authController->me());
+$router->put('/api/auth/me', fn() => $authController->updateMe());
+$router->put('/api/auth/password', fn() => $authController->changePassword());
 $router->get('/api/auth/clients', fn() => $authController->listClients(), 'admin');
 
 // Public car routes
 $router->get('/api/cars', fn() => $carController->index());
 $router->get('/api/cars/{id}', fn(array $params) => $carController->show($params));
+$router->get('/api/cars/{id}/booked', fn(array $params) => $reservationController->bookedDates($params));
 
 // Car management routes (admin only)
 $router->post('/api/cars', fn() => $carController->create(), 'admin');
@@ -78,6 +81,7 @@ $router->delete('/api/cars/{id}', fn(array $params) => $carController->delete($p
 // Reservation routes (role checks are done inside ReservationController)
 $router->post('/api/reservations', fn() => $reservationController->create());
 $router->get('/api/reservations/me', fn() => $reservationController->myReservations());
+$router->patch('/api/reservations/{id}/cancel', fn(array $params) => $reservationController->cancel($params));
 $router->get('/api/reservations', fn() => $reservationController->allReservations());
 $router->patch('/api/reservations/{id}/status', fn(array $params) => $reservationController->updateStatus($params));
 

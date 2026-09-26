@@ -242,6 +242,8 @@ export async function deleteCar(id: number): Promise<void> {
   await request<void>("DELETE", `/cars/${id}`, undefined, true);
 }
 
+export type PaymentMethod = "especes" | "carte" | "virement";
+
 export interface ReservationInput {
   car_id: number;
   start_date: string;
@@ -249,6 +251,14 @@ export interface ReservationInput {
   full_name: string;
   email: string;
   phone: string;
+  pickup_place?: string;
+  pickup_time?: string;
+  return_place?: string;
+  return_time?: string;
+  delivery_address?: string;
+  license_number?: string;
+  payment_method?: PaymentMethod;
+  client_note?: string;
 }
 
 export interface ReservationFromApi {
@@ -264,13 +274,79 @@ export interface ReservationFromApi {
   email?: string;
   phone?: string;
   status?: "pending" | "confirmed" | "rejected" | "cancelled";
-  admin_note?: string;
+  admin_note?: string | null;
   total_price?: string | number;
   created_at?: string;
+  car_image_url?: string | null;
+  car_price_per_day?: string | number;
+  car_transmission?: string;
+  car_seats?: number;
+  pickup_place?: string | null;
+  pickup_time?: string | null;
+  return_place?: string | null;
+  return_time?: string | null;
+  delivery_address?: string | null;
+  license_number?: string | null;
+  payment_method?: PaymentMethod | null;
+  client_note?: string | null;
 }
 
-export async function createReservation(input: ReservationInput): Promise<unknown> {
-  return request<unknown>("POST", "/reservations", input, true);
+export interface BookedRange {
+  start_date: string;
+  end_date: string;
+}
+
+export interface CreateReservationResponse {
+  success: boolean;
+  reservation?: ReservationFromApi;
+  total_price?: number;
+  days?: number;
+}
+
+export async function createReservation(input: ReservationInput): Promise<CreateReservationResponse> {
+  return request<CreateReservationResponse>("POST", "/reservations", input, true);
+}
+
+export async function cancelReservation(id: number): Promise<ReservationFromApi | undefined> {
+  const res = await request<{ success: boolean; reservation?: ReservationFromApi }>(
+    "PATCH",
+    `/reservations/${id}/cancel`,
+    undefined,
+    true
+  );
+  return res.reservation;
+}
+
+/** Périodes déjà réservées pour une voiture (pour prévenir le client avant l'envoi). */
+export async function fetchBookedRanges(carId: number): Promise<BookedRange[]> {
+  const res = await request<{ success: boolean; booked?: BookedRange[] }>("GET", `/cars/${carId}/booked`);
+  return res.booked || [];
+}
+
+export async function updateProfile(fullName: string, phone: string): Promise<UserFromApi | undefined> {
+  const res = await request<{ success: boolean; user?: UserFromApi }>(
+    "PUT",
+    "/auth/me",
+    { full_name: fullName, phone },
+    true
+  );
+  return res.user;
+}
+
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  await request<unknown>(
+    "PUT",
+    "/auth/password",
+    { current_password: currentPassword, new_password: newPassword },
+    true
+  );
+}
+
+/** URL complète d'une image renvoyée par l'API (chemin relatif → servi par le backend). */
+export function apiImageUrl(path?: string | null): string {
+  if (!path) return "images/audi-png-auto-car-0.png";
+  if (path.startsWith("http")) return path;
+  return `${getApiBase()}/${path.replace(/^\/?/, "")}`;
 }
 
 export async function fetchMyReservations(): Promise<ReservationFromApi[]> {

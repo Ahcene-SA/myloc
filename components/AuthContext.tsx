@@ -21,6 +21,8 @@ interface AuthContextValue {
     phone: string
   ) => Promise<{ ok: boolean; error?: string; role?: string }>;
   logout: () => void;
+  /** Met à jour l'utilisateur en mémoire (après modification du profil). */
+  updateUser: (user: UserFromApi) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -136,6 +138,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login: handleLogin,
         register: handleRegister,
         logout,
+        updateUser: persistUser,
       }}
     >
       {children}

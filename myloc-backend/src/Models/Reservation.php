@@ -21,7 +21,7 @@ class Reservation
         $sql = "
             SELECT 1 FROM reservations
             WHERE car_id = :car_id
-              AND status != 'cancelled'
+              AND status IN ('pending', 'confirmed')
               AND start_date < :end_date
               AND end_date > :start_date
         ";
@@ -43,11 +43,17 @@ class Reservation
         return (bool) $stmt->fetch();
     }
 
-    public function create(int $userId, int $carId, string $startDate, string $endDate, string $fullName, string $email, string $phone, float $totalPrice): int
+    /**
+     * @param array<string, mixed> $details pickup_place, pickup_time, return_place, return_time,
+     *                                      delivery_address, license_number, payment_method, client_note
+     */
+    public function create(int $userId, int $carId, string $startDate, string $endDate, string $fullName, string $email, string $phone, float $totalPrice, array $details = []): int
     {
         $stmt = $this->pdo->prepare("
-            INSERT INTO reservations (user_id, car_id, start_date, end_date, full_name, email, phone, status, total_price)
-            VALUES (:user_id, :car_id, :start_date, :end_date, :full_name, :email, :phone, 'pending', :total_price)
+            INSERT INTO reservations (user_id, car_id, start_date, end_date, full_name, email, phone, status, total_price,
+                pickup_place, pickup_time, return_place, return_time, delivery_address, license_number, payment_method, client_note)
+            VALUES (:user_id, :car_id, :start_date, :end_date, :full_name, :email, :phone, 'pending', :total_price,
+                :pickup_place, :pickup_time, :return_place, :return_time, :delivery_address, :license_number, :payment_method, :client_note)
         ");
         $stmt->execute([
             ':user_id' => $userId,
@@ -58,14 +64,38 @@ class Reservation
             ':email' => $email,
             ':phone' => $phone,
             ':total_price' => $totalPrice,
+            ':pickup_place' => $details['pickup_place'] ?? null,
+            ':pickup_time' => $details['pickup_time'] ?? null,
+            ':return_place' => $details['return_place'] ?? null,
+            ':return_time' => $details['return_time'] ?? null,
+            ':delivery_address' => $details['delivery_address'] ?? null,
+            ':license_number' => $details['license_number'] ?? null,
+            ':payment_method' => $details['payment_method'] ?? null,
+            ':client_note' => $details['client_note'] ?? null,
         ]);
         return (int) $this->pdo->lastInsertId();
+    }
+
+    /** Périodes déjà prises pour une voiture (sans données personnelles). */
+    public function bookedRanges(int $carId): array
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT start_date, end_date
+            FROM reservations
+            WHERE car_id = :car_id
+              AND status IN ('pending', 'confirmed')
+              AND end_date >= CURDATE()
+            ORDER BY start_date
+        ");
+        $stmt->execute([':car_id' => $carId]);
+        return $stmt->fetchAll();
     }
 
     public function findByUserId(int $userId): array
     {
         $stmt = $this->pdo->prepare("
-            SELECT r.*, c.name AS car_name, c.category AS car_category
+            SELECT r.*, c.name AS car_name, c.category AS car_category, c.image_url AS car_image_url,
+                   c.price_per_day AS car_price_per_day, c.transmission AS car_transmission, c.seats AS car_seats
             FROM reservations r
             JOIN cars c ON r.car_id = c.id
             WHERE r.user_id = :user_id
@@ -78,7 +108,8 @@ class Reservation
     public function findAll(): array
     {
         $stmt = $this->pdo->query("
-            SELECT r.*, c.name AS car_name, c.category AS car_category, u.full_name AS user_full_name
+            SELECT r.*, c.name AS car_name, c.category AS car_category, c.image_url AS car_image_url,
+                   u.full_name AS user_full_name
             FROM reservations r
             JOIN cars c ON r.car_id = c.id
             JOIN users u ON r.user_id = u.id

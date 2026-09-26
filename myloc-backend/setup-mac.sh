@@ -105,6 +105,8 @@ SQL
 # Mises à jour d'une base déjà existante (sans risque si déjà appliquées)
 "${SQL_ROOT[@]}" "${DB_NAME}" < database/migrations/003_add_compacte_category.sql
 "${SQL_ROOT[@]}" "${DB_NAME}" < database/migrations/004_demo_fleet_new_images.sql
+unset MYSQL_PWD
+php database/migrate.php
 ok "Tables créées / mises à jour"
 
 # 6. Admin + flotte de démo
