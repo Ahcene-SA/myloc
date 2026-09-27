@@ -7,6 +7,7 @@ import { ClientContent } from "./ClientContent";
 import { useAuth } from "./AuthContext";
 import { LoadingBlock } from "./client/shared";
 import { pageUrl } from "@/lib/routes";
+import { isStaff } from "@/lib/api";
 import { useLang } from "@/lib/i18n";
 
 export function ClientLayout() {
@@ -23,10 +24,10 @@ export function ClientLayout() {
   useEffect(() => {
     if (!mounted || isLoading) return;
     if (!token) window.location.replace(pageUrl("login"));
-    else if (user?.role === "admin") window.location.replace(pageUrl("admin"));
+    else if (isStaff(user?.role)) window.location.replace(pageUrl("admin"));
   }, [mounted, isLoading, token, user]);
 
-  if (!mounted || isLoading || !token || user?.role === "admin") {
+  if (!mounted || isLoading || !token || isStaff(user?.role)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-mist">
         <LoadingBlock label={t("Vérification de votre session…")} />

@@ -37,7 +37,7 @@ export default function LoginPage() {
 
     // Static export: use a full page navigation so .html files resolve on any server.
     if (typeof window !== "undefined") {
-      window.location.href = pageUrl(result.role === "admin" ? "admin" : "client");
+      window.location.href = pageUrl("client");
     }
   };
 
@@ -66,6 +66,11 @@ export default function LoginPage() {
       imageAlt="Jetour X70 Plus"
     >
       <AuthError message={error ? t(error) : expired ? t("Votre session a expiré : reconnectez-vous.") : ""} />
+      {error.includes("espace agence") && (
+        <a href={pageUrl("agence")} className="-mt-2 text-sm font-bold text-sky-text hover:underline">
+          {t("Aller à l'espace agence")} →
+        </a>
+      )}
       <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
         <AuthField
           label={t("Adresse email")}

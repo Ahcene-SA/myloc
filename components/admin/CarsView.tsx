@@ -3,11 +3,13 @@
 import { useRef, useState, type FormEvent } from "react";
 import { Eye, EyeOff, ImagePlus, Loader2, Pencil, PlusCircle, Trash2, Upload } from "lucide-react";
 import { useAdmin } from "../AdminContext";
+import { useAuth } from "../AuthContext";
 import {
   apiImageUrl,
   createCar,
   deleteCar,
   formatTransmission,
+  isOwner,
   updateCar,
   uploadCarImage,
   type CarFromApi,
@@ -34,6 +36,9 @@ type Filter = "all" | "online" | "offline";
 
 export function CarsView() {
   const { cars, loading, error, refresh } = useAdmin();
+  const { user } = useAuth();
+  // Employé : peut seulement mettre en ligne / retirer un véhicule
+  const owner = isOwner(user?.role);
   const [filter, setFilter] = useState<Filter>("all");
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<CarFromApi | "new" | null>(null);
@@ -50,10 +55,12 @@ export function CarsView() {
   return (
     <div>
       <PageTitle kicker="Flotte" title="Véhicules">
-        <button type="button" onClick={() => setEditing("new")} className={primaryBtn}>
-          <PlusCircle className="h-4 w-4" />
-          Ajouter un véhicule
-        </button>
+        {owner && (
+          <button type="button" onClick={() => setEditing("new")} className={primaryBtn}>
+            <PlusCircle className="h-4 w-4" />
+            Ajouter un véhicule
+          </button>
+        )}
       </PageTitle>
 
       <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center">
@@ -76,7 +83,7 @@ export function CarsView() {
           title={cars.length === 0 ? "Aucun véhicule" : "Rien ici"}
           text={cars.length === 0 ? "Ajoutez votre premier véhicule : il apparaîtra sur le site." : "Aucun véhicule ne correspond."}
           action={
-            cars.length === 0 ? (
+            cars.length === 0 && owner ? (
               <button type="button" onClick={() => setEditing("new")} className={primaryBtn}>
                 Ajouter un véhicule
               </button>
@@ -86,7 +93,7 @@ export function CarsView() {
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 2xl:grid-cols-3">
           {list.map((c) => (
-            <CarAdminCard key={c.id} car={c} onEdit={() => setEditing(c)} />
+            <CarAdminCard key={c.id} car={c} owner={owner} onEdit={() => setEditing(c)} />
           ))}
         </div>
       )}
@@ -96,7 +103,7 @@ export function CarsView() {
   );
 }
 
-function CarAdminCard({ car, onEdit }: { car: CarFromApi; onEdit: () => void }) {
+function CarAdminCard({ car, owner, onEdit }: { car: CarFromApi; owner: boolean; onEdit: () => void }) {
   const { upsertCar, removeCar } = useAdmin();
   const [busy, setBusy] = useState<"toggle" | "delete" | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -200,13 +207,15 @@ function CarAdminCard({ car, onEdit }: { car: CarFromApi; onEdit: () => void }) 
             </>
           ) : (
             <>
-              <button
-                type="button"
-                onClick={onEdit}
-                className="inline-flex h-10 items-center gap-1.5 rounded-full bg-navy px-4 text-xs font-bold text-white hover:bg-navy-soft"
-              >
-                <Pencil className="h-3.5 w-3.5" /> Modifier
-              </button>
+              {owner && (
+                <button
+                  type="button"
+                  onClick={onEdit}
+                  className="inline-flex h-10 items-center gap-1.5 rounded-full bg-navy px-4 text-xs font-bold text-white hover:bg-navy-soft"
+                >
+                  <Pencil className="h-3.5 w-3.5" /> Modifier
+                </button>
+              )}
               <button
                 type="button"
                 onClick={toggle}
@@ -222,14 +231,16 @@ function CarAdminCard({ car, onEdit }: { car: CarFromApi; onEdit: () => void }) 
                 )}
                 {online ? "Retirer du site" : "Remettre en ligne"}
               </button>
-              <button
-                type="button"
-                onClick={() => setConfirmDelete(true)}
-                aria-label={`Supprimer ${car.name}`}
-                className="ml-auto inline-flex h-10 w-10 items-center justify-center rounded-full border-2 border-line text-red-600 hover:border-red-600"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
+              {owner && (
+                <button
+                  type="button"
+                  onClick={() => setConfirmDelete(true)}
+                  aria-label={`Supprimer ${car.name}`}
+                  className="ml-auto inline-flex h-10 w-10 items-center justify-center rounded-full border-2 border-line text-red-600 hover:border-red-600"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              )}
             </>
           )}
         </div>

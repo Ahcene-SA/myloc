@@ -70,8 +70,10 @@ class Router
                 continue;
             }
 
-            if ($route['role'] === 'admin') {
-                AuthMiddleware::requireAdmin();
+            if ($route['role'] === 'admin' || $route['role'] === 'staff') {
+                AuthMiddleware::requireStaff();
+            } elseif ($route['role'] === 'owner') {
+                AuthMiddleware::requireOwner();
             } elseif ($route['role'] === 'client') {
                 AuthMiddleware::requireClient();
             }

@@ -10,7 +10,16 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     phone VARCHAR(20) NOT NULL,
-    role ENUM('admin', 'client') NOT NULL DEFAULT 'client',
+    role ENUM('owner', 'employee', 'client', 'admin') NOT NULL DEFAULT 'client',
+    active TINYINT(1) NOT NULL DEFAULT 1,
+    must_change_password TINYINT(1) NOT NULL DEFAULT 0,
+    agency VARCHAR(100) NULL,
+    totp_secret VARCHAR(64) NULL,
+    totp_enabled TINYINT(1) NOT NULL DEFAULT 0,
+    recovery_codes TEXT NULL,
+    token_version INT NOT NULL DEFAULT 0,
+    last_login_at DATETIME NULL,
+    last_activity_at DATETIME NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -109,4 +118,19 @@ CREATE TABLE IF NOT EXISTS inspections (
     updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY uniq_reservation_type (reservation_id, type),
     CONSTRAINT fk_inspections_reservation FOREIGN KEY (reservation_id) REFERENCES reservations(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NULL,
+    user_name VARCHAR(100) NULL,
+    action VARCHAR(60) NOT NULL,
+    entity_type VARCHAR(30) NULL,
+    entity_id INT NULL,
+    details TEXT NULL,
+    ip VARCHAR(45) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_audit_entity (entity_type, entity_id),
+    INDEX idx_audit_user (user_id),
+    INDEX idx_audit_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

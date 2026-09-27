@@ -10,6 +10,7 @@ use Myloc\Models\Car;
 use Myloc\Models\Reservation;
 use Myloc\Models\User;
 use Myloc\Services\Pricing;
+use Myloc\Utils\Audit;
 use Myloc\Utils\Response;
 use Myloc\Utils\Validator;
 
@@ -161,14 +162,14 @@ class ReservationController
 
     public function allReservations(): void
     {
-        AuthMiddleware::requireAdmin();
+        AuthMiddleware::requireStaff();
         $reservations = $this->reservationModel->findAll();
         Response::success('Réservations récupérées.', ['reservations' => $reservations]);
     }
 
     public function updateStatus(array $params): void
     {
-        AuthMiddleware::requireAdmin();
+        $actor = AuthMiddleware::requireStaff();
         $id = (int) $params['id'];
 
         $input = $this->getJsonInput();
@@ -202,7 +203,22 @@ class ReservationController
             }
         }
 
+        // Un employé qui annule une location déjà confirmée doit en donner la raison
+        if ($actor['role'] !== 'owner' && $status === 'cancelled' && $existing['status'] === 'confirmed'
+            && trim((string) ($adminNote ?? $existing['admin_note'] ?? '')) === '') {
+            Response::error('Indiquez le motif de l\'annulation dans le message pour le client.', 422);
+        }
+
         $this->reservationModel->updateStatus($id, $status, $adminNote);
+        if ($status !== $existing['status']) {
+            Audit::log('reservation_' . $status, 'reservation', $id, [
+                'from' => $existing['status'],
+                'client' => $existing['full_name'],
+                'note' => $adminNote,
+            ]);
+        } elseif ($adminNote !== null && $adminNote !== (string) $existing['admin_note']) {
+            Audit::log('reservation_note', 'reservation', $id, ['client' => $existing['full_name'], 'note' => $adminNote]);
+        }
         Response::success('Statut mis à jour.', [
             'admin_note' => $adminNote,
             'reservation' => $this->reservationModel->findDetailedById($id),
@@ -215,7 +231,7 @@ class ReservationController
      */
     public function adminCreate(): void
     {
-        AuthMiddleware::requireAdmin();
+        AuthMiddleware::requireStaff();
         $input = $this->getJsonInput();
 
         $required = Validator::required($input, ['car_id', 'start_date', 'end_date', 'full_name', 'phone']);
@@ -316,6 +332,14 @@ class ReservationController
             $this->pricing->usePromo($quote['promo_code']);
         }
 
+        Audit::log('reservation_created', 'reservation', $id, [
+            'client' => $fullName,
+            'car' => $car['name'],
+            'start' => $startDate,
+            'end' => $endDate,
+            'total' => $totalPrice,
+            'status' => $status,
+        ]);
         Response::success('Réservation enregistrée.', [
             'reservation' => $this->reservationModel->findDetailedById($id),
         ], 201);

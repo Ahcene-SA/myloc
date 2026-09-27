@@ -6,6 +6,7 @@ import { useAuth } from "../AuthContext";
 import { Logo } from "../Brand";
 import {
   fetchAllReservations,
+  isStaff,
   fetchInspections,
   formatTransmission,
   zoneLabels,
@@ -84,8 +85,8 @@ export function ContractView() {
 
   useEffect(() => {
     if (isLoading || !id) return;
-    if (!token || user?.role !== "admin") {
-      window.location.replace(pageUrl("login"));
+    if (!token || !isStaff(user?.role)) {
+      window.location.replace(pageUrl("agence"));
       return;
     }
     let cancelled = false;

@@ -37,14 +37,14 @@ try {
     if ($existing) {
         // Le compte existe déjà (ex. inscrit comme client) : on le passe admin
         // et on aligne son mot de passe sur celui du .env.
-        $stmt = $db->prepare("UPDATE users SET role = 'admin', password_hash = :hash WHERE id = :id");
+        $stmt = $db->prepare("UPDATE users SET role = 'owner', active = 1, password_hash = :hash WHERE id = :id");
         $stmt->execute([':hash' => password_hash($plainPassword, PASSWORD_BCRYPT), ':id' => $existing['id']]);
-        echo "Admin account updated (role admin + password from .env): {$email}\n";
+        echo "Compte propriétaire mis à jour (rôle + mot de passe du .env) : {$email}\n";
     } else {
         $hash = password_hash($plainPassword, PASSWORD_BCRYPT);
         $stmt = $db->prepare("
             INSERT INTO users (full_name, email, password_hash, phone, role)
-            VALUES (:full_name, :email, :password_hash, :phone, 'admin')
+            VALUES (:full_name, :email, :password_hash, :phone, 'owner')
         ");
         $stmt->execute([
             ':full_name' => $fullName,

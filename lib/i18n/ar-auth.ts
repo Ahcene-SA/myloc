@@ -124,4 +124,7 @@ export const arAuth: Record<string, string> = {
 
   // ── API : états des lieux ──
   "États des lieux.": "محاضر معاينة السيارة.",
+  "Aller à l'espace agence": "الذهاب إلى فضاء الوكالة",
+  "Ce compte appartient à l'équipe de l'agence : connectez-vous depuis l'espace agence.":
+    "هذا الحساب تابع لفريق الوكالة: سجّلوا الدخول من فضاء الوكالة.",
 };

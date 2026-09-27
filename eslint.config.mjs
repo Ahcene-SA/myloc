@@ -13,6 +13,8 @@ const eslintConfig = defineConfig([
     "build/**",
     "dist/**",
     "next-env.d.ts",
+    // Bibliothèque tierce copiée telle quelle (QR code)
+    "lib/vendor/**",
   ]),
 ]);
 

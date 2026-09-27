@@ -9,6 +9,7 @@ use Myloc\Middleware\AuthMiddleware;
 use Myloc\Models\Car;
 use Myloc\Models\Promo;
 use Myloc\Services\Pricing;
+use Myloc\Utils\Audit;
 use Myloc\Utils\Response;
 use Myloc\Utils\Validator;
 
@@ -81,7 +82,9 @@ class PricingController
             'duration' => $duration,
             'loyalty' => ['enabled' => !empty($l['enabled']), 'min_rentals' => $min, 'percent' => round((float) $pct, 2)],
         ];
+        $before = $this->pricing->rules();
         $this->pricing->saveRules($rules);
+        Audit::log('pricing_rules_updated', 'settings', null, ['before' => $before, 'after' => $rules]);
         Response::success('Règles de remise enregistrées.', ['rules' => $rules]);
     }
 
@@ -97,6 +100,7 @@ class PricingController
             Response::error('Ce code existe déjà.', 409);
         }
         $id = $this->promos->create($data);
+        Audit::log('promo_created', 'promo', $id, ['code' => $data['code'], 'type' => $data['discount_type'], 'value' => $data['discount_value']]);
         Response::success('Code promo créé.', ['promo' => $this->promos->findById($id)], 201);
     }
 
@@ -113,12 +117,22 @@ class PricingController
             Response::error('Ce code existe déjà.', 409);
         }
         $this->promos->update($id, $data);
+        Audit::log(
+            (bool) $existing['active'] !== (bool) $data['active'] ? ($data['active'] ? 'promo_activated' : 'promo_deactivated') : 'promo_updated',
+            'promo',
+            $id,
+            ['code' => $data['code'], 'type' => $data['discount_type'], 'value' => $data['discount_value']]
+        );
         Response::success('Code promo mis à jour.', ['promo' => $this->promos->findById($id)]);
     }
 
     public function deletePromo(array $params): void
     {
+        $promo = $this->promos->findById((int) $params['id']);
         $this->promos->delete((int) $params['id']);
+        if ($promo) {
+            Audit::log('promo_deleted', 'promo', (int) $params['id'], ['code' => $promo['code']]);
+        }
         Response::success('Code promo supprimé.');
     }
 

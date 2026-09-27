@@ -6,6 +6,8 @@ namespace Myloc\Controllers;
 
 use Myloc\Config\Database;
 use Myloc\Models\Car;
+use Myloc\Middleware\AuthMiddleware;
+use Myloc\Utils\Audit;
 use Myloc\Utils\Response;
 use Myloc\Utils\Validator;
 
@@ -89,6 +91,7 @@ class CarController
 
         $carId = $this->carModel->create($data);
         $car = $this->carModel->findById($carId, true);
+        Audit::log('car_created', 'car', $carId, ['name' => $car['name'], 'price_per_day' => $car['price_per_day']]);
 
         Response::success('Véhicule ajouté.', ['car' => $car], 201);
     }
@@ -102,10 +105,28 @@ class CarController
         }
 
         $input = $this->getJsonInput();
+        // Un employé peut seulement mettre en ligne / retirer du site
+        $actor = AuthMiddleware::current();
+        if (($actor['role'] ?? '') !== 'owner' && array_diff(array_keys($input), ['status'])) {
+            Response::error('Seul le propriétaire peut modifier les informations et le prix d\'un véhicule.', 403);
+        }
         $data = $this->validateCarInput($input, false);
 
         $this->carModel->update($id, $data);
         $car = $this->carModel->findById($id, true);
+
+        $changes = [];
+        foreach ($data as $k => $v) {
+            if ((string) ($existing[$k] ?? '') !== (string) $v) {
+                $changes[$k] = [$existing[$k] ?? null, $v];
+            }
+        }
+        if ($changes) {
+            $action = array_keys($changes) === ['status']
+                ? ($data['status'] === 'available' ? 'car_online' : 'car_offline')
+                : (isset($changes['price_per_day']) ? 'car_price_changed' : 'car_updated');
+            Audit::log($action, 'car', $id, ['name' => $existing['name'], 'changes' => $changes]);
+        }
 
         Response::success('Véhicule mis à jour.', ['car' => $car]);
     }
@@ -124,10 +145,12 @@ class CarController
 
         if ($this->carModel->countReservations($id) > 0) {
             $this->carModel->setUnavailable($id);
+            Audit::log('car_offline', 'car', $id, ['name' => $existing['name'], 'reason' => 'suppression demandée (historique conservé)']);
             Response::success('Ce véhicule a un historique de réservations : il a été retiré du site au lieu d\'être supprimé.', ['deleted' => false]);
         }
 
         $this->carModel->hardDelete($id);
+        Audit::log('car_deleted', 'car', $id, ['name' => $existing['name']]);
         $image = (string) ($existing['image_url'] ?? '');
         if (preg_match('#^images/cars/car-[a-f0-9]{16}\.(png|jpg|webp|gif)$#', $image)) {
             @unlink(__DIR__ . '/../../public/' . $image);

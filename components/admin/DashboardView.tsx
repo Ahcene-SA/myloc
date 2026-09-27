@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { useAdmin } from "../AdminContext";
 import { useAuth } from "../AuthContext";
-import { apiImageUrl, updateReservationStatus, type ReservationFromApi } from "@/lib/api";
+import { apiImageUrl, isOwner, updateReservationStatus, type ReservationFromApi } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import {
   Card,
@@ -92,13 +92,22 @@ export function DashboardView() {
       icon: Car,
       go: () => setActiveTab("planning"),
     },
-    {
-      label: `Confirmé en ${monthLabel}`,
-      value: formatPrice(monthRevenue),
-      hint: "locations qui démarrent ce mois-ci",
-      icon: Wallet,
-      go: () => showReservations("all"),
-    },
+    // Le chiffre d'affaires n'est visible que par le propriétaire
+    isOwner(user?.role)
+      ? {
+          label: `Confirmé en ${monthLabel}`,
+          value: formatPrice(monthRevenue),
+          hint: "locations qui démarrent ce mois-ci",
+          icon: Wallet,
+          go: () => showReservations("all"),
+        }
+      : {
+          label: "Départs et retours",
+          value: String(departures.length + returns.length),
+          hint: "aujourd'hui et demain",
+          icon: CalendarClock,
+          go: () => setActiveTab("planning"),
+        },
   ];
 
   return (

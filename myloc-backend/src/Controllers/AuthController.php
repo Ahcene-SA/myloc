@@ -7,6 +7,7 @@ namespace Myloc\Controllers;
 use Myloc\Config\Database;
 use Myloc\Middleware\AuthMiddleware;
 use Myloc\Models\User;
+use Myloc\Utils\Audit;
 use Myloc\Utils\JwtHelper;
 use Myloc\Utils\RateLimiter;
 use Myloc\Utils\Response;
@@ -57,7 +58,7 @@ class AuthController
         $hash = password_hash($password, PASSWORD_BCRYPT);
         $userId = $this->userModel->create($fullName, $email, $phone, $hash);
 
-        $token = JwtHelper::encode($userId, 'client');
+        $token = JwtHelper::encode($userId, 'client', ['scope' => 'client']);
 
         Response::success('Registration successful.', [
             'user_id' => $userId,
@@ -93,7 +94,12 @@ class AuthController
 
         $this->rateLimiter->reset($identifier);
 
-        $token = JwtHelper::encode((int) $user['id'], $user['role']);
+        // L'équipe de l'agence a sa propre porte d'entrée (avec code à 6 chiffres)
+        if (AuthMiddleware::isStaffRole($user['role'])) {
+            Response::error('Ce compte appartient à l\'équipe de l\'agence : connectez-vous depuis l\'espace agence.', 403, ['code' => 'USE_AGENCY_LOGIN']);
+        }
+
+        $token = JwtHelper::encode((int) $user['id'], $user['role'], ['scope' => 'client']);
 
         Response::success('Login successful.', [
             'user_id' => (int) $user['id'],
@@ -104,7 +110,7 @@ class AuthController
 
     public function me(): void
     {
-        $user = AuthMiddleware::requireAuth();
+        $user = AuthMiddleware::requireAuth(true);
         $profile = $this->userModel->findById($user['user_id']);
 
         if (!$profile) {
@@ -137,7 +143,7 @@ class AuthController
     /** Changement de mot de passe (mot de passe actuel requis). */
     public function changePassword(): void
     {
-        $user = AuthMiddleware::requireAuth();
+        $user = AuthMiddleware::requireAuth(true);
         $input = $this->getJsonInput();
 
         $current = (string) ($input['current_password'] ?? '');
@@ -149,14 +155,21 @@ class AuthController
         if (!Validator::stringLength($new, 8, 128)) {
             Response::error('Le nouveau mot de passe doit contenir au moins 8 caractères.', 422);
         }
+        if (hash_equals($current, $new)) {
+            Response::error('Choisissez un mot de passe différent de l\'actuel.', 422);
+        }
 
         $this->userModel->updatePassword($user['user_id'], password_hash($new, PASSWORD_BCRYPT));
+        if (AuthMiddleware::isStaffRole($user['role'])) {
+            $this->userModel->clearMustChangePassword($user['user_id']);
+            Audit::log('password_changed', 'user', $user['user_id']);
+        }
         Response::success('Mot de passe modifié.');
     }
 
     public function listClients(): void
     {
-        AuthMiddleware::requireAdmin();
+        AuthMiddleware::requireStaff();
         $clients = $this->userModel->findClientsWithStats();
         Response::success('Clients récupérés.', ['clients' => $clients]);
     }

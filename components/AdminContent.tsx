@@ -9,10 +9,18 @@ import { ClientsView } from "./admin/ClientsView";
 import { PromosView } from "./admin/PromosView";
 import { ReservationDrawer } from "./admin/ReservationDrawer";
 import { NewReservationModal } from "./admin/NewReservationModal";
-import { ProfilView } from "./client/ProfilView";
+import { TeamView } from "./admin/TeamView";
+import { AuditView } from "./admin/AuditView";
+import { AccountView } from "./admin/AccountView";
+import { OWNER_TABS } from "./AdminSidebar";
+import { useAuth } from "./AuthContext";
+import { isOwner } from "@/lib/api";
 
 export function AdminContent() {
-  const { activeTab } = useAdmin();
+  const { activeTab: tab } = useAdmin();
+  const { user } = useAuth();
+  // Un employé ne peut pas ouvrir un onglet du propriétaire (même en bricolant l'état)
+  const activeTab = !isOwner(user?.role) && OWNER_TABS.includes(tab) ? "dashboard" : tab;
 
   return (
     <div className="mx-auto max-w-7xl">
@@ -22,11 +30,9 @@ export function AdminContent() {
       {activeTab === "cars" && <CarsView />}
       {activeTab === "clients" && <ClientsView />}
       {activeTab === "promos" && <PromosView />}
-      {activeTab === "compte" && (
-        <div className="max-w-4xl">
-          <ProfilView />
-        </div>
-      )}
+      {activeTab === "equipe" && <TeamView />}
+      {activeTab === "journal" && <AuditView />}
+      {activeTab === "compte" && <AccountView />}
 
       {/* Fenêtres ouvertes par-dessus n'importe quel onglet */}
       <ReservationDrawer />

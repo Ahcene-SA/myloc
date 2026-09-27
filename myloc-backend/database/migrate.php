@@ -151,6 +151,55 @@ try {
         $changes++;
     }
 
+    // 6. Espace agence : rôles propriétaire / employé, 2FA, sessions, journal d'activité
+    $roleType = (string) $pdo->query("SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'role'")->fetchColumn();
+    if (!str_contains($roleType, "'owner'")) {
+        $pdo->exec("ALTER TABLE users MODIFY COLUMN role ENUM('owner', 'employee', 'client', 'admin') NOT NULL DEFAULT 'client'");
+        echo "✓ users.role : rôles propriétaire et employé\n";
+        $changes++;
+    }
+    $n = $pdo->exec("UPDATE users SET role = 'owner' WHERE role = 'admin'");
+    if ($n > 0) {
+        echo "✓ {$n} compte(s) admin devenu(s) propriétaire\n";
+        $changes++;
+    }
+    $userColumns = [
+        'active'               => 'TINYINT(1) NOT NULL DEFAULT 1',
+        'must_change_password' => 'TINYINT(1) NOT NULL DEFAULT 0',
+        'agency'               => 'VARCHAR(100) NULL',
+        'totp_secret'          => 'VARCHAR(64) NULL',
+        'totp_enabled'         => 'TINYINT(1) NOT NULL DEFAULT 0',
+        'recovery_codes'       => 'TEXT NULL',
+        'token_version'        => 'INT NOT NULL DEFAULT 0',
+        'last_login_at'        => 'DATETIME NULL',
+        'last_activity_at'     => 'DATETIME NULL',
+    ];
+    foreach ($userColumns as $column => $definition) {
+        if (!$hasColumn('users', $column)) {
+            $pdo->exec("ALTER TABLE users ADD COLUMN {$column} {$definition}");
+            echo "✓ users.{$column} ajoutée\n";
+            $changes++;
+        }
+    }
+    if (!$hasTable('audit_logs')) {
+        $pdo->exec("CREATE TABLE audit_logs (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NULL,
+            user_name VARCHAR(100) NULL,
+            action VARCHAR(60) NOT NULL,
+            entity_type VARCHAR(30) NULL,
+            entity_id INT NULL,
+            details TEXT NULL,
+            ip VARCHAR(45) NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_audit_entity (entity_type, entity_id),
+            INDEX idx_audit_user (user_id),
+            INDEX idx_audit_created (created_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        echo "✓ table audit_logs créée (journal d'activité)\n";
+        $changes++;
+    }
+
     echo $changes === 0 ? "Schéma déjà à jour.\n" : "Schéma mis à jour ({$changes} changement(s)).\n";
 } catch (Throwable $e) {
     fwrite(STDERR, 'Migration error: ' . $e->getMessage() . "\n");

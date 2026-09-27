@@ -24,6 +24,8 @@ interface AuthContextValue {
   logout: () => void;
   /** Met à jour l'utilisateur en mémoire (après modification du profil). */
   updateUser: (user: UserFromApi) => void;
+  /** Ouvre une session à partir d'un jeton déjà obtenu (connexion de l'espace agence). */
+  startSession: (token: string, user: UserFromApi) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -131,6 +133,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const startSession = (newToken: string, u: UserFromApi) => {
+    localStorage.setItem("myloc_token", newToken);
+    persistUser(u);
+    setToken(newToken);
+  };
+
   const logout = () => {
     if (typeof window !== "undefined") {
       localStorage.removeItem("myloc_token");
@@ -150,6 +158,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         register: handleRegister,
         logout,
         updateUser: persistUser,
+        startSession,
       }}
     >
       {children}

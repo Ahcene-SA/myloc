@@ -24,6 +24,10 @@ interface DashboardSidebarProps<T extends string> {
   onSelect: (tab: T) => void;
   /** Affiche le bouton FR / عربي (espace client) */
   showLangSwitch?: boolean;
+  /** Ligne sous le titre, ex. « Salim · Propriétaire » */
+  subtitle?: string;
+  /** Page après déconnexion (espace agence ou connexion client) */
+  logoutTo?: "login" | "agence";
 }
 
 /** Barre latérale commune aux espaces client et admin (thème Méditerranée). */
@@ -33,6 +37,8 @@ export function DashboardSidebar<T extends string>({
   activeTab,
   onSelect,
   showLangSwitch = false,
+  subtitle,
+  logoutTo = "login",
 }: DashboardSidebarProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
   const { t } = useLang();
@@ -40,7 +46,7 @@ export function DashboardSidebar<T extends string>({
 
   const handleLogout = () => {
     logout();
-    window.location.href = pageUrl("login");
+    window.location.href = pageUrl(logoutTo);
   };
 
   return (
@@ -81,6 +87,7 @@ export function DashboardSidebar<T extends string>({
               <Logo light />
             </a>
             <span className="mt-3 text-[11px] font-bold uppercase tracking-[0.24em] text-sky">{title}</span>
+            {subtitle && <span className="text-sm font-semibold text-white/60">{subtitle}</span>}
           </div>
 
           <nav className="flex-1 space-y-1 px-4" aria-label={title}>

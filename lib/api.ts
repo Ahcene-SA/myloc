@@ -78,13 +78,30 @@ export interface CarFromApi {
   reservations_count?: number;
 }
 
+export type Role = "owner" | "employee" | "client" | "admin";
+
 export interface UserFromApi {
   id: number;
   full_name: string;
   email: string;
   phone: string;
-  role: "admin" | "client";
+  role: Role;
   created_at?: string;
+  /* Équipe de l'agence uniquement */
+  active?: boolean;
+  must_change_password?: boolean;
+  agency?: string | null;
+  totp_enabled?: boolean;
+  last_login_at?: string | null;
+}
+
+/** Membre de l'équipe de l'agence (propriétaire ou employé). */
+export function isStaff(role?: string | null): boolean {
+  return role === "owner" || role === "employee" || role === "admin";
+}
+
+export function isOwner(role?: string | null): boolean {
+  return role === "owner" || role === "admin";
 }
 
 export interface LoginResponse {
@@ -135,7 +152,7 @@ async function request<T>(
 
   if (!response.ok || data.success === false) {
     const message = data.error || `Erreur HTTP ${response.status}`;
-    if (response.status === 401 && sentToken) handleExpiredSession(sentToken);
+    if (response.status === 401 && sentToken) handleExpiredSession(sentToken, message);
     throw new HttpError(translate(message), response.status);
   }
 
@@ -148,17 +165,21 @@ async function request<T>(
  *   toute récente serait effacée par une ancienne requête) ;
  * - jamais de redirection depuis les pages de connexion / inscription (on y est déjà).
  */
-function handleExpiredSession(sentToken: string) {
+function handleExpiredSession(sentToken: string, message = "") {
   if (typeof window === "undefined") return;
   if (localStorage.getItem("myloc_token") !== sentToken) return;
   localStorage.removeItem("myloc_token");
   localStorage.removeItem("myloc_user");
   const path = window.location.pathname;
-  if (/\/(login|register)(\.html)?$/.test(path)) return;
-  const login = process.env.NODE_ENV === "production" ? "./login.html" : "/login";
+  if (/\/(login|register|agence)(\.html)?$/.test(path)) return;
+  // L'équipe retourne vers l'espace agence, les clients vers la connexion client
+  const staffPage = /\/(admin|contrat)(\.html)?$/.test(path);
+  const page = staffPage ? "agence" : "login";
+  const url = process.env.NODE_ENV === "production" ? `./${page}.html` : `/${page}`;
   window.setTimeout(() => {
     // Entre-temps, l'utilisateur a pu se reconnecter dans un autre onglet
-    if (!localStorage.getItem("myloc_token")) window.location.replace(`${login}?expired=1`);
+    const reason = /inactivit/i.test(message) ? "idle" : /désactivé/i.test(message) ? "disabled" : "1";
+    if (!localStorage.getItem("myloc_token")) window.location.replace(`${url}?expired=${reason}`);
   }, 1200);
 }
 
@@ -667,4 +688,118 @@ export async function uploadInspectionPhoto(file: File): Promise<string> {
   const res = await request<{ success: boolean; path?: string }>("POST", "/admin/inspections/upload", form, true);
   if (!res.path) throw new Error("Photo non enregistrée.");
   return res.path;
+}
+
+/* ─────────────── Espace agence ─────────────── */
+
+export interface AgencyLoginResult {
+  step: "totp" | "totp_setup" | "done";
+  challenge?: string;
+  secret?: string;
+  otpauth?: string;
+  token?: string;
+  role?: Role;
+  user?: UserFromApi;
+  recovery_codes?: string[];
+  recovery_codes_left?: number;
+}
+
+export async function agencyLogin(email: string, password: string): Promise<AgencyLoginResult> {
+  return request<AgencyLoginResult>("POST", "/agency/login", { email, password });
+}
+
+export async function agencyVerify(challenge: string, code: { code?: string; recovery_code?: string }): Promise<AgencyLoginResult> {
+  return request<AgencyLoginResult>("POST", "/agency/verify", { challenge, ...code });
+}
+
+/** Garde la session agence active (et vérifie qu'elle l'est encore). */
+export async function agencyPing(): Promise<UserFromApi | undefined> {
+  const res = await request<{ success: boolean; user?: UserFromApi }>("GET", "/agency/me", undefined, true);
+  return res.user;
+}
+
+export async function agencyLogoutAll(): Promise<void> {
+  await request<unknown>("POST", "/agency/logout-all", undefined, true);
+}
+
+export async function twoFactorSetup(): Promise<{ secret: string; otpauth: string }> {
+  return request<{ success: boolean; secret: string; otpauth: string }>("POST", "/agency/2fa/setup", undefined, true);
+}
+
+export async function twoFactorEnable(code: string): Promise<string[]> {
+  const res = await request<{ success: boolean; recovery_codes: string[] }>("POST", "/agency/2fa/enable", { code }, true);
+  return res.recovery_codes;
+}
+
+export async function regenerateRecoveryCodes(code: string): Promise<string[]> {
+  const res = await request<{ success: boolean; recovery_codes: string[] }>("POST", "/agency/2fa/recovery-codes", { code }, true);
+  return res.recovery_codes;
+}
+
+export async function twoFactorDisable(password: string): Promise<void> {
+  await request<unknown>("POST", "/agency/2fa/disable", { password }, true);
+}
+
+export interface TeamMember extends UserFromApi {
+  role: "owner" | "employee";
+}
+
+export async function fetchTeam(): Promise<TeamMember[]> {
+  const res = await request<{ success: boolean; team?: TeamMember[] }>("GET", "/agency/team", undefined, true);
+  return res.team || [];
+}
+
+export async function createTeamMember(input: {
+  full_name: string;
+  email: string;
+  phone: string;
+  agency?: string;
+  role: "owner" | "employee";
+}): Promise<{ member: TeamMember; temporary_password: string }> {
+  return request<{ success: boolean; member: TeamMember; temporary_password: string }>("POST", "/agency/team", input, true);
+}
+
+export async function updateTeamMember(
+  id: number,
+  fields: Partial<Pick<TeamMember, "full_name" | "phone" | "agency" | "role" | "active">>
+): Promise<TeamMember | undefined> {
+  const res = await request<{ success: boolean; member?: TeamMember }>("PUT", `/agency/team/${id}`, fields, true);
+  return res.member;
+}
+
+export async function resetMemberPassword(id: number): Promise<string> {
+  const res = await request<{ success: boolean; temporary_password: string }>("POST", `/agency/team/${id}/reset-password`, undefined, true);
+  return res.temporary_password;
+}
+
+export async function resetMemberTwoFactor(id: number): Promise<void> {
+  await request<unknown>("POST", `/agency/team/${id}/reset-2fa`, undefined, true);
+}
+
+export interface AuditEntry {
+  id: number;
+  user_id: number | null;
+  user_name: string | null;
+  action: string;
+  entity_type: string | null;
+  entity_id: number | null;
+  details: Record<string, unknown> | null;
+  ip: string | null;
+  created_at: string;
+}
+
+export async function fetchAudit(filters: {
+  user_id?: number;
+  action?: string;
+  entity_type?: string;
+  entity_id?: number;
+  from?: string;
+  to?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<{ entries: AuditEntry[]; total: number }> {
+  const q = new URLSearchParams();
+  Object.entries(filters).forEach(([k, v]) => v !== undefined && v !== "" && q.set(k, String(v)));
+  const res = await request<{ success: boolean; entries: AuditEntry[]; total: number }>("GET", `/agency/audit?${q}`, undefined, true);
+  return { entries: res.entries || [], total: res.total || 0 };
 }

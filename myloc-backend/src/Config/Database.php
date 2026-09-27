@@ -10,6 +10,13 @@ use PDOException;
 class Database
 {
     private ?PDO $pdo = null;
+    private static ?Database $shared = null;
+
+    /** Une seule connexion par requête, partagée par tout le code. */
+    public static function shared(): Database
+    {
+        return self::$shared ??= new Database();
+    }
 
     public function __construct()
     {

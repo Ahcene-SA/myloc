@@ -11,22 +11,26 @@ use Firebase\JWT\SignatureInvalidException;
 
 class JwtHelper
 {
-    public static function encode(int $userId, string $role): string
+    /**
+     * @param array<string, mixed> $claims claims supplémentaires (scope, tv…)
+     * @param int|null $ttl durée de validité en secondes (par défaut JWT_EXPIRY)
+     */
+    public static function encode(int $userId, string $role, array $claims = [], ?int $ttl = null): string
     {
         $secret = $_ENV['JWT_SECRET'] ?? '';
         if ($secret === '') {
             throw new \RuntimeException('JWT secret is not configured.');
         }
 
-        $expiry = (int) ($_ENV['JWT_EXPIRY'] ?? 86400);
+        $expiry = $ttl ?? (int) ($_ENV['JWT_EXPIRY'] ?? 86400);
         $issuedAt = time();
 
-        $payload = [
+        $payload = array_merge($claims, [
             'iat' => $issuedAt,
             'exp' => $issuedAt + $expiry,
             'sub' => $userId,
             'role' => $role,
-        ];
+        ]);
 
         return JWT::encode($payload, $secret, 'HS256');
     }

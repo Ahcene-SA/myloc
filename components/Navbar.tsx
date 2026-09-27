@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Menu, X, UserRound, LayoutDashboard } from "lucide-react";
+import { Menu, X, UserRound } from "lucide-react";
 import { Logo } from "./Brand";
 import { WhatsAppIcon } from "./FloatingWhatsApp";
 import { site } from "@/lib/site";
@@ -141,24 +141,14 @@ export function Navbar() {
               {t(link.label)}
             </a>
           ))}
-          <div className="mt-5 grid grid-cols-2 gap-2">
-            <a
-              href={pageUrl("client")}
-              onClick={() => setIsOpen(false)}
-              className="flex h-12 items-center justify-center gap-2 rounded-full border-2 border-navy text-sm font-bold text-navy"
-            >
-              <UserRound className="h-4 w-4" />
-              {t("Mon espace")}
-            </a>
-            <a
-              href={pageUrl("admin")}
-              onClick={() => setIsOpen(false)}
-              className="flex h-12 items-center justify-center gap-2 rounded-full bg-mist text-sm font-bold text-navy"
-            >
-              <LayoutDashboard className="h-4 w-4" />
-              Admin
-            </a>
-          </div>
+          <a
+            href={pageUrl("client")}
+            onClick={() => setIsOpen(false)}
+            className="mt-5 flex h-12 items-center justify-center gap-2 rounded-full border-2 border-navy text-sm font-bold text-navy"
+          >
+            <UserRound className="h-4 w-4" />
+            {t("Mon espace")}
+          </a>
           <a
             href={site.whatsappHref}
             target="_blank"

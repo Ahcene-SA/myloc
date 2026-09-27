@@ -8,6 +8,7 @@ use Myloc\Config\Database;
 use Myloc\Middleware\AuthMiddleware;
 use Myloc\Models\Inspection;
 use Myloc\Models\Reservation;
+use Myloc\Utils\Audit;
 use Myloc\Utils\Response;
 use Myloc\Utils\Validator;
 
@@ -31,7 +32,7 @@ class InspectionController
         $user = AuthMiddleware::requireAuth();
         $reservation = $this->reservations->findById($id);
         // Le client peut consulter les états des lieux de ses propres locations
-        if (!$reservation || ($user['role'] !== 'admin' && (int) $reservation['user_id'] !== $user['user_id'])) {
+        if (!$reservation || (!AuthMiddleware::isStaffRole($user['role']) && (int) $reservation['user_id'] !== $user['user_id'])) {
             Response::error('Réservation introuvable.', 404);
         }
         Response::success('États des lieux.', ['inspections' => (object) $this->inspections->forReservation($id)]);
@@ -39,7 +40,7 @@ class InspectionController
 
     public function save(array $params): void
     {
-        $admin = AuthMiddleware::requireAdmin();
+        $admin = AuthMiddleware::requireStaff();
         $id = (int) $params['id'];
         $type = (string) $params['type'];
         if (!in_array($type, ['depart', 'retour'], true)) {
@@ -94,13 +95,19 @@ class InspectionController
             'photos' => $photos,
             'notes' => $notes !== '' ? $notes : null,
         ], $admin['user_id']);
+        Audit::log('inspection_' . $type, 'reservation', $id, [
+            'mileage' => $mileage,
+            'fuel' => $fuel,
+            'damages' => count($damages),
+            'photos' => count($photos),
+        ]);
 
         Response::success('État des lieux enregistré.', ['inspections' => (object) $this->inspections->forReservation($id)]);
     }
 
     public function upload(): void
     {
-        AuthMiddleware::requireAdmin();
+        AuthMiddleware::requireStaff();
         if (empty($_FILES['image']) || $_FILES['image']['error'] !== UPLOAD_ERR_OK) {
             Response::error('Photo non reçue (5 Mo maximum).', 422);
         }

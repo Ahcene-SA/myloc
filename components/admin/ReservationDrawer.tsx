@@ -19,9 +19,14 @@ import {
 } from "lucide-react";
 import { useAdmin } from "../AdminContext";
 import { WhatsAppIcon } from "../FloatingWhatsApp";
+import { useAuth } from "../AuthContext";
+import { auditDetail, auditLabel, toneClass } from "./auditLabels";
 import {
   apiImageUrl,
+  fetchAudit,
   fetchInspections,
+  isOwner,
+  type AuditEntry,
   updateReservationStatus,
   zoneLabels,
   type InspectionSet,
@@ -72,6 +77,8 @@ export function ReservationDrawer() {
 
 function DrawerBody({ r, onClose }: { r: ReservationFromApi; onClose: () => void }) {
   const { upsertReservation } = useAdmin();
+  const { user } = useAuth();
+  const owner = isOwner(user?.role);
   const [note, setNote] = useState(r.admin_note || "");
   const [busy, setBusy] = useState<Status | "note" | null>(null);
   const [err, setErr] = useState("");
@@ -282,6 +289,8 @@ function DrawerBody({ r, onClose }: { r: ReservationFromApi; onClose: () => void
           )}
         </section>
 
+        <History key={`${r.id}-${r.status}-${r.admin_note ?? ""}`} reservationId={r.id} />
+
         <FormError message={err} />
       </div>
 
@@ -290,8 +299,10 @@ function DrawerBody({ r, onClose }: { r: ReservationFromApi; onClose: () => void
         {asking ? (
           <div className="flex flex-col gap-3">
             <p className="text-sm font-semibold text-navy">
-              {asking === "rejected" ? "Refuser cette demande ?" : "Annuler cette réservation ?"} Vous pouvez expliquer pourquoi dans le
-              message ci-dessus.
+              {asking === "rejected" ? "Refuser cette demande ?" : "Annuler cette réservation ?"}{" "}
+              {asking === "cancelled" && r.status === "confirmed" && !owner
+                ? "Indiquez obligatoirement le motif dans le message ci-dessus."
+                : "Vous pouvez expliquer pourquoi dans le message ci-dessus."}
             </p>
             <div className="flex flex-wrap gap-2">
               <ActionButton tone="danger" busy={busy === asking} onClick={() => act(asking)} icon={X}>
@@ -458,6 +469,42 @@ function InspectionSection({ r }: { r: ReservationFromApi }) {
           }}
         />
       )}
+    </section>
+  );
+}
+
+/** Historique de la réservation : qui l'a confirmée, annulée, etc. */
+function History({ reservationId }: { reservationId: number }) {
+  const [entries, setEntries] = useState<AuditEntry[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchAudit({ entity_type: "reservation", entity_id: reservationId, limit: 20 })
+      .then((r) => !cancelled && setEntries(r.entries))
+      .catch(() => !cancelled && setEntries([]));
+    return () => {
+      cancelled = true;
+    };
+  }, [reservationId]);
+
+  if (!entries || entries.length === 0) return null;
+  return (
+    <section>
+      <p className={labelClass}>Historique</p>
+      <ol className="flex flex-col gap-2 border-s-2 border-line ps-4">
+        {entries.map((e) => {
+          const meta = auditLabel(e.action);
+          const detail = auditDetail(e);
+          return (
+            <li key={e.id} className="text-sm">
+              <span className={cn("me-2 rounded-full px-2 py-0.5 text-[11px] font-bold", toneClass[meta.tone])}>{meta.label}</span>
+              <span className="font-semibold text-navy">{e.user_name || "Système"}</span>
+              <span className="text-muted"> · {formatDateTime(e.created_at)}</span>
+              {detail && e.action !== "reservation_created" && <p className="mt-0.5 text-xs text-muted">{detail}</p>}
+            </li>
+          );
+        })}
+      </ol>
     </section>
   );
 }
