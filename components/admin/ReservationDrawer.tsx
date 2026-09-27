@@ -144,7 +144,7 @@ function DrawerBody({ r, onClose }: { r: ReservationFromApi; onClose: () => void
             <p className="flex items-center gap-2 font-bold">
               <Check className="h-4 w-4" />
               {done === "confirmed" ? "Réservation confirmée." : done === "rejected" ? "Réservation refusée." : done === "cancelled" ? "Réservation annulée." : "Réservation remise en attente."}{" "}
-              Le client le voit dans son espace.
+              Le client le voit dans son espace{done !== "pending" && r.email ? " et reçoit un e-mail" : ""}.
             </p>
             <a
               href={clientWhatsApp(r.phone, whatsappText(r, done, note))}

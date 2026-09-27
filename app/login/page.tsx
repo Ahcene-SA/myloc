@@ -100,7 +100,7 @@ export default function LoginPage() {
             <input type="checkbox" className="h-4 w-4 accent-sky" />
             {t("Se souvenir de moi")}
           </label>
-          <a href="#" className="font-bold text-sky-text hover:underline">
+          <a href={pageUrl("reinitialiser")} className="font-bold text-sky-text hover:underline">
             {t("Mot de passe oublié ?")}
           </a>
         </div>

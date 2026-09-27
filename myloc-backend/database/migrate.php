@@ -200,6 +200,24 @@ try {
         $changes++;
     }
 
+    // 7. Mot de passe oublié : liens de réinitialisation (30 min, usage unique)
+    if (!$hasTable('password_resets')) {
+        $pdo->exec("CREATE TABLE password_resets (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            token_hash CHAR(64) NOT NULL,
+            expires_at DATETIME NOT NULL,
+            used_at DATETIME NULL,
+            ip VARCHAR(45) NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY uniq_reset_token (token_hash),
+            INDEX idx_reset_user (user_id),
+            CONSTRAINT fk_reset_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        echo "✓ table password_resets créée (mot de passe oublié)\n";
+        $changes++;
+    }
+
     echo $changes === 0 ? "Schéma déjà à jour.\n" : "Schéma mis à jour ({$changes} changement(s)).\n";
 } catch (Throwable $e) {
     fwrite(STDERR, 'Migration error: ' . $e->getMessage() . "\n");

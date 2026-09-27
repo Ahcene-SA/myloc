@@ -127,6 +127,34 @@ class Reservation
         return $stmt->fetchAll();
     }
 
+    public function latestId(): int
+    {
+        return (int) $this->pdo->query('SELECT COALESCE(MAX(id), 0) FROM reservations')->fetchColumn();
+    }
+
+    public function countPending(): int
+    {
+        return (int) $this->pdo->query("SELECT COUNT(*) FROM reservations WHERE status = 'pending'")->fetchColumn();
+    }
+
+    /** Réservations plus récentes que $id (même forme que findAll), 20 au maximum. */
+    public function findSince(int $id): array
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT r.*, c.name AS car_name, c.category AS car_category, c.image_url AS car_image_url,
+                   c.price_per_day AS car_price_per_day, c.transmission AS car_transmission, c.seats AS car_seats,
+                   c.plate AS car_plate, c.year AS car_year, u.full_name AS user_full_name, u.email AS user_email
+            FROM reservations r
+            JOIN cars c ON r.car_id = c.id
+            LEFT JOIN users u ON r.user_id = u.id
+            WHERE r.id > :id
+            ORDER BY r.id DESC
+            LIMIT 20
+        ");
+        $stmt->execute([':id' => $id]);
+        return $stmt->fetchAll();
+    }
+
     public function findById(int $id): ?array
     {
         $stmt = $this->pdo->prepare("SELECT * FROM reservations WHERE id = :id LIMIT 1");

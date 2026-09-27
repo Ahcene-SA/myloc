@@ -44,6 +44,7 @@ const patterns: [RegExp, string][] = [
   [/^Code (\S+) \(remise fixe\)$/, "الرمز $1 (تخفيض ثابت)"],
   [/^Prix négocié par l'agence$/, "سعر متفاوض عليه مع الوكالة"],
   [/^Trop de tentatives\. Réessayez dans (\d+) secondes\.$/, "محاولات كثيرة. أعد المحاولة بعد $1 ثانية."],
+  [/^Trop de demandes\. Réessayez dans (\d+) minute\(s\)\.$/, "طلبات كثيرة. أعد المحاولة بعد $1 دقيقة."],
   [/^Email ou mot de passe incorrect \((\d+) essai\(s\) restant\(s\)\)\.$/, "البريد الإلكتروني أو كلمة المرور غير صحيحة (بقيت $1 محاولة)."],
   [/^Ce code sera valable à partir du ([\d/]+)\.$/, "سيكون هذا الرمز صالحًا ابتداءً من $1."],
   [/^Ce code est valable à partir de (\d+) jours de location\.$/, "هذا الرمز صالح ابتداءً من $1 أيام كراء."],

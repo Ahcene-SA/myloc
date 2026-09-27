@@ -171,7 +171,7 @@ function handleExpiredSession(sentToken: string, message = "") {
   localStorage.removeItem("myloc_token");
   localStorage.removeItem("myloc_user");
   const path = window.location.pathname;
-  if (/\/(login|register|agence)(\.html)?$/.test(path)) return;
+  if (/\/(login|register|agence|reinitialiser)(\.html)?$/.test(path)) return;
   // L'équipe retourne vers l'espace agence, les clients vers la connexion client
   const staffPage = /\/(admin|contrat)(\.html)?$/.test(path);
   const page = staffPage ? "agence" : "login";
@@ -702,6 +702,35 @@ export interface AgencyLoginResult {
   user?: UserFromApi;
   recovery_codes?: string[];
   recovery_codes_left?: number;
+}
+
+// ───────── Mot de passe oublié ─────────
+
+/** Envoie le lien par e-mail (réponse identique que le compte existe ou non). */
+export async function requestPasswordReset(email: string): Promise<string> {
+  const res = await request<{ success: boolean; message: string }>("POST", "/auth/forgot", { email });
+  return res.message;
+}
+
+export async function checkResetToken(token: string): Promise<{ first_name: string; staff: boolean }> {
+  return request<{ success: boolean; first_name: string; staff: boolean }>("GET", `/auth/reset?token=${encodeURIComponent(token)}`);
+}
+
+export async function resetPassword(token: string, password: string): Promise<{ staff: boolean }> {
+  return request<{ success: boolean; staff: boolean }>("POST", "/auth/reset", { token, password });
+}
+
+// ───────── Alertes de l'espace agence ─────────
+
+export interface AgencyUpdates {
+  latest_id: number;
+  pending_count: number;
+  reservations: ReservationFromApi[];
+}
+
+/** Nouvelles réservations depuis `since` (ne prolonge pas la session). */
+export async function fetchAgencyUpdates(since: number): Promise<AgencyUpdates> {
+  return request<AgencyUpdates & { success: boolean }>("GET", `/agency/updates?since=${since}`, undefined, true);
 }
 
 export async function agencyLogin(email: string, password: string): Promise<AgencyLoginResult> {

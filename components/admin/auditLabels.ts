@@ -10,6 +10,8 @@ export const auditActions: Record<string, { label: string; tone: Tone; group: st
   login_recovery_code: { label: "Connexion avec un code de secours", tone: "warn", group: "connexion" },
   logout_all: { label: "A déconnecté tous ses appareils", tone: "security", group: "connexion" },
   password_changed: { label: "A changé son mot de passe", tone: "security", group: "compte" },
+  password_reset_requested: { label: "Lien « mot de passe oublié » demandé", tone: "warn", group: "compte" },
+  password_reset_email: { label: "Mot de passe changé via le lien e-mail", tone: "security", group: "compte" },
   "2fa_enabled": { label: "A activé la double authentification", tone: "security", group: "compte" },
   "2fa_disabled": { label: "A désactivé la double authentification", tone: "warn", group: "compte" },
   "2fa_recovery_regenerated": { label: "A généré de nouveaux codes de secours", tone: "security", group: "compte" },

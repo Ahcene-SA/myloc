@@ -11,6 +11,7 @@ import { setLang, useLang } from "@/lib/i18n";
 import { isStaff } from "@/lib/api";
 import { ForcePasswordChange } from "./agency/ForcePasswordChange";
 import { IdleGuard } from "./agency/IdleGuard";
+import { ReservationAlerts } from "./agency/ReservationAlerts";
 
 export function AdminLayout() {
   const { token, user, isLoading } = useAuth();
@@ -47,6 +48,7 @@ export function AdminLayout() {
   return (
     <AdminProvider>
       <IdleGuard />
+      <ReservationAlerts />
       <div className="min-h-screen bg-mist">
         <AdminSidebar />
         <main className="transition-all duration-300 md:pl-72">

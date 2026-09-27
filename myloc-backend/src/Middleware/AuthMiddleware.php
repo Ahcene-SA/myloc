@@ -24,6 +24,16 @@ class AuthMiddleware
     /** Utilisateur de la requête en cours (pour le journal d'activité). */
     private static ?array $current = null;
 
+    /** false pour les vérifications automatiques (alertes) : elles ne comptent pas comme activité. */
+    private static bool $touchActivity = true;
+
+    /** Membre de l'équipe, sans prolonger la session (requêtes automatiques en arrière-plan). */
+    public static function requireStaffPassive(): array
+    {
+        self::$touchActivity = false;
+        return self::requireStaff();
+    }
+
     public static function isStaffRole(?string $role): bool
     {
         return in_array($role, self::STAFF_ROLES, true);
@@ -74,10 +84,26 @@ class AuthMiddleware
 
         if (self::isStaffRole((string) $decoded->role)) {
             $user = self::checkStaffSession($user, $decoded, $allowPasswordChange);
+        } else {
+            self::checkClientSession($user, $decoded);
         }
 
         self::$current = $user;
         return $user;
+    }
+
+    /** Un changement de mot de passe (ex. « mot de passe oublié ») ferme les autres sessions du client. */
+    private static function checkClientSession(array $user, object $decoded): void
+    {
+        $stmt = Database::shared()->getPdo()->prepare('SELECT token_version FROM users WHERE id = :id LIMIT 1');
+        $stmt->execute([':id' => $user['user_id']]);
+        $version = $stmt->fetchColumn();
+        if ($version === false) {
+            Response::error('Session invalide : reconnectez-vous.', 401);
+        }
+        if ((int) $version !== (int) ($decoded->tv ?? 0)) {
+            Response::error('Session fermée : reconnectez-vous.', 401);
+        }
     }
 
     private static function checkStaffSession(array $user, object $decoded, bool $allowPasswordChange): array
@@ -106,7 +132,7 @@ class AuthMiddleware
             Response::error('Session expirée après 30 minutes d\'inactivité.', 401);
         }
         // Mise à jour de l'activité (au plus une écriture toutes les 30 s)
-        if ($last === null || time() - $last > 30) {
+        if (self::$touchActivity && ($last === null || time() - $last > 30)) {
             $pdo->prepare('UPDATE users SET last_activity_at = NOW() WHERE id = :id')->execute([':id' => $user['user_id']]);
         }
         if ((int) $row['must_change_password'] && !$allowPasswordChange) {

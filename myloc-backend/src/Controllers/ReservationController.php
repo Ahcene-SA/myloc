@@ -9,6 +9,7 @@ use Myloc\Middleware\AuthMiddleware;
 use Myloc\Models\Car;
 use Myloc\Models\Reservation;
 use Myloc\Models\User;
+use Myloc\Services\Emails;
 use Myloc\Services\Pricing;
 use Myloc\Utils\Audit;
 use Myloc\Utils\Response;
@@ -116,6 +117,12 @@ class ReservationController
 
         $reservation = $this->reservationModel->findById($reservationId);
 
+        // Alerte à l'agence + accusé de réception au client (un échec d'envoi ne bloque pas)
+        $detailed = $this->reservationModel->findDetailedById($reservationId);
+        if ($detailed) {
+            Emails::newReservation($detailed);
+        }
+
         Response::success('Réservation envoyée.', [
             'reservation' => $reservation,
             'total_price' => $totalPrice,
@@ -150,6 +157,10 @@ class ReservationController
         }
 
         $this->reservationModel->updateStatus($id, 'cancelled');
+        $detailed = $this->reservationModel->findDetailedById($id);
+        if ($detailed) {
+            Emails::clientCancelled($detailed, $reservation['status']);
+        }
         Response::success('Réservation annulée.', ['reservation' => $this->reservationModel->findById($id)]);
     }
 
@@ -210,6 +221,10 @@ class ReservationController
         }
 
         $this->reservationModel->updateStatus($id, $status, $adminNote);
+        $detailed = $this->reservationModel->findDetailedById($id);
+        if ($status !== $existing['status'] && $detailed && ($input['notify_client'] ?? true) !== false) {
+            Emails::reservationStatus($detailed, $status);
+        }
         if ($status !== $existing['status']) {
             Audit::log('reservation_' . $status, 'reservation', $id, [
                 'from' => $existing['status'],
@@ -221,7 +236,24 @@ class ReservationController
         }
         Response::success('Statut mis à jour.', [
             'admin_note' => $adminNote,
-            'reservation' => $this->reservationModel->findDetailedById($id),
+            'reservation' => $detailed,
+        ]);
+    }
+
+    /**
+     * Alertes de l'espace agence : réservations créées après ?since=<id>.
+     * Sans « since », renvoie seulement le dernier numéro (point de départ).
+     * Requête automatique : ne compte pas comme activité (la session expire toujours après 30 min).
+     */
+    public function updatesSince(): void
+    {
+        AuthMiddleware::requireStaffPassive();
+        $since = max(0, (int) ($_GET['since'] ?? 0));
+        $latest = $this->reservationModel->latestId();
+        Response::success('OK', [
+            'latest_id' => $latest,
+            'pending_count' => $this->reservationModel->countPending(),
+            'reservations' => $since > 0 && $latest > $since ? $this->reservationModel->findSince($since) : [],
         ]);
     }
 

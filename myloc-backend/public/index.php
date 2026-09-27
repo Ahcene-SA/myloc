@@ -17,6 +17,7 @@ use Myloc\Controllers\AgencyController;
 use Myloc\Controllers\AuthController;
 use Myloc\Controllers\CarController;
 use Myloc\Controllers\InspectionController;
+use Myloc\Controllers\PasswordResetController;
 use Myloc\Controllers\PricingController;
 use Myloc\Controllers\ReservationController;
 use Myloc\Middleware\AuthMiddleware;
@@ -62,6 +63,7 @@ $reservationController = new ReservationController($db);
 $pricingController = new PricingController($db);
 $inspectionController = new InspectionController($db);
 $agencyController = new AgencyController($db);
+$passwordResetController = new PasswordResetController($db);
 
 $router = new Router();
 
@@ -69,6 +71,10 @@ $router = new Router();
 $router->post('/api/auth/register', fn() => $authController->register());
 $router->post('/api/auth/login', fn() => $authController->login());
 $router->get('/api/auth/me', fn() => $authController->me());
+// Mot de passe oublié (clients et équipe)
+$router->post('/api/auth/forgot', fn() => $passwordResetController->request());
+$router->get('/api/auth/reset', fn() => $passwordResetController->check());
+$router->post('/api/auth/reset', fn() => $passwordResetController->reset());
 $router->put('/api/auth/me', fn() => $authController->updateMe());
 $router->put('/api/auth/password', fn() => $authController->changePassword());
 $router->get('/api/auth/clients', fn() => $authController->listClients(), 'admin');
@@ -88,6 +94,8 @@ $router->put('/api/agency/team/{id}', fn(array $p) => $agencyController->updateM
 $router->post('/api/agency/team/{id}/reset-password', fn(array $p) => $agencyController->resetMemberPassword($p), 'owner');
 $router->post('/api/agency/team/{id}/reset-2fa', fn(array $p) => $agencyController->resetMemberTwoFactor($p), 'owner');
 $router->get('/api/agency/audit', fn() => $agencyController->auditLog(), 'staff');
+// Alertes : nouvelles demandes depuis la dernière vérification (ne prolonge pas la session)
+$router->get('/api/agency/updates', fn() => $reservationController->updatesSince());
 
 // Administration
 $router->get('/api/admin/cars', fn() => $carController->adminIndex(), 'admin');

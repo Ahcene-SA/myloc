@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, type FormEvent, type ReactNode } from "react";
-import { Check, KeyRound, Loader2, LogOut, MonitorSmartphone, ShieldCheck, UserRound } from "lucide-react";
+import { BellRing, Check, KeyRound, Loader2, LogOut, MonitorSmartphone, ShieldCheck, UserRound, Volume2 } from "lucide-react";
+import { askNotificationPermission, playChime, setAlertSound, useAlertSound, useNotificationState } from "@/lib/alerts";
 import { useAuth } from "../AuthContext";
 import { QrCode } from "../agency/QrCode";
 import { RecoveryCodes } from "../agency/AgencyLogin";
@@ -33,6 +34,7 @@ export function AccountView() {
         <ProfileCard />
         <PasswordCard />
         <TwoFactorCard owner={owner} />
+        <AlertsCard />
         <DevicesCard />
       </div>
     </div>
@@ -340,6 +342,45 @@ function TwoFactorCard({ owner }: { owner: boolean }) {
           </div>
         </Modal>
       )}
+    </Section>
+  );
+}
+
+function AlertsCard() {
+  const sound = useAlertSound();
+  const notif = useNotificationState();
+  return (
+    <Section icon={BellRing} title="Alertes de réservation" text="Chaque nouvelle demande faite sur le site s'affiche ici en direct (vérification toutes les 20 secondes).">
+      <div className="flex flex-col gap-3">
+        <label className="flex cursor-pointer items-center justify-between gap-4 rounded-2xl bg-mist px-4 py-3">
+          <span className="flex items-center gap-2 text-sm font-bold text-navy">
+            <Volume2 className="h-4 w-4 text-sky-text" /> Son à chaque nouvelle demande
+          </span>
+          <input
+            type="checkbox"
+            checked={sound}
+            onChange={(e) => {
+              setAlertSound(e.target.checked);
+              if (e.target.checked) playChime();
+            }}
+            className="h-5 w-5 accent-sky"
+          />
+        </label>
+        {notif === "granted" ? (
+          <p className="flex items-center gap-2 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
+            <Check className="h-4 w-4" /> Notifications activées : vous êtes prévenu même si l&apos;onglet est en arrière-plan.
+          </p>
+        ) : notif === "denied" ? (
+          <p className="rounded-2xl bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
+            Notifications bloquées par le navigateur. Autorisez-les dans les réglages du site (icône à gauche de l&apos;adresse).
+          </p>
+        ) : notif === "default" ? (
+          <button type="button" onClick={() => void askNotificationPermission()} className={secondaryBtn}>
+            <BellRing className="h-4 w-4" /> Activer les notifications du navigateur
+          </button>
+        ) : null}
+        <p className="text-xs text-muted">L&apos;agence reçoit aussi un e-mail à chaque nouvelle demande, et le client est prévenu par e-mail quand vous confirmez ou refusez.</p>
+      </div>
     </Section>
   );
 }

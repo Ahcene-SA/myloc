@@ -99,7 +99,7 @@ class AuthController
             Response::error('Ce compte appartient à l\'équipe de l\'agence : connectez-vous depuis l\'espace agence.', 403, ['code' => 'USE_AGENCY_LOGIN']);
         }
 
-        $token = JwtHelper::encode((int) $user['id'], $user['role'], ['scope' => 'client']);
+        $token = JwtHelper::encode((int) $user['id'], $user['role'], ['scope' => 'client', 'tv' => (int) ($user['token_version'] ?? 0)]);
 
         Response::success('Login successful.', [
             'user_id' => (int) $user['id'],

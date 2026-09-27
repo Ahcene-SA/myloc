@@ -127,4 +127,34 @@ export const arAuth: Record<string, string> = {
   "Aller à l'espace agence": "الذهاب إلى فضاء الوكالة",
   "Ce compte appartient à l'équipe de l'agence : connectez-vous depuis l'espace agence.":
     "هذا الحساب تابع لفريق الوكالة: سجّلوا الدخول من فضاء الوكالة.",
+
+  // ── Mot de passe oublié ──
+  "Espace agence": "فضاء الوكالة",
+  "oublié ?": "منسية؟",
+  "Choisissez votre nouveau mot de passe.": "اختر كلمة مرورك الجديدة.",
+  "Indiquez l'adresse e-mail de votre compte : nous vous envoyons un lien pour en choisir un nouveau.":
+    "أدخل البريد الإلكتروني لحسابك: سنرسل لك رابطًا لاختيار كلمة مرور جديدة.",
+  "Si un compte existe avec cette adresse, un e-mail vient de lui être envoyé. Pensez à vérifier vos courriers indésirables.":
+    "إذا كان هناك حساب بهذا العنوان، فقد أُرسل إليه بريد إلكتروني للتو. تحقّق أيضًا من البريد غير المرغوب فيه.",
+  "Le lien est valable 30 minutes et ne fonctionne qu'une seule fois.": "الرابط صالح لمدة 30 دقيقة ويُستعمل مرة واحدة فقط.",
+  "Retour à la connexion": "العودة إلى تسجيل الدخول",
+  "Je n'ai rien reçu : renvoyer un lien": "لم يصلني شيء: أعد إرسال الرابط",
+  "Envoi...": "جارٍ الإرسال...",
+  "Recevoir le lien": "استلام الرابط",
+  "Demander un nouveau lien": "طلب رابط جديد",
+  "Lien invalide.": "رابط غير صالح.",
+  "Lien invalide. Demandez-en un nouveau.": "رابط غير صالح. اطلب رابطًا جديدًا.",
+  "Lien invalide ou déjà remplacé par un plus récent. Demandez-en un nouveau.": "رابط غير صالح أو تم استبداله برابط أحدث. اطلب رابطًا جديدًا.",
+  "Ce lien a déjà été utilisé. Demandez-en un nouveau.": "تم استعمال هذا الرابط من قبل. اطلب رابطًا جديدًا.",
+  "Ce lien a expiré (30 minutes). Demandez-en un nouveau.": "انتهت صلاحية هذا الرابط (30 دقيقة). اطلب رابطًا جديدًا.",
+  "Ce compte est désactivé.": "هذا الحساب معطّل.",
+  "Mot de passe modifié. Vous pouvez vous connecter.": "تم تغيير كلمة المرور. يمكنك تسجيل الدخول الآن.",
+  "Votre code à 6 chiffres vous sera demandé comme d'habitude.": "سيُطلب منك رمزك المكوّن من 6 أرقام كالمعتاد.",
+  "Les deux mots de passe ne sont pas identiques.": "كلمتا المرور غير متطابقتين.",
+  "Bonjour {name} !": "مرحبًا {name}!",
+  "Nouveau mot de passe": "كلمة المرور الجديدة",
+  "Confirmez le mot de passe": "أكّد كلمة المرور",
+  "Enregistrement...": "جارٍ الحفظ...",
+  "Enregistrer le mot de passe": "حفظ كلمة المرور",
+  "Choisissez un mot de passe différent de l'ancien.": "اختر كلمة مرور مختلفة عن السابقة.",
 };

@@ -166,6 +166,9 @@ export function AgencyLogin() {
                 {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <ArrowRight className="h-5 w-5" />}
                 Continuer
               </button>
+              <a href={`${pageUrl("reinitialiser")}?equipe=1`} className="-mt-1 text-center text-sm font-semibold text-white/50 hover:text-sky">
+                Mot de passe oublié ?
+              </a>
             </form>
           )}
 
