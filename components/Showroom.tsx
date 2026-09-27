@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { interpolate, motion, useReducedMotion, useScroll, useTransform, type MotionValue } from "framer-motion";
+import { interpolate, motion, useReducedMotion, useScroll, useSpring, useTransform, type MotionValue } from "framer-motion";
 import { Armchair, ArrowDown, CalendarDays, Cog } from "lucide-react";
 import { apiImageUrl, fetchCars, formatTransmission, type CarFromApi } from "@/lib/api";
 import { categoryInfo, site } from "@/lib/site";
@@ -73,7 +73,9 @@ export function Showroom() {
 
 function PinnedShowroom({ cars }: { cars: ShowCar[] }) {
   const ref = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
+  const { scrollYProgress: rawProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
+  // Lissage : la molette et le trackpad avancent par à-coups, le ressort les adoucit
+  const scrollYProgress = useSpring(rawProgress, { stiffness: 90, damping: 26, mass: 0.35, restDelta: 0.0005 });
   const n = cars.length;
   const roadX = useTransform(scrollYProgress, [0, 1], ["0%", "-50%"]);
   const { t } = useLang();
@@ -81,7 +83,11 @@ function PinnedShowroom({ cars }: { cars: ShowCar[] }) {
   return (
     <section ref={ref} aria-label={t("La flotte en scène")} className="relative bg-navy" style={{ height: `${n * 90 + 40}vh` }}>
       <div className="sticky top-0 flex h-[100svh] flex-col overflow-hidden text-white">
-        <div aria-hidden="true" className="absolute left-1/2 top-[38%] h-[70vmin] w-[70vmin] -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky/15 blur-3xl" />
+        <div
+          aria-hidden="true"
+          className="absolute left-1/2 top-[38%] h-[80vmin] w-[80vmin] -translate-x-1/2 -translate-y-1/2 rounded-full"
+          style={{ background: "radial-gradient(circle, rgba(67,176,230,0.2) 0%, rgba(67,176,230,0.06) 40%, transparent 68%)" }}
+        />
 
         <div className="relative z-10 mx-auto w-full max-w-7xl px-4 pt-24 sm:px-6 lg:px-8 lg:pt-28">
           <p className="kicker text-sky">{t("La flotte en scène")}</p>
@@ -97,7 +103,7 @@ function PinnedShowroom({ cars }: { cars: ShowCar[] }) {
         {/* Route qui défile sous les voitures */}
         <div aria-hidden="true" className="relative h-24 overflow-hidden">
           <div className="absolute inset-x-0 top-6 h-px bg-white/10" />
-          <motion.div className="absolute top-10 flex w-[200%] gap-10" style={{ x: roadX }}>
+          <motion.div className="absolute top-10 flex w-[200%] gap-10" style={{ x: roadX, willChange: "transform" }}>
             {Array.from({ length: 40 }, (_, k) => (
               <span key={k} className="h-1 w-16 flex-shrink-0 rounded-full bg-white/15" />
             ))}
@@ -163,10 +169,11 @@ function Slide({ car, i, n, progress }: { car: ShowCar; i: number; n: number; pr
     [c - span * 0.5, c - span * 0.18, c + span * 0.18, c + span * 0.5],
     [first ? "0vw" : "120vw", "0vw", "0vw", last ? "0vw" : "-120vw"]
   );
-  const blur = useKeys(
+  // Fondu léger en entrée/sortie (un flou animé coûte trop cher au navigateur)
+  const carOpacity = useKeys<number>(
     progress,
-    [c - span * 0.55, c - span * 0.2, c + span * 0.2, c + span * 0.55],
-    [first ? "blur(0px)" : "blur(6px)", "blur(0px)", "blur(0px)", last ? "blur(0px)" : "blur(6px)"]
+    [c - span * 0.5, c - span * 0.3, c + span * 0.3, c + span * 0.5],
+    [first ? 1 : 0, 1, 1, last ? 1 : 0]
   );
   // Freinage : le capot plonge légèrement en arrivant
   const rotate = useKeys<number>(progress, [c - span * 0.2, c - span * 0.1, c], [first ? 0 : -2, first ? 0 : 0.8, 0]);
@@ -187,13 +194,13 @@ function Slide({ car, i, n, progress }: { car: ShowCar; i: number; n: number; pr
       <motion.p
         aria-hidden="true"
         className="absolute inset-x-0 top-[6%] whitespace-nowrap text-center text-[22vw] font-extrabold uppercase leading-none text-transparent lg:text-[15vw]"
-        style={{ x: wordX, opacity: info, WebkitTextStroke: "1.5px rgba(67,176,230,0.35)" }}
+        style={{ x: wordX, opacity: info, WebkitTextStroke: "1.5px rgba(67,176,230,0.35)", willChange: "transform, opacity" }}
       >
         {car.model || car.brand}
       </motion.p>
 
-      <motion.div className="absolute inset-x-0 top-[14%] mx-auto w-[82%] max-w-[560px] sm:top-[12%]" style={{ x, filter: blur }}>
-        <motion.div className="origin-bottom" style={{ rotate }}>
+      <motion.div className="absolute inset-x-0 top-[14%] mx-auto w-[82%] max-w-[560px] sm:top-[12%]" style={{ x, opacity: carOpacity, willChange: "transform, opacity" }}>
+        <motion.div className="origin-bottom" style={{ rotate, willChange: "transform" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={car.image} alt={`${car.brand} ${car.model}`} className="w-full drop-shadow-[0_40px_30px_rgba(0,0,0,0.55)]" draggable={false} />
         </motion.div>
@@ -201,7 +208,7 @@ function Slide({ car, i, n, progress }: { car: ShowCar; i: number; n: number; pr
 
       <motion.div
         className="pointer-events-auto absolute inset-x-0 bottom-0 mx-auto flex max-w-7xl flex-col gap-4 px-4 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:px-8"
-        style={{ opacity: info, y: infoY }}
+        style={{ opacity: info, y: infoY, willChange: "transform, opacity" }}
       >
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-sky">{t(cat?.label ?? car.category)}</p>
