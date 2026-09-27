@@ -8,7 +8,7 @@ import {
   ReactNode,
 } from "react";
 import { t } from "@/lib/i18n";
-import { login as apiLogin, register as apiRegister, fetchCurrentUser, UserFromApi } from "@/lib/api";
+import { login as apiLogin, register as apiRegister, fetchCurrentUser, isAuthError, UserFromApi } from "@/lib/api";
 
 interface AuthContextValue {
   user: UserFromApi | null;
@@ -62,8 +62,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let stale = false;
     fetchCurrentUser()
       .then((u) => !stale && persistUser(u))
-      .catch(() => {
-        // N'efface la session que si c'est toujours ce jeton (pas une connexion plus récente)
+      .catch((e) => {
+        // Safari interrompt les requêtes en cours quand on change de page : ce n'est pas
+        // une session invalide. On n'efface la session que si le serveur l'a refusée,
+        // et seulement si c'est toujours ce jeton (pas une connexion plus récente).
+        if (!isAuthError(e)) return;
         if (stale || localStorage.getItem("myloc_token") !== token) return;
         localStorage.removeItem("myloc_token");
         localStorage.removeItem("myloc_user");

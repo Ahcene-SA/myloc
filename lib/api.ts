@@ -34,6 +34,20 @@ export function getApiBase(): string {
   return "http://localhost:8000";
 }
 
+/** Erreur renvoyée par l'API, avec son code HTTP (401 = session invalide). */
+export class HttpError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.status = status;
+  }
+}
+
+/** Vrai seulement si le serveur a refusé la session (et pas pour une coupure réseau). */
+export function isAuthError(e: unknown): boolean {
+  return e instanceof HttpError && (e.status === 401 || e.status === 403);
+}
+
 export interface ApiError {
   success: false;
   error: string;
@@ -122,7 +136,7 @@ async function request<T>(
   if (!response.ok || data.success === false) {
     const message = data.error || `Erreur HTTP ${response.status}`;
     if (response.status === 401 && sentToken) handleExpiredSession(sentToken);
-    throw new Error(translate(message));
+    throw new HttpError(translate(message), response.status);
   }
 
   return data;
