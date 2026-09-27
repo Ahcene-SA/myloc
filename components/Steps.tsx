@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { motion, useReducedMotion, useScroll, useTransform, type MotionValue } from "framer-motion";
+import { motion, useReducedMotion, useScroll, useSpring, useTransform, type MotionValue } from "framer-motion";
 import { BrandHeading, Sky } from "./Brand";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/lib/i18n";
@@ -12,14 +12,23 @@ const steps = [
   { title: "Roulez", desc: "Récupérez les clés et partez l’esprit libre : assurance et assistance 24/7 incluses." },
 ];
 
+/** Position de l'étape i sur la route (0 = 1re carte, 1 = dernière). */
+const reachAt = (i: number) => i / (steps.length - 1);
+
+// La route va du centre de la 1re carte au centre de la 3e (grille de 3 colonnes, espace de 1,5 rem).
+const trackInset = "calc((100% - 3rem) / 6)";
+
 export function Steps() {
-  const ref = useRef<HTMLOListElement>(null);
-  const { t } = useLang();
+  const ref = useRef<HTMLDivElement>(null);
+  const { t, dir } = useLang();
+  const rtl = dir === "rtl";
   const reduce = !!useReducedMotion();
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start 85%", "end 45%"] });
-  const p = useTransform(scrollYProgress, [0, 1], [reduce ? 1 : 0, 1]);
-  // La petite voiture roule de gauche à droite sur la route (image retournée : capot vers la droite)
-  const carLeft = useTransform(p, [0, 1], ["0%", "100%"]);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start 80%", "end 70%"] });
+  // Ressort : la voiture glisse au lieu de suivre les à-coups de la molette
+  const smooth = useSpring(scrollYProgress, { stiffness: 80, damping: 24, mass: 0.4, restDelta: 0.0005 });
+  const p = useTransform(smooth, (v) => (reduce ? 1 : Math.min(1, Math.max(0, v))));
+  // Tout passe par des transformations (accélérées par la carte graphique), jamais par left/width
+  const carX = useTransform(p, (v) => `${(rtl ? -v : v) * 100}%`);
 
   return (
     <section className="overflow-hidden bg-white py-20 lg:py-28">
@@ -28,68 +37,87 @@ export function Steps() {
           {t("Réservez en")} <Sky>{t("3 étapes")}</Sky>
         </BrandHeading>
 
-        {/* Route (grand écran) */}
-        <div aria-hidden="true" className="relative mx-[16%] mt-16 hidden h-16 md:block">
-          <div className="absolute inset-x-0 top-1/2 h-[6px] -translate-y-1/2 rounded-full bg-mist" />
-          <motion.div
-            className="absolute left-0 top-1/2 h-[6px] -translate-y-1/2 rounded-full bg-gradient-to-r from-sky to-sky-mid"
-            style={{ width: carLeft }}
-          />
-          <div className="absolute inset-x-0 top-1/2 flex -translate-y-1/2 justify-between">
-            {steps.map((s, i) => (
-              <Milestone key={s.title} i={i} p={p} />
-            ))}
+        <div ref={ref} className="relative mt-14 md:mt-16">
+          {/* Route alignée sur le centre des cartes (grand écran) */}
+          <div aria-hidden="true" className="relative mb-6 hidden h-16 md:block">
+            <div className="absolute inset-y-0" style={{ left: trackInset, right: trackInset }}>
+              <div className="absolute inset-x-0 top-1/2 h-[6px] -translate-y-1/2 rounded-full bg-mist" />
+              <motion.div
+                className={cn(
+                  "absolute inset-x-0 top-1/2 h-[6px] -translate-y-1/2 rounded-full bg-gradient-to-r from-sky to-sky-mid",
+                  rtl ? "origin-right" : "origin-left"
+                )}
+                style={{ scaleX: p, willChange: "transform" }}
+              />
+              {steps.map((s, i) => (
+                <Milestone key={s.title} i={i} p={p} rtl={rtl} />
+              ))}
+              {/* Voiture : un calque de la largeur de la route, déplacé de 0 à 100 % */}
+              <motion.div className="absolute inset-0" style={{ x: carX, willChange: "transform" }}>
+                <div className={cn("absolute top-1/2 w-20 -translate-y-[80%]", rtl ? "right-0 translate-x-1/2" : "left-0 -translate-x-1/2")}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="images/cars/clio5-alpino.png"
+                    alt=""
+                    className={cn("block w-full drop-shadow-[0_8px_6px_rgba(15,27,45,0.25)]", !rtl && "-scale-x-100")}
+                    draggable={false}
+                  />
+                </div>
+              </motion.div>
+            </div>
           </div>
-          <motion.div className="absolute top-1/2 w-24 -translate-x-1/2 -translate-y-[78%]" style={{ left: carLeft }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="images/cars/clio5-alpino.png" alt="" className="car-reflect w-full -scale-x-100" />
-          </motion.div>
-        </div>
 
-        <ol ref={ref} className="mt-12 grid gap-4 md:mt-8 md:grid-cols-3 md:gap-6">
-          {steps.map((s, i) => (
-            <StepCard key={s.title} s={s} i={i} p={p} last={i === steps.length - 1} />
-          ))}
-        </ol>
+          <ol className="grid gap-4 md:grid-cols-3 md:gap-6">
+            {steps.map((s, i) => (
+              <StepCard key={s.title} s={s} i={i} p={p} last={i === steps.length - 1} />
+            ))}
+          </ol>
+        </div>
       </div>
     </section>
   );
 }
 
-function reachAt(i: number) {
-  return 0.04 + (i / (steps.length - 1)) * 0.92;
-}
-
-function Milestone({ i, p }: { i: number; p: MotionValue<number> }) {
+function Milestone({ i, p, rtl }: { i: number; p: MotionValue<number>; rtl: boolean }) {
   const at = reachAt(i);
-  const scale = useTransform(p, [Math.max(0, at - 0.08), at], [0.7, 1]);
-  const bg = useTransform(p, [Math.max(0, at - 0.02), at], ["#e8eef5", "#43b0e6"]);
+  const lit = useTransform<number, number>(p, (v) => (v >= at - 0.02 ? 1 : 0));
+  const scale = useSpring(useTransform(lit, [0, 1], [0.8, 1.1]), { stiffness: 300, damping: 18 });
+  const bg = useTransform(lit, [0, 1], ["#e8eef5", "#43b0e6"]);
   return (
-    <motion.span
-      className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-extrabold text-navy ring-4 ring-white"
-      style={{ scale, backgroundColor: bg }}
+    <span
+      className="absolute top-1/2 z-10"
+      style={rtl ? { right: `${at * 100}%`, transform: "translate(50%, -50%)" } : { left: `${at * 100}%`, transform: "translate(-50%, -50%)" }}
     >
-      {i + 1}
-    </motion.span>
+      <motion.span
+        className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-extrabold text-navy ring-4 ring-white transition-colors duration-300"
+        style={{ scale, backgroundColor: bg }}
+      >
+        {i + 1}
+      </motion.span>
+    </span>
   );
 }
 
 function StepCard({ s, i, p, last }: { s: (typeof steps)[number]; i: number; p: MotionValue<number>; last: boolean }) {
   const at = reachAt(i);
-  const opacity = useTransform(p, [Math.max(0, at - 0.25), at], [0.35, 1]);
-  const y = useTransform(p, [Math.max(0, at - 0.25), at], [24, 0]);
   const { t } = useLang();
+  // Carte « atteinte » quand la voiture arrive au-dessus : bordure bleue et légère montée
+  const lit = useTransform<number, number>(p, (v) => (v >= at - 0.02 ? 1 : 0));
+  const y = useSpring(useTransform(lit, [0, 1], [0, -6]), { stiffness: 260, damping: 22 });
+  const borderColor = useTransform(lit, [0, 1], [last ? "rgba(15,27,45,1)" : "rgba(221,229,238,1)", "rgba(67,176,230,1)"]);
+  const shadow = useTransform(lit, [0, 1], ["0 0 0 0 rgba(67,176,230,0)", "0 22px 40px -24px rgba(67,176,230,0.55)"]);
+
   return (
     <motion.li
-      style={{ opacity, y }}
+      style={{ y, borderColor, boxShadow: shadow, willChange: "transform" }}
       className={cn(
-        "relative flex min-h-[220px] flex-col gap-4 overflow-hidden rounded-3xl p-8",
-        last ? "bg-navy text-white" : "border border-line bg-mist text-navy"
+        "relative flex min-h-[220px] flex-col gap-4 overflow-hidden rounded-3xl border-2 p-8 transition-[border-color,box-shadow] duration-500",
+        last ? "bg-navy text-white" : "bg-mist text-navy"
       )}
     >
       <span
         aria-hidden="true"
-        className={cn("absolute -right-3 -top-6 text-[140px] font-extrabold leading-none", last ? "text-white/[0.06]" : "text-navy/[0.05]")}
+        className={cn("absolute -end-3 -top-6 text-[140px] font-extrabold leading-none", last ? "text-white/[0.06]" : "text-navy/[0.05]")}
       >
         {i + 1}
       </span>
