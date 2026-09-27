@@ -18,7 +18,7 @@ class JwtHelper
             throw new \RuntimeException('JWT secret is not configured.');
         }
 
-        $expiry = (int) ($_ENV['JWT_EXPIRY'] ?? 3600);
+        $expiry = (int) ($_ENV['JWT_EXPIRY'] ?? 86400);
         $issuedAt = time();
 
         $payload = [

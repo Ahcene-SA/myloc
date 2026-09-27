@@ -103,11 +103,9 @@ async function request<T>(
     headers["Content-Type"] = "application/json";
   }
 
-  if (auth) {
-    const token = getToken();
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
+  const sentToken = auth ? getToken() : null;
+  if (sentToken) {
+    headers["Authorization"] = `Bearer ${sentToken}`;
   }
 
   const response = await fetch(url, {
@@ -123,20 +121,31 @@ async function request<T>(
 
   if (!response.ok || data.success === false) {
     const message = data.error || `Erreur HTTP ${response.status}`;
-    if (response.status === 401 && auth) handleExpiredSession();
+    if (response.status === 401 && sentToken) handleExpiredSession(sentToken);
     throw new Error(translate(message));
   }
 
   return data;
 }
 
-/** Jeton expiré ou invalide : on vide la session et on renvoie vers la connexion. */
-function handleExpiredSession() {
+/**
+ * Jeton expiré ou invalide : on vide la session et on renvoie vers la connexion.
+ * - seulement si c'est bien ce jeton-là qui est encore enregistré (sinon une connexion
+ *   toute récente serait effacée par une ancienne requête) ;
+ * - jamais de redirection depuis les pages de connexion / inscription (on y est déjà).
+ */
+function handleExpiredSession(sentToken: string) {
   if (typeof window === "undefined") return;
+  if (localStorage.getItem("myloc_token") !== sentToken) return;
   localStorage.removeItem("myloc_token");
   localStorage.removeItem("myloc_user");
+  const path = window.location.pathname;
+  if (/\/(login|register)(\.html)?$/.test(path)) return;
   const login = process.env.NODE_ENV === "production" ? "./login.html" : "/login";
-  window.setTimeout(() => window.location.replace(`${login}?expired=1`), 1200);
+  window.setTimeout(() => {
+    // Entre-temps, l'utilisateur a pu se reconnecter dans un autre onglet
+    if (!localStorage.getItem("myloc_token")) window.location.replace(`${login}?expired=1`);
+  }, 1200);
 }
 
 export async function login(email: string, password: string): Promise<LoginResponse> {

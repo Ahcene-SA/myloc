@@ -59,14 +59,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!token) return;
+    let stale = false;
     fetchCurrentUser()
-      .then((u) => persistUser(u))
+      .then((u) => !stale && persistUser(u))
       .catch(() => {
+        // N'efface la session que si c'est toujours ce jeton (pas une connexion plus récente)
+        if (stale || localStorage.getItem("myloc_token") !== token) return;
         localStorage.removeItem("myloc_token");
         localStorage.removeItem("myloc_user");
         setToken(null);
+        setUser(null);
       })
-      .finally(() => setIsLoading(false));
+      .finally(() => !stale && setIsLoading(false));
+    return () => {
+      stale = true;
+    };
   }, [token]);
 
   const handleLogin = async (email: string, password: string) => {
