@@ -28,6 +28,11 @@ const steps = [
   },
 ];
 
+/** Part du scroll réservée au tracé du contour de la 1re carte avant que la voiture parte. */
+const LEAD = 0.2;
+/** Durée (en part de scroll) du tracé du contour d'une carte ; il se termine quand la voiture arrive. */
+const TRACE = 0.3;
+
 /** Position de l'étape i sur la route (0 = 1re carte, 1 = dernière). */
 const reachAt = (i: number) => i / (steps.length - 1);
 
@@ -42,7 +47,9 @@ export function Steps() {
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start 80%", "end 70%"] });
   // Ressort : la voiture glisse au lieu de suivre les à-coups de la molette
   const smooth = useSpring(scrollYProgress, { stiffness: 80, damping: 24, mass: 0.4, restDelta: 0.0005 });
-  const p = useTransform(smooth, (v) => (reduce ? 1 : Math.min(1, Math.max(0, v))));
+  // q : progression globale ; la voiture ne démarre qu'après LEAD, le temps que la 1re carte se dessine
+  const q = useTransform(smooth, (v) => (reduce ? 1 : Math.min(1, Math.max(0, v))));
+  const p = useTransform(q, (v) => Math.min(1, Math.max(0, (v - LEAD) / (1 - LEAD))));
   // Tout passe par des transformations (accélérées par la carte graphique), jamais par left/width
   const carX = useTransform(p, (v) => `${(rtl ? -v : v) * 100}%`);
 
@@ -85,7 +92,7 @@ export function Steps() {
 
           <ol className="grid gap-5 pt-2 md:grid-cols-3 md:gap-6">
             {steps.map((s, i) => (
-              <StepCard key={s.title} s={s} i={i} p={p} />
+              <StepCard key={s.title} s={s} i={i} p={p} q={q} rtl={rtl} />
             ))}
           </ol>
         </div>
@@ -114,7 +121,19 @@ function Milestone({ i, p, rtl }: { i: number; p: MotionValue<number>; rtl: bool
   );
 }
 
-function StepCard({ s, i, p }: { s: (typeof steps)[number]; i: number; p: MotionValue<number> }) {
+function StepCard({
+  s,
+  i,
+  p,
+  q,
+  rtl,
+}: {
+  s: (typeof steps)[number];
+  i: number;
+  p: MotionValue<number>;
+  q: MotionValue<number>;
+  rtl: boolean;
+}) {
   const at = reachAt(i);
   const { t } = useLang();
   // La carte s'allume quand la voiture arrive au-dessus (re-rendu seulement au franchissement)
@@ -122,60 +141,69 @@ function StepCard({ s, i, p }: { s: (typeof steps)[number]; i: number; p: Motion
   useMotionValueEvent(p, "change", (v) => setLit(v >= at - 0.02));
   const Icon = s.icon;
 
+  // Contour bleu qui fait le tour de la carte pendant que la voiture s'en approche
+  const end = LEAD + (1 - LEAD) * at;
+  const trace = useTransform(q, (v) => {
+    const k = Math.min(1, Math.max(0, (v - (end - TRACE)) / TRACE));
+    return `${(k * 360).toFixed(1)}deg`;
+  });
+  const ringBg = rtl
+    ? "conic-gradient(from 0deg, transparent calc(360deg - var(--trace)), #43b0e6 0)"
+    : "conic-gradient(from 0deg, #43b0e6 var(--trace), transparent 0)";
+
   return (
-    <li
-      className={cn(
-        "group relative flex min-h-[280px] flex-col overflow-hidden rounded-[28px] border-2 bg-white p-7 transition-all duration-500 ease-out lg:p-8",
-        lit
-          ? "-translate-y-1.5 border-sky shadow-[0_28px_50px_-28px_rgba(46,147,204,0.7)]"
-          : "border-line shadow-[0_18px_40px_-32px_rgba(15,27,45,0.35)]"
-      )}
-    >
-      {/* barre de couleur qui se remplit au passage de la voiture */}
-      <span
-        aria-hidden="true"
+    <li className={cn("relative rounded-[28px] transition-transform duration-500 ease-out", lit && "-translate-y-1.5")}>
+      <div
         className={cn(
-          "absolute inset-x-0 top-0 h-1.5 origin-left bg-gradient-to-r from-sky to-sky-mid transition-transform duration-700 ease-out rtl:origin-right",
-          lit ? "scale-x-100" : "scale-x-0"
-        )}
-      />
-      {/* grand numéro en filigrane */}
-      <span
-        aria-hidden="true"
-        className={cn(
-          "pointer-events-none absolute -bottom-14 -end-2 text-[170px] font-extrabold leading-none transition-colors duration-500",
-          lit ? "text-sky/15" : "text-navy/[0.04]"
+          "group relative flex h-full min-h-[280px] flex-col overflow-hidden rounded-[28px] border-2 border-line bg-white p-7 transition-shadow duration-500 lg:p-8",
+          lit ? "shadow-[0_28px_50px_-28px_rgba(46,147,204,0.7)]" : "shadow-[0_18px_40px_-32px_rgba(15,27,45,0.35)]"
         )}
       >
-        {i + 1}
-      </span>
-
-      <div className="flex items-center justify-between gap-4">
+        {/* grand numéro en filigrane */}
         <span
+          aria-hidden="true"
           className={cn(
-            "flex h-14 w-14 items-center justify-center rounded-2xl transition-colors duration-500",
-            lit ? "bg-sky text-navy" : "bg-sky-soft text-sky-text"
+            "pointer-events-none absolute -bottom-14 -end-2 text-[170px] font-extrabold leading-none transition-colors duration-500",
+            lit ? "text-sky/15" : "text-navy/[0.04]"
           )}
         >
-          <Icon className="h-6 w-6" strokeWidth={1.9} />
+          {i + 1}
         </span>
-        <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-muted">
-          {t("Étape")} {String(i + 1).padStart(2, "0")}
+
+        <div className="flex items-center justify-between gap-4">
+          <span
+            className={cn(
+              "flex h-14 w-14 items-center justify-center rounded-2xl transition-colors duration-500",
+              lit ? "bg-sky text-navy" : "bg-sky-soft text-sky-text"
+            )}
+          >
+            <Icon className="h-6 w-6" strokeWidth={1.9} />
+          </span>
+          <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-muted">
+            {t("Étape")} {String(i + 1).padStart(2, "0")}
+          </span>
+        </div>
+
+        <h3 className="mt-6 text-2xl font-extrabold uppercase tracking-wide text-navy">{t(s.title)}</h3>
+        <p className="relative mb-6 mt-3 text-[15px] leading-relaxed text-ink-soft">{t(s.desc)}</p>
+
+        <span
+          className={cn(
+            "relative mt-auto inline-flex w-fit items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-bold transition-colors duration-500",
+            lit ? "bg-navy text-white" : "bg-mist text-navy"
+          )}
+        >
+          <Check className={cn("h-3.5 w-3.5", lit ? "text-sky" : "text-sky-text")} strokeWidth={3} />
+          {t(s.perk)}
         </span>
       </div>
 
-      <h3 className="mt-6 text-2xl font-extrabold uppercase tracking-wide text-navy">{t(s.title)}</h3>
-      <p className="relative mt-3 mb-6 text-[15px] leading-relaxed text-ink-soft">{t(s.desc)}</p>
-
-      <span
-        className={cn(
-          "relative mt-auto inline-flex w-fit items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-bold transition-colors duration-500",
-          lit ? "bg-navy text-white" : "bg-mist text-navy"
-        )}
-      >
-        <Check className={cn("h-3.5 w-3.5", lit ? "text-sky" : "text-sky-text")} strokeWidth={3} />
-        {t(s.perk)}
-      </span>
+      {/* Anneau de 2 px posé sur la bordure, rempli en « cadran » depuis le haut */}
+      <motion.span
+        aria-hidden="true"
+        className="trace-ring pointer-events-none absolute inset-0 rounded-[28px]"
+        style={{ "--trace": trace, background: ringBg } as React.CSSProperties & Record<string, unknown>}
+      />
     </li>
   );
 }
