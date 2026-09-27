@@ -113,6 +113,9 @@ export const arSite: Record<string, string> = {
   "Réservez en": "احجزوا في",
   "3 étapes": "3 خطوات",
   "Choisissez": "اختاروا",
+  "Étape": "الخطوة",
+  "Prix total affiché": "السعر الإجمالي ظاهر",
+  "Confirmation rapide": "تأكيد سريع",
   "Vos dates et votre point de retrait : les véhicules libres s'affichent avec le prix total.":
     "تواريخكم ونقطة الاستلام: تظهر السيارات المتاحة مع السعر الإجمالي.",
   "Réservez": "احجزوا",

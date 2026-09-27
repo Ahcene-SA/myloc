@@ -1,15 +1,31 @@
 "use client";
 
-import { useRef } from "react";
-import { motion, useReducedMotion, useScroll, useSpring, useTransform, type MotionValue } from "framer-motion";
+import { useRef, useState } from "react";
+import { CalendarSearch, Check, KeyRound, Smartphone } from "lucide-react";
+import { motion, useMotionValueEvent, useReducedMotion, useScroll, useSpring, useTransform, type MotionValue } from "framer-motion";
 import { BrandHeading, Sky } from "./Brand";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/lib/i18n";
 
 const steps = [
-  { title: "Choisissez", desc: "Vos dates et votre point de retrait : les véhicules libres s'affichent avec le prix total." },
-  { title: "Réservez", desc: "En ligne depuis votre espace client, ou sur WhatsApp si vous préférez." },
-  { title: "Roulez", desc: "Récupérez les clés et partez l’esprit libre : assurance et assistance 24/7 incluses." },
+  {
+    title: "Choisissez",
+    desc: "Vos dates et votre point de retrait : les véhicules libres s'affichent avec le prix total.",
+    icon: CalendarSearch,
+    perk: "Prix total affiché",
+  },
+  {
+    title: "Réservez",
+    desc: "En ligne depuis votre espace client, ou sur WhatsApp si vous préférez.",
+    icon: Smartphone,
+    perk: "Confirmation rapide",
+  },
+  {
+    title: "Roulez",
+    desc: "Récupérez les clés et partez l’esprit libre : assurance et assistance 24/7 incluses.",
+    icon: KeyRound,
+    perk: "Assistance 24/7",
+  },
 ];
 
 /** Position de l'étape i sur la route (0 = 1re carte, 1 = dernière). */
@@ -67,9 +83,9 @@ export function Steps() {
             </div>
           </div>
 
-          <ol className="grid gap-4 md:grid-cols-3 md:gap-6">
+          <ol className="grid gap-5 pt-2 md:grid-cols-3 md:gap-6">
             {steps.map((s, i) => (
-              <StepCard key={s.title} s={s} i={i} p={p} last={i === steps.length - 1} />
+              <StepCard key={s.title} s={s} i={i} p={p} />
             ))}
           </ol>
         </div>
@@ -98,39 +114,68 @@ function Milestone({ i, p, rtl }: { i: number; p: MotionValue<number>; rtl: bool
   );
 }
 
-function StepCard({ s, i, p, last }: { s: (typeof steps)[number]; i: number; p: MotionValue<number>; last: boolean }) {
+function StepCard({ s, i, p }: { s: (typeof steps)[number]; i: number; p: MotionValue<number> }) {
   const at = reachAt(i);
   const { t } = useLang();
-  // Carte « atteinte » quand la voiture arrive au-dessus : bordure bleue et légère montée
-  const lit = useTransform<number, number>(p, (v) => (v >= at - 0.02 ? 1 : 0));
-  const y = useSpring(useTransform(lit, [0, 1], [0, -6]), { stiffness: 260, damping: 22 });
-  const borderColor = useTransform(lit, [0, 1], [last ? "rgba(15,27,45,1)" : "rgba(221,229,238,1)", "rgba(67,176,230,1)"]);
-  const shadow = useTransform(lit, [0, 1], ["0 0 0 0 rgba(67,176,230,0)", "0 22px 40px -24px rgba(67,176,230,0.55)"]);
+  // La carte s'allume quand la voiture arrive au-dessus (re-rendu seulement au franchissement)
+  const [lit, setLit] = useState(() => p.get() >= at - 0.02);
+  useMotionValueEvent(p, "change", (v) => setLit(v >= at - 0.02));
+  const Icon = s.icon;
 
   return (
-    <motion.li
-      style={{ y, borderColor, boxShadow: shadow, willChange: "transform" }}
+    <li
       className={cn(
-        "relative flex min-h-[220px] flex-col gap-4 overflow-hidden rounded-3xl border-2 p-8 transition-[border-color,box-shadow] duration-500",
-        last ? "bg-navy text-white" : "bg-mist text-navy"
+        "group relative flex min-h-[280px] flex-col overflow-hidden rounded-[28px] border-2 bg-white p-7 transition-all duration-500 ease-out lg:p-8",
+        lit
+          ? "-translate-y-1.5 border-sky shadow-[0_28px_50px_-28px_rgba(46,147,204,0.7)]"
+          : "border-line shadow-[0_18px_40px_-32px_rgba(15,27,45,0.35)]"
       )}
     >
+      {/* barre de couleur qui se remplit au passage de la voiture */}
       <span
         aria-hidden="true"
-        className={cn("absolute -end-3 -top-6 text-[140px] font-extrabold leading-none", last ? "text-white/[0.06]" : "text-navy/[0.05]")}
-      >
-        {i + 1}
-      </span>
-      <span
         className={cn(
-          "flex h-12 w-12 items-center justify-center rounded-full text-lg font-extrabold md:hidden",
-          last ? "bg-sky text-navy" : "bg-white text-sky-text"
+          "absolute inset-x-0 top-0 h-1.5 origin-left bg-gradient-to-r from-sky to-sky-mid transition-transform duration-700 ease-out rtl:origin-right",
+          lit ? "scale-x-100" : "scale-x-0"
+        )}
+      />
+      {/* grand numéro en filigrane */}
+      <span
+        aria-hidden="true"
+        className={cn(
+          "pointer-events-none absolute -bottom-14 -end-2 text-[170px] font-extrabold leading-none transition-colors duration-500",
+          lit ? "text-sky/15" : "text-navy/[0.04]"
         )}
       >
         {i + 1}
       </span>
-      <h3 className="text-2xl font-extrabold uppercase tracking-wide">{t(s.title)}</h3>
-      <p className={cn("text-[15px] leading-relaxed", last ? "text-white/75" : "text-ink-soft")}>{t(s.desc)}</p>
-    </motion.li>
+
+      <div className="flex items-center justify-between gap-4">
+        <span
+          className={cn(
+            "flex h-14 w-14 items-center justify-center rounded-2xl transition-colors duration-500",
+            lit ? "bg-sky text-navy" : "bg-sky-soft text-sky-text"
+          )}
+        >
+          <Icon className="h-6 w-6" strokeWidth={1.9} />
+        </span>
+        <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-muted">
+          {t("Étape")} {String(i + 1).padStart(2, "0")}
+        </span>
+      </div>
+
+      <h3 className="mt-6 text-2xl font-extrabold uppercase tracking-wide text-navy">{t(s.title)}</h3>
+      <p className="relative mt-3 mb-6 text-[15px] leading-relaxed text-ink-soft">{t(s.desc)}</p>
+
+      <span
+        className={cn(
+          "relative mt-auto inline-flex w-fit items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-bold transition-colors duration-500",
+          lit ? "bg-navy text-white" : "bg-mist text-navy"
+        )}
+      >
+        <Check className={cn("h-3.5 w-3.5", lit ? "text-sky" : "text-sky-text")} strokeWidth={3} />
+        {t(s.perk)}
+      </span>
+    </li>
   );
 }
