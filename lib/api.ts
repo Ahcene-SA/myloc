@@ -727,6 +727,9 @@ export async function uploadInspectionPhoto(file: File): Promise<string> {
 
 /* ─────────────── Espace agence ─────────────── */
 
+/** Étape de connexion agence commencée depuis la page de connexion client (reprise sur /agence). */
+export const AGENCY_PENDING_KEY = "myloc_agency_pending";
+
 export interface AgencyLoginResult {
   step: "totp" | "totp_setup" | "done";
   challenge?: string;

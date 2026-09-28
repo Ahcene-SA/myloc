@@ -5,7 +5,7 @@ import { ArrowRight, Check, Copy, Eye, EyeOff, KeyRound, Loader2, Lock, Mail, Pr
 import { Logo } from "../Brand";
 import { useAuth } from "../AuthContext";
 import { QrCode } from "./QrCode";
-import { agencyLogin, agencyVerify, isStaff, type AgencyLoginResult } from "@/lib/api";
+import { AGENCY_PENDING_KEY, agencyLogin, agencyVerify, isStaff, type AgencyLoginResult } from "@/lib/api";
 import { pageUrl } from "@/lib/routes";
 import { setLang, useLang } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -67,6 +67,25 @@ export function AgencyLogin() {
     if (r.recovery_codes_left !== undefined && r.recovery_codes_left <= 2) return setStep({ kind: "lowCodes", result: r });
     finish(r);
   };
+
+  // Connexion commencée sur la page client : on reprend directement à l'étape du code
+  useEffect(() => {
+    let raw: string | null = null;
+    try {
+      raw = sessionStorage.getItem(AGENCY_PENDING_KEY);
+      sessionStorage.removeItem(AGENCY_PENDING_KEY);
+    } catch {
+      return;
+    }
+    if (!raw) return;
+    try {
+      const pending = JSON.parse(raw) as AgencyLoginResult;
+      void Promise.resolve().then(() => handle(pending));
+    } catch {
+      /* ignoré */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const run = async (fn: () => Promise<AgencyLoginResult>) => {
     setBusy(true);

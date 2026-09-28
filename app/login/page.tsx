@@ -5,6 +5,7 @@ import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 import { useAuth } from "@/components/AuthContext";
 import { AuthShell, AuthField, AuthError, authSubmitClass } from "@/components/AuthShell";
 import { pageUrl } from "@/lib/routes";
+import { AGENCY_PENDING_KEY, agencyLogin } from "@/lib/api";
 import { useLang } from "@/lib/i18n";
 
 export default function LoginPage() {
@@ -31,7 +32,20 @@ export default function LoginPage() {
     setLoading(false);
 
     if (!result.ok) {
-      setError(result.error || "Échec de la connexion.");
+      // Compte de l'équipe : on continue directement vers l'espace agence (code à 6 chiffres),
+      // sans lui faire ressaisir son email et son mot de passe.
+      const msg = result.error || "";
+      if (msg.includes("espace agence") || msg === t("Ce compte appartient à l'équipe de l'agence : connectez-vous depuis l'espace agence.")) {
+        try {
+          const next = await agencyLogin(email.trim(), password);
+          sessionStorage.setItem(AGENCY_PENDING_KEY, JSON.stringify(next));
+          window.location.href = pageUrl("agence");
+          return;
+        } catch {
+          /* on affiche le message et le lien habituels */
+        }
+      }
+      setError(msg || "Échec de la connexion.");
       return;
     }
 
