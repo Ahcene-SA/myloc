@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, useMotionValue, useSpring, useTransform, type MotionValue } from "framer-motion";
+import { CasbahHouses } from "./Casbah";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
@@ -162,6 +163,9 @@ export function HeroCars({ scrollYProgress, reduce }: { scrollYProgress: MotionV
             <path className="med-wave med-wave-2" d="M0 300 q40.0 -4 80.0 0 t80.0 0 q40.0 -4 80.0 0 t80.0 0 q40.0 -4 80.0 0 t80.0 0 q40.0 -4 80.0 0 t80.0 0 q40.0 -4 80.0 0 t80.0 0 q40.0 -4 80.0 0 t80.0 0 q40.0 -4 80.0 0 t80.0 0 q40.0 -4 80.0 0 t80.0 0 q40.0 -4 80.0 0 t80.0 0 q40.0 -4 80.0 0 t80.0 0 q40.0 -4 80.0 0 t80.0 0" stroke="#43b0e6" strokeOpacity="0.28" strokeWidth="1.6" transform="translate(-460 0)" />
             <path className="med-wave med-wave-3" d="M0 335 q50.0 -5 100.0 0 t100.0 0 q50.0 -5 100.0 0 t100.0 0 q50.0 -5 100.0 0 t100.0 0 q50.0 -5 100.0 0 t100.0 0 q50.0 -5 100.0 0 t100.0 0 q50.0 -5 100.0 0 t100.0 0 q50.0 -5 100.0 0 t100.0 0 q50.0 -5 100.0 0 t100.0 0 q50.0 -5 100.0 0 t100.0 0" stroke="#43b0e6" strokeOpacity="0.2" strokeWidth="2" transform="translate(-460 0)" />
           </g>
+
+          {/* Casbah blanche qui descend vers la mer */}
+          <CasbahHouses />
 
           {/* mouettes */}
           <g fill="none" stroke="#0b1f3a" strokeOpacity="0.35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
