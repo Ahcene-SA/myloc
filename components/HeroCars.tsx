@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { motion, useMotionValue, useSpring, useTransform, type MotionValue } from "framer-motion";
-import { AlgiersSkyline } from "./Brand";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
@@ -81,7 +80,7 @@ export function HeroCars({ scrollYProgress, reduce }: { scrollYProgress: MotionV
   // Parallaxe au scroll
   const stageY = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : -70]);
   const stageScale = useTransform(scrollYProgress, [0, 1], [1, reduce ? 1 : 1.12]);
-  const skylineY = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : -30]);
+  const roadY = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : -30]);
 
   // Parallaxe à la souris (ordinateur uniquement)
   const mx = useMotionValue(0);
@@ -110,22 +109,34 @@ export function HeroCars({ scrollYProgress, reduce }: { scrollYProgress: MotionV
 
   return (
     <div className="relative h-[280px] [perspective:1200px] sm:h-[380px] lg:h-[500px]">
-      {/* Baie d'Alger et Maqam Echahid en filigrane derrière les voitures */}
+      {/* Route en perspective qui file vers l'horizon derrière les voitures */}
       <motion.div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-[-8%] bottom-16 h-[62%] sm:bottom-20"
+        className="pointer-events-none absolute inset-x-[-18%] -bottom-2 h-[58%]"
         style={{
-          y: skylineY,
-          // Bords fondus : la ville se perd doucement dans le décor
-          maskImage: "linear-gradient(to right, transparent, #000 22%, #000 78%, transparent)",
-          WebkitMaskImage: "linear-gradient(to right, transparent, #000 22%, #000 78%, transparent)",
+          y: roadY,
+          // fondu en haut (horizon) et en bas (sous le formulaire)
+          maskImage: "linear-gradient(to top, transparent, #000 18%, #000 55%, transparent)",
+          WebkitMaskImage: "linear-gradient(to top, transparent, #000 18%, #000 55%, transparent)",
         }}
-        initial={reduce ? false : { opacity: 0, y: 30 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1.6, ease }}
+        initial={reduce ? false : { opacity: 0, scaleY: 0.4 }}
+        animate={{ opacity: 1, scaleY: 1 }}
+        transition={{ duration: 1.4, ease }}
       >
-        <AlgiersSkyline className="inset-0 h-full w-full text-navy opacity-[0.08]" />
-        <span className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-navy/15 to-transparent" />
+        <svg viewBox="0 0 600 300" preserveAspectRatio="none" className="h-full w-full">
+          <defs>
+            <linearGradient id="road-fill" x1="0" y1="1" x2="0" y2="0">
+              <stop offset="0" stopColor="#0b1f3a" stopOpacity="0.09" />
+              <stop offset="1" stopColor="#0b1f3a" stopOpacity="0.02" />
+            </linearGradient>
+          </defs>
+          {/* chaussée */}
+          <path d="M0 300 L292 0 L308 0 L600 300 Z" fill="url(#road-fill)" />
+          {/* bords de route */}
+          <path d="M0 300 L292 0 M600 300 L308 0" stroke="#43b0e6" strokeOpacity="0.35" strokeWidth="1.5" fill="none" vectorEffect="non-scaling-stroke" />
+          {/* marquage central qui défile vers nous */}
+          <path className="road-dash" d="M300 0 L300 300" stroke="#0b1f3a" strokeOpacity="0.18" strokeWidth="3" strokeDasharray="18 16" fill="none" vectorEffect="non-scaling-stroke" />
+        </svg>
       </motion.div>
       <motion.div className="absolute inset-x-0 bottom-10 sm:bottom-14" style={{ y: stageY, scale: stageScale, rotateY: tilt }}>
         {/* ombre au sol */}

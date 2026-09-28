@@ -274,3 +274,18 @@ html[dir="rtl"] .flip-rtl {
     scroll-behavior: auto !important;
   }
 }
+
+/* Marquage de la route de l'accueil : défile vers le visiteur */
+.road-dash {
+  animation: road-dash 1.1s linear infinite;
+}
+@keyframes road-dash {
+  to {
+    stroke-dashoffset: -34;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .road-dash {
+    animation: none;
+  }
+}
