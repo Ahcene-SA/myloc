@@ -42,7 +42,7 @@ const categories = [
   ...Object.entries(categoryInfo).map(([id, c]) => ({ id, label: c.label })),
 ];
 
-const trust = ["Assistance 24/7", "Prix clairs, sans surprise", "Annulation gratuite 24h avant"];
+const trust = ["Livraison aéroports et wilayas", "Prix clairs, sans surprise", "Siège bébé offert"];
 
 const fieldLabel = "text-[11px] font-bold uppercase tracking-[0.2em] text-muted";
 const fieldInput = "w-full appearance-none bg-transparent p-0 text-[15px] font-bold text-navy outline-none placeholder:text-muted/70";
@@ -177,7 +177,7 @@ export function Hero() {
             className="fade-up max-w-lg text-[15px] font-semibold uppercase leading-relaxed tracking-[0.06em] text-ink-soft sm:text-base"
             style={{ animationDelay: "0.25s" }}
           >
-            {t("Une équipe professionnelle à votre service, partout en Algérie.")}
+            {t("Votre partenaire mobilité en Algérie, partout où vous en avez besoin.")}
           </p>
 
           <div className="fade-up flex flex-wrap items-center gap-3" style={{ animationDelay: "0.35s" }}>

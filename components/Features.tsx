@@ -2,17 +2,17 @@
 
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import type { PointerEvent, ReactNode } from "react";
-import { BadgeEuro, Timer, Headphones, Sparkles, Gauge, CalendarX2 } from "lucide-react";
+import { Baby, Headphones, Map as MapIcon, MapPin, Plane, Sparkles } from "lucide-react";
 import { BrandHeading, PalmShadow, Sky } from "./Brand";
 import { useLang } from "@/lib/i18n";
 
 const features = [
-  { icon: BadgeEuro, title: "Prix transparents", desc: "Pas de frais cachés. Le prix affiché est le prix final, avec assurance et assistance incluses." },
-  { icon: Timer, title: "Réservation rapide", desc: "Réservez votre voiture en moins de 2 minutes, 24h/24 et 7j/7." },
-  { icon: Headphones, title: "Assistance 24/7", desc: "Notre équipe reste à votre disposition à toute heure pour vous accompagner sur la route." },
-  { icon: Sparkles, title: "Véhicules récents", desc: "Flotte constamment renouvelée, entretenue et nettoyée avant chaque location." },
-  { icon: Gauge, title: "Kilométrage illimité", desc: "Roulez sans compter avec nos options de kilométrage illimité sur de nombreux véhicules." },
-  { icon: CalendarX2, title: "Annulation flexible", desc: "Modifiez ou annulez votre réservation gratuitement jusqu’à 24h avant le départ." },
+  { icon: MapPin, title: "Agence basée à Alger", desc: "Notre agence de Birkhadem vous accueille et prépare votre véhicule avant chaque départ." },
+  { icon: Plane, title: "Livraison aux aéroports", desc: "Votre voiture vous attend à votre arrivée, dans plusieurs aéroports d'Algérie." },
+  { icon: MapIcon, title: "Livraison dans plusieurs wilayas", desc: "Nous livrons votre véhicule là où vous en avez besoin, à domicile ou à l'hôtel." },
+  { icon: Sparkles, title: "Véhicules récents", desc: "Des modèles 2025 et 2026, entretenus et nettoyés avant chaque location." },
+  { icon: Baby, title: "Siège bébé et cosy offerts", desc: "Voyagez en famille : sièges bébé et cosy disponibles gratuitement sur demande." },
+  { icon: Headphones, title: "Assistance réactive", desc: "Une équipe joignable par téléphone et WhatsApp pour vous accompagner sur la route." },
 ];
 
 /** Carte qui s'incline légèrement vers la souris (effet 3D). */

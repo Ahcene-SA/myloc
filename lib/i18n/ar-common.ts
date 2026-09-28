@@ -36,6 +36,8 @@ export const arCommon: Record<string, string> = {
   "Berline": "سيدان",
   "Berlines": "سيارات السيدان",
   "Aéroport Messali Hadj": "مطار مصالي الحاج",
+  "Agence Birkhadem (Alger)": "وكالة بئر خادم (الجزائر العاصمة)",
+  "Aéroport d'Alger Houari Boumediene": "مطار الجزائر هواري بومدين",
   "Agence Alger Centre": "وكالة الجزائر الوسطى",
   "Agence Oran": "وكالة وهران",
   "Agence Constantine": "وكالة قسنطينة",

@@ -233,4 +233,6 @@ export const arClient: Record<string, string> = {
   "Les réservations en ligne sont possibles jusqu'à 12 mois à l'avance.": "الحجز عبر الإنترنت ممكن حتى 12 شهرًا مسبقًا.",
   "Vous avez déjà 3 demandes en attente : attendez la réponse de l'agence avant d'en faire une autre.":
     "لديك بالفعل 3 طلبات قيد الانتظار: انتظر رد الوكالة قبل تقديم طلب آخر.",
+  "À prévoir le jour du départ : passeport, permis de conduire et caution de {amount} (espèces ou virement), restituée au retour du véhicule.":
+    "يوم الانطلاق، يُرجى إحضار: جواز السفر، رخصة السياقة، وضمان بقيمة {amount} (نقدًا أو بتحويل بنكي)، يُعاد عند إرجاع السيارة.",
 };

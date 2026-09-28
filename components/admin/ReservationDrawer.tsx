@@ -270,7 +270,7 @@ function DrawerBody({ r, onClose }: { r: ReservationFromApi; onClose: () => void
             onChange={(e) => setNote(e.target.value)}
             rows={3}
             maxLength={1000}
-            placeholder="Ex. : véhicule prêt à 10h à l'agence Alger Centre, pensez à votre permis."
+            placeholder="Ex. : véhicule prêt à 10h à l'agence de Birkhadem, pensez à votre permis."
             className="w-full resize-y rounded-2xl border-2 border-line bg-mist px-4 py-3 text-sm font-semibold text-navy outline-none placeholder:font-medium placeholder:text-muted/60 focus:border-sky focus:bg-white"
           />
           <p className="mt-1.5 flex items-center gap-1.5 text-xs text-muted">

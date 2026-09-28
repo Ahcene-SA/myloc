@@ -34,7 +34,7 @@ class Emails
 
     private static function money($amount): string
     {
-        $currency = $_ENV['CURRENCY'] ?? '€';
+        $currency = $_ENV['CURRENCY'] ?? 'DA';
         return number_format((float) $amount, 0, ',', ' ') . ' ' . $currency;
     }
 
@@ -59,7 +59,7 @@ class Emails
         $btn = $button
             ? '<p style="margin:28px 0 8px"><a href="' . self::e($button[1]) . '" style="display:inline-block;background:#43b0e6;color:#0b1f3a;font-weight:800;text-decoration:none;padding:14px 26px;border-radius:999px">' . self::e($button[0]) . '</a></p>'
             : '';
-        $phone = $_ENV['AGENCY_PHONE'] ?? '';
+        $phone = $_ENV['AGENCY_PHONE'] ?? '+213 560 55 05 90';
         $contact = $phone !== '' ? ' · ' . self::e($phone) : '';
         return '<!doctype html><html lang="fr"><body style="margin:0;background:#eef4f8;font-family:Montserrat,Helvetica,Arial,sans-serif;color:#1d2b3a">'
             . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef4f8;padding:24px 12px"><tr><td align="center">'

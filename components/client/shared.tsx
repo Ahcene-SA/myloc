@@ -11,7 +11,7 @@ import { dateLocale, t } from "@/lib/i18n";
 
 export function formatPrice(value: number | string | undefined | null): string {
   const n = typeof value === "string" ? parseFloat(value) : value ?? 0;
-  return `${(Number.isFinite(n) ? n : 0).toLocaleString(dateLocale(), { maximumFractionDigits: 2 })} ${site.currency}`;
+  return `${(Number.isFinite(n) ? n : 0).toLocaleString(dateLocale(), { maximumFractionDigits: 2 })} ${t(site.currency)}`;
 }
 
 export function formatDate(date?: string | null, withWeekday = false): string {

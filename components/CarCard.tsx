@@ -3,9 +3,10 @@
 import { motion } from "framer-motion";
 import { Cog, Car as CarIcon, Armchair, CalendarDays } from "lucide-react";
 import { WhatsAppIcon } from "./FloatingWhatsApp";
-import { categoryInfo, site, whatsappLink } from "@/lib/site";
+import { categoryInfo, whatsappLink } from "@/lib/site";
 import { cn } from "@/lib/utils";
-import { dateLocale, useLang } from "@/lib/i18n";
+import { useLang } from "@/lib/i18n";
+import { formatPrice } from "./client/shared";
 
 export interface Car {
   id: string;
@@ -101,16 +102,16 @@ export function CarCard({ car, index = 0, quote, onBook }: CarCardProps) {
                   {t(quote.days > 1 ? "Total · {days} jours" : "Total · {days} jour", { days: quote.days })}
                 </span>
                 <span className="whitespace-nowrap text-[11px] font-semibold text-muted">
-                  {car.price} {site.currency}/{t("jour")}
+                  {formatPrice(car.price)}/{t("jour")}
                 </span>
               </div>
               <p className="mt-1.5 flex flex-wrap items-baseline gap-x-2 leading-none">
                 <span className="whitespace-nowrap text-[26px] font-extrabold text-navy">
-                  {quote.total.toLocaleString(dateLocale())} {site.currency}
+                  {formatPrice(quote.total)}
                 </span>
                 {!!quote.base && quote.base > quote.total && (
                   <span className="whitespace-nowrap text-sm font-semibold text-muted line-through">
-                    {quote.base.toLocaleString(dateLocale())} {site.currency}
+                    {formatPrice(quote.base)}
                   </span>
                 )}
               </p>
@@ -152,7 +153,7 @@ export function CarCard({ car, index = 0, quote, onBook }: CarCardProps) {
             <p className="leading-none">
               <span className="block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">{t("À partir de")}</span>
               <span className="mt-1.5 block whitespace-nowrap text-[28px] font-extrabold text-navy">
-                {car.price} {site.currency}
+                {formatPrice(car.price)}
                 <span className="ms-1 whitespace-nowrap text-xs font-semibold text-muted">/ {t(car.priceUnit)}</span>
               </span>
             </p>

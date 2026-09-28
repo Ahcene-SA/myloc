@@ -4,21 +4,22 @@
  */
 export const site = {
   name: "MYLOC.DZ",
-  phoneDisplay: "+213 555 00 00 00",
-  phoneHref: "tel:+213555000000",
-  whatsappHref: "https://wa.me/213555000000",
+  phoneDisplay: "+213 560 55 05 90",
+  phoneHref: "tel:+213560550590",
+  whatsappHref: "https://wa.me/213560550590",
   email: "contact@myloc.dz",
-  address: "Alger, Algérie",
+  address: "Résidence AM, 08 lotissement du Stade, Zonka, Birkhadem, Alger",
   instagram: "https://instagram.com/myloc.dz",
   instagramHandle: "@myloc.dz",
-  currency: "€",
-  agencies: [
-    "Aéroport Messali Hadj",
-    "Agence Alger Centre",
-    "Agence Oran",
-    "Agence Constantine",
-    "Agence Annaba",
-  ],
+  currency: "DA",
+  /** Registre du commerce (en-tête du contrat) */
+  rc: "16/00-5921518 25",
+  /** Caution et franchise (conditions générales du contrat) */
+  deposit: 120000,
+  depositEur: 500,
+  franchise: 200000,
+  /** Points de retrait / livraison proposés au client */
+  agencies: ["Agence Birkhadem (Alger)", "Aéroport d'Alger Houari Boumediene"],
   hours: [
     { label: "Lundi – Samedi", value: "08h00 – 20h00" },
     { label: "Dimanche", value: "09h00 – 18h00" },

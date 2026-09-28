@@ -17,7 +17,7 @@ import {
 } from "@/lib/api";
 import { categoryInfo, site } from "@/lib/site";
 import { cn } from "@/lib/utils";
-import { useLang } from "@/lib/i18n";
+import { dateLocale, useLang } from "@/lib/i18n";
 import {
   Card,
   EmptyState,
@@ -619,7 +619,12 @@ export function ReserverView() {
             <Card className="flex flex-col gap-6 p-6 sm:p-8">
               <div>
                 <p className="mb-3 text-sm font-extrabold uppercase tracking-wide text-navy">{t("Moyen de paiement")}</p>
-                <p className="mb-4 text-sm text-muted">{t("Aucun paiement en ligne : vous réglez directement auprès de l'agence.")}</p>
+                <p className="mb-2 text-sm text-muted">{t("Aucun paiement en ligne : vous réglez directement auprès de l'agence.")}</p>
+                <p className="mb-4 rounded-2xl bg-sky-soft px-4 py-3 text-sm font-semibold text-navy">
+                  {t("À prévoir le jour du départ : passeport, permis de conduire et caution de {amount} (espèces ou virement), restituée au retour du véhicule.", {
+                    amount: `${site.deposit.toLocaleString(dateLocale())} ${t(site.currency)}`,
+                  })}
+                </p>
                 <div className="grid gap-3">
                   {(Object.keys(paymentLabels) as PaymentMethod[]).map((m) => (
                     <label
