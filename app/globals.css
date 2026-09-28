@@ -275,17 +275,58 @@ html[dir="rtl"] .flip-rtl {
   }
 }
 
-/* Marquage de la route de l'accueil : défile vers le visiteur */
-.road-dash {
-  animation: road-dash 1.1s linear infinite;
+/* Horizon méditerranéen de l'accueil : vagues, soleil et mouettes */
+.med-wave {
+  transform-box: view-box;
+  animation: med-wave-1 12s linear infinite;
 }
-@keyframes road-dash {
+.med-wave-2 {
+  animation: med-wave-2 18s linear infinite reverse;
+}
+.med-wave-3 {
+  animation: med-wave-3 24s linear infinite;
+}
+/* chaque vague avance d'un nombre entier de périodes : boucle sans à-coup */
+@keyframes med-wave-1 {
+  from { transform: translateX(-460px); }
+  to { transform: translateX(-220px); }
+}
+@keyframes med-wave-2 {
+  from { transform: translateX(-460px); }
+  to { transform: translateX(-140px); }
+}
+@keyframes med-wave-3 {
+  from { transform: translateX(-460px); }
+  to { transform: translateX(-60px); }
+}
+.med-sun {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: med-sun 6s ease-in-out infinite alternate;
+}
+@keyframes med-sun {
   to {
-    stroke-dashoffset: -34;
+    transform: scale(1.06);
+    fill-opacity: 0.9;
+  }
+}
+.med-gull {
+  transform-box: fill-box;
+  animation: med-gull 7s ease-in-out infinite alternate;
+}
+.med-gull-2 {
+  animation-duration: 9s;
+  animation-delay: -3s;
+}
+@keyframes med-gull {
+  to {
+    transform: translate(40px, -12px);
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .road-dash {
+  .med-wave,
+  .med-sun,
+  .med-gull {
     animation: none;
   }
 }
