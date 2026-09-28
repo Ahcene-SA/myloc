@@ -1,587 +1,350 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import {
-  MapPin,
-  CalendarDays,
-  Clock,
-  ChevronDown,
-  Zap,
-  Clock as ClockIcon,
-  CircleCheck,
-  Shield,
-  ArrowRight,
-  Home,
-  Building2,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useRef, useState, useSyncExternalStore, type FormEvent } from "react";
+import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { ArrowDown, Search, Check } from "lucide-react";
+import { AlgiersSkyline, BlueBar, PalmShadow } from "./Brand";
+import { WhatsAppIcon } from "./FloatingWhatsApp";
+import { HeroCars } from "./HeroCars";
+import { FILTER_EVENT, categoryInfo, site, whatsappLink } from "@/lib/site";
+import { AVAILABILITY_EVENT, type AvailabilitySearch } from "@/lib/booking";
+import { dateLocale, useLang } from "@/lib/i18n";
 
-const features = [
-  {
-    icon: Zap,
-    title: "Flexibilité",
-    desc: "Horaires souples, 7j/7",
-    active: true,
-  },
-  {
-    icon: ClockIcon,
-    title: "Disponibilité",
-    desc: "Flotte toujours prête",
-    active: false,
-  },
-  {
-    icon: CircleCheck,
-    title: "Simplicité",
-    desc: "Réservation en 2 minutes",
-    active: false,
-  },
-  {
-    icon: Shield,
-    title: "Transparence",
-    desc: "Prix clairs, sans surprise",
-    active: false,
-  },
+const HOME = "__domicile__";
+/** Libellé attendu par le formulaire de réservation de l'espace client */
+const HOME_LABEL = "Livraison à domicile";
+
+const ease = [0.22, 1, 0.36, 1] as const;
+
+/** Titre révélé mot par mot, chaque mot glisse hors d'un masque. */
+function RevealWords({ text, className, delay = 0, reduce }: { text: string; className?: string; delay?: number; reduce: boolean }) {
+  return (
+    <>
+      {text.split(" ").map((w, i) => (
+        <span key={i} className="inline-block overflow-hidden pb-[0.08em] align-bottom">
+          <motion.span
+            className={`inline-block ${className ?? ""}`}
+            initial={reduce ? false : { y: "110%" }}
+            animate={{ y: 0 }}
+            transition={{ duration: 0.9, delay: delay + i * 0.08, ease }}
+          >
+            {w}
+            {"\u00a0"}
+          </motion.span>
+        </span>
+      ))}
+    </>
+  );
+}
+
+const categories = [
+  { id: "all", label: "Toutes" },
+  ...Object.entries(categoryInfo).map(([id, c]) => ({ id, label: c.label })),
 ];
 
-const agencies = [
-  "Aéroport Messali Hadj",
-  "Agence Alger Centre",
-  "Agence Oran",
-  "Agence Constantine",
-  "Agence Annaba",
-];
+const trust = ["Assistance 24/7", "Prix clairs, sans surprise", "Annulation gratuite 24h avant"];
 
-const timeSlots = Array.from({ length: 33 }, (_, i) => {
-  const hour = Math.floor(i / 2) + 6;
-  const minute = i % 2 === 0 ? "00" : "30";
-  return `${hour.toString().padStart(2, "0")}:${minute}`;
-});
+const fieldLabel = "text-[11px] font-bold uppercase tracking-[0.2em] text-muted";
+const fieldInput = "w-full appearance-none bg-transparent p-0 text-[15px] font-bold text-navy outline-none placeholder:text-muted/70";
+
+/** Date du jour au format AAAA-MM-JJ, dans le fuseau du visiteur (et non en UTC). */
+function localToday() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+const noSubscribe = () => () => {};
+
+function formatDate(d: string) {
+  if (!d) return "";
+  return new Date(d + "T00:00:00").toLocaleDateString(dateLocale(), { day: "numeric", month: "long" });
+}
 
 export function Hero() {
-  /* ── scroll-to-top on mount ── */
-  useEffect(() => {
-    window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-  }, []);
+  const { t, lang } = useLang();
+  // Calculée côté navigateur après l'hydratation (vide au pré-rendu, jamais figée au build)
+  const today = useSyncExternalStore(noSubscribe, localToday, () => "");
 
-  const today = new Date().toISOString().split("T")[0];
-
-  /* ── pickup location ── */
-  const [pickupType, setPickupType] = useState<"agence" | "domicile">("agence");
-  const [pickupAgency, setPickupAgency] = useState("Aéroport Messali Hadj");
+  const [pickup, setPickup] = useState<string>(site.agencies[0]);
   const [pickupAddress, setPickupAddress] = useState("");
-  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
-
-  /* ── return location ── */
   const [differentReturn, setDifferentReturn] = useState(false);
-  const [returnType, setReturnType] = useState<"agence" | "domicile">("agence");
-  const [returnAgency, setReturnAgency] = useState("Aéroport Messali Hadj");
+  const [returnPlace, setReturnPlace] = useState<string>(site.agencies[0]);
   const [returnAddress, setReturnAddress] = useState("");
-
-  /* ── date + heure départ ── */
   const [departDate, setDepartDate] = useState("");
-  const [departTime, setDepartTime] = useState("10:00");
-  const [showDepartPicker, setShowDepartPicker] = useState(false);
-
-  /* ── date + heure retour ── */
   const [retourDate, setRetourDate] = useState("");
-  const [retourTime, setRetourTime] = useState("10:00");
-  const [showRetourPicker, setShowRetourPicker] = useState(false);
+  const [category, setCategory] = useState("all");
+  const [formError, setFormError] = useState("");
 
-  /* refs for click-outside */
-  const locationRef = useRef<HTMLDivElement>(null);
-  const departRef = useRef<HTMLDivElement>(null);
-  const retourRef = useRef<HTMLDivElement>(null);
+  const reduce = !!useReducedMotion();
+  const sectionRef = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({ target: sectionRef, offset: ["start start", "end start"] });
+  const palmY = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : 220]);
+  const palmRotate = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : 8]);
+  const skylineY = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : 90]);
+  const textY = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : 120]);
+  const textOpacity = useTransform(scrollYProgress, [0, 0.7], [1, reduce ? 1 : 0.15]);
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        locationRef.current &&
-        !locationRef.current.contains(event.target as Node)
-      )
-        setShowLocationDropdown(false);
-      if (
-        departRef.current &&
-        !departRef.current.contains(event.target as Node)
-      )
-        setShowDepartPicker(false);
-      if (
-        retourRef.current &&
-        !retourRef.current.contains(event.target as Node)
-      )
-        setShowRetourPicker(false);
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    setFormError("");
+    if (departDate || retourDate) {
+      if (!departDate || !retourDate) return setFormError(t("Choisissez une date de départ et une date de retour."));
+      if (departDate < localToday()) return setFormError(t("La date de départ ne peut pas être dans le passé."));
+      if (retourDate <= departDate) return setFormError(t("La date de retour doit être après la date de départ."));
+      const toLabel = (p: string) => (p === HOME ? HOME_LABEL : p);
+      const detail: AvailabilitySearch = {
+        start: departDate,
+        end: retourDate,
+        category,
+        pickupPlace: toLabel(pickup),
+        pickupAddress: pickup === HOME ? pickupAddress : "",
+        // Sans « retour ailleurs » : pas de lieu de retour, le formulaire de réservation
+        // reprend alors le lieu de retrait (aucun faux « retour différent » pré-coché).
+        returnPlace: differentReturn ? toLabel(returnPlace) : "",
+        returnAddress: differentReturn && returnPlace === HOME ? returnAddress : "",
+      };
+      window.dispatchEvent(new CustomEvent(AVAILABILITY_EVENT, { detail }));
+    } else {
+      window.dispatchEvent(new CustomEvent(FILTER_EVENT, { detail: category }));
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const fmtDate = (d: string) => {
-    if (!d) return "";
-    const date = new Date(d + "T00:00:00");
-    return date.toLocaleDateString("fr-FR", {
-      day: "2-digit",
-      month: "short",
-    });
+    document.getElementById("vehicules")?.scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
   };
 
-  const fmtDisplay = (date: string, time: string) => {
-    if (!date) return "Choisir";
-    return `${fmtDate(date)}, ${time}`;
-  };
+  // Message WhatsApp pré-rempli avec la recherche du visiteur
+  const place = (p: string, addr: string) =>
+    p === HOME ? t("à domicile ({address})", { address: addr || t("adresse à préciser") }) : t(p);
+  const waMessage = [
+    t("Bonjour MYLOC.DZ, je souhaite louer un véhicule."),
+    t("Retrait : {place}", { place: place(pickup, pickupAddress) }),
+    differentReturn ? t("Retour : {place}", { place: place(returnPlace, returnAddress) }) : "",
+    departDate
+      ? retourDate
+        ? t("Du {start} au {end}", { start: formatDate(departDate), end: formatDate(retourDate) })
+        : t("À partir du {start}", { start: formatDate(departDate) })
+      : "",
+    category !== "all" ? t("Catégorie : {category}", { category: t(categoryInfo[category]?.label ?? category) }) : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
 
   return (
-    <section id="accueil" className="bg-[#43B0E6] p-3 sm:p-4 lg:p-2">
-      {/* ── Hero container ── */}
-      <div className="rounded-[2rem] relative h-[min(calc(100svh-1.5rem),916px)] lg:h-[calc(100svh-3.5rem)]">
-        {/* Background */}
-        <div className="absolute inset-0 rounded-[2rem] overflow-hidden">
-          <img
-            src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1600&q=80"
-            alt="Aéroport"
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-black/10" />
-        </div>
+    <section ref={sectionRef} id="accueil" className="bg-brand-mist relative overflow-hidden pt-24 lg:pt-28">
+      <motion.div aria-hidden="true" className="pointer-events-none absolute inset-0" style={{ y: palmY, rotate: palmRotate }}>
+        <motion.div
+          className="absolute inset-0"
+          initial={reduce ? false : { opacity: 0, x: -40 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 1.6, ease }}
+        >
+          <PalmShadow className="palm-sway -left-24 -top-10 w-[420px] opacity-25 sm:w-[560px]" />
+          <PalmShadow flip className="palm-sway-slow -right-32 top-40 hidden w-[480px] opacity-15 lg:block" />
+        </motion.div>
+      </motion.div>
+      <motion.div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-40 lg:h-56" style={{ y: skylineY }}>
+        <AlgiersSkyline className="inset-0 h-full w-full text-navy opacity-[0.05]" />
+      </motion.div>
 
-        {/* Title */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none -translate-y-32 sm:-translate-y-20 md:-translate-y-24 hero-title-wrapper">
-          <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tight flex shimmer-text">
-            {"MYLOC".split("").map((letter, i) => (
-              <span
-                key={i}
-                className="letter-reveal inline-block"
-                style={{ animationDelay: `${i * 0.2}s` }}
-              >
-                {letter}
-              </span>
-            ))}
+      <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 sm:px-6 lg:grid-cols-[1fr_1.05fr] lg:gap-6 lg:px-8">
+        {/* ── Texte ── */}
+        <motion.div className="relative z-10 flex flex-col gap-6 pt-6 lg:pt-10" style={{ y: textY, opacity: textOpacity }}>
+          <span className="fade-up kicker text-navy/80" style={{ animationDelay: "0.05s" }}>
+            {t("Location de véhicules en")} <strong className="font-extrabold text-navy">{t("Algérie")}</strong>
+          </span>
+          <h1 className="text-[42px] font-extrabold uppercase leading-[1] tracking-[-0.015em] text-navy sm:text-6xl lg:text-[68px]">
+            {lang === "ar" ? (
+              <>
+                <RevealWords text={t("Votre mobilité,")} className="text-sky-shimmer" reduce={reduce} delay={0.1} />
+                <br />
+                <RevealWords text={t("notre priorité")} reduce={reduce} delay={0.26} />
+              </>
+            ) : (
+              <>
+                <RevealWords text="Votre" reduce={reduce} delay={0.1} />
+                <RevealWords text="mobilité," className="text-sky-shimmer" reduce={reduce} delay={0.18} />
+                <br />
+                <RevealWords text="notre priorité" reduce={reduce} delay={0.32} />
+              </>
+            )}
           </h1>
-          <p className="mt-3 sm:mt-4 text-xl sm:text-2xl md:text-3xl font-bold tracking-tight flex">
-            {"et c'est parti !".split("").map((letter, i) => (
-              <span
-                key={i}
-                className="jitter-reveal inline-block text-white/90"
-                style={{ animationDelay: `${1.9 + i * 0.04}s` }}
-              >
-                {letter === " " ? " " : letter}
-              </span>
-            ))}
+          <motion.span
+            className="block origin-left rtl:origin-right"
+            initial={reduce ? false : { scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={{ duration: 0.8, delay: 0.6, ease }}
+          >
+            <BlueBar className="w-16" />
+          </motion.span>
+          <p
+            className="fade-up max-w-lg text-[15px] font-semibold uppercase leading-relaxed tracking-[0.06em] text-ink-soft sm:text-base"
+            style={{ animationDelay: "0.25s" }}
+          >
+            {t("Une équipe professionnelle à votre service, partout en Algérie.")}
           </p>
-        </div>
 
-        {/* ── Reservation Bar ── */}
-        <div className="absolute top-[44%] sm:top-auto sm:bottom-36 left-0 right-0 z-[60] max-w-5xl mx-auto px-3 sm:px-6">
-          <div className="relative">
-            <form
-              className="bg-white rounded-2xl shadow-2xl border border-gray-100"
-              onSubmit={(e) => e.preventDefault()}
+          <div className="fade-up flex flex-wrap items-center gap-3" style={{ animationDelay: "0.35s" }}>
+            <a
+              href={site.whatsappHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-14 items-center gap-2.5 rounded-full bg-sky px-7 text-[15px] font-bold text-navy shadow-[0_14px_30px_-12px_rgba(67,176,230,0.8)] transition-colors hover:bg-sky-mid hover:text-white"
             >
-              {/* Row: Location | Date+heure départ | Date+heure retour | Submit */}
-              <div className="flex flex-col lg:flex-row divide-y lg:divide-y-0 lg:divide-x divide-gray-100">
-                {/* ── Location ── */}
-                <div
-                  ref={locationRef}
-                  className="relative flex items-start gap-3 px-4 py-3 sm:px-6 sm:py-4 lg:flex-[2] min-w-0"
-                >
-                  <MapPin
-                    className="w-5 h-5 flex-shrink-0 mt-5"
-                    style={{ color: "#43B0E6" }}
-                  />
-                  <div className="relative flex-1 min-w-0">
-                    <p className="text-[11px] font-bold uppercase tracking-widest mb-1.5 text-gray-900">
-                      Retrait et retour
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setShowLocationDropdown(!showLocationDropdown)
-                      }
-                      className="flex items-center gap-2 w-full text-left"
-                    >
-                      <span className="font-semibold text-[15px] flex-1 text-left truncate text-gray-900">
-                        {pickupType === "agence"
-                          ? pickupAgency
-                          : "À domicile"}
-                      </span>
-                      <ChevronDown
-                        className={cn(
-                          "w-3.5 h-3.5 flex-shrink-0 text-gray-400 transition-transform",
-                          showLocationDropdown && "rotate-180"
-                        )}
-                      />
-                    </button>
-
-                    {/* Location Dropdown — 2 options only */}
-                    {showLocationDropdown && (
-                      <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 z-[100] overflow-hidden">
-                        <div className="p-2 space-y-1">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setPickupType("agence");
-                              setShowLocationDropdown(false);
-                            }}
-                            className={cn(
-                              "w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm transition-colors",
-                              pickupType === "agence"
-                                ? "bg-[#43B0E6]/10 text-[#43B0E6] font-semibold"
-                                : "text-gray-700 hover:bg-gray-50"
-                            )}
-                          >
-                            <Building2 className="w-4 h-4" />
-                            En agence
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setPickupType("domicile");
-                              setShowLocationDropdown(false);
-                            }}
-                            className={cn(
-                              "w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm transition-colors",
-                              pickupType === "domicile"
-                                ? "bg-[#43B0E6]/10 text-[#43B0E6] font-semibold"
-                                : "text-gray-700 hover:bg-gray-50"
-                            )}
-                          >
-                            <Home className="w-4 h-4" />
-                            À domicile
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* ── Date et heure de départ ── */}
-                <div
-                  ref={departRef}
-                  className="relative lg:flex-[1.3]"
-                >
-                  <button
-                    type="button"
-                    onClick={() => setShowDepartPicker(!showDepartPicker)}
-                    className="flex items-start gap-3 px-4 py-3 sm:px-6 sm:py-4 w-full text-left hover:bg-gray-50 transition-colors"
-                  >
-                    <CalendarDays
-                      className="w-5 h-5 flex-shrink-0 mt-0.5"
-                      style={{ color: "#43B0E6" }}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[11px] font-bold text-gray-900 uppercase tracking-widest mb-1.5">
-                        Date et heure de départ
-                      </p>
-                      <p
-                        className={cn(
-                          "font-semibold text-[15px]",
-                          departDate ? "text-gray-900" : "text-gray-400"
-                        )}
-                      >
-                        {fmtDisplay(departDate, departTime)}
-                      </p>
-                    </div>
-                  </button>
-
-                  {/* Depart picker dropdown */}
-                  {showDepartPicker && (
-                    <div className="absolute left-0 right-0 lg:right-auto lg:w-80 top-full mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 z-[100] p-4">
-                      <div className="space-y-3">
-                        <div>
-                          <label className="text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">
-                            Date
-                          </label>
-                          <input
-                            type="date"
-                            min={today}
-                            value={departDate}
-                            onChange={(e) => setDepartDate(e.target.value)}
-                            className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#43B0E6]/30 focus:border-[#43B0E6]"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">
-                            Heure
-                          </label>
-                          <div className="grid grid-cols-4 gap-1 max-h-36 overflow-y-auto">
-                            {timeSlots.map((time) => (
-                              <button
-                                key={time}
-                                type="button"
-                                onClick={() => {
-                                  setDepartTime(time);
-                                  setShowDepartPicker(false);
-                                }}
-                                className={cn(
-                                  "px-2 py-1.5 rounded-lg text-xs font-medium transition-colors",
-                                  departTime === time
-                                    ? "bg-[#43B0E6] text-white"
-                                    : "bg-gray-50 text-gray-700 hover:bg-gray-100"
-                                )}
-                              >
-                                {time}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* ── Date et heure de retour ── */}
-                <div
-                  ref={retourRef}
-                  className="relative lg:flex-[1.3]"
-                >
-                  <button
-                    type="button"
-                    onClick={() => setShowRetourPicker(!showRetourPicker)}
-                    className="flex items-start gap-3 px-4 py-3 sm:px-6 sm:py-4 w-full text-left hover:bg-gray-50 transition-colors"
-                  >
-                    <CalendarDays
-                      className="w-5 h-5 flex-shrink-0 mt-0.5"
-                      style={{ color: "#43B0E6" }}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[11px] font-bold text-gray-900 uppercase tracking-widest mb-1.5">
-                        Date et heure de retour
-                      </p>
-                      <p
-                        className={cn(
-                          "font-semibold text-[15px]",
-                          retourDate ? "text-gray-900" : "text-gray-400"
-                        )}
-                      >
-                        {fmtDisplay(retourDate, retourTime)}
-                      </p>
-                    </div>
-                  </button>
-
-                  {/* Retour picker dropdown */}
-                  {showRetourPicker && (
-                    <div className="absolute left-0 right-0 lg:right-auto lg:w-80 top-full mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 z-[100] p-4">
-                      <div className="space-y-3">
-                        <div>
-                          <label className="text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">
-                            Date
-                          </label>
-                          <input
-                            type="date"
-                            min={departDate || today}
-                            value={retourDate}
-                            onChange={(e) => setRetourDate(e.target.value)}
-                            className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#43B0E6]/30 focus:border-[#43B0E6]"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">
-                            Heure
-                          </label>
-                          <div className="grid grid-cols-4 gap-1 max-h-36 overflow-y-auto">
-                            {timeSlots.map((time) => (
-                              <button
-                                key={time}
-                                type="button"
-                                onClick={() => {
-                                  setRetourTime(time);
-                                  setShowRetourPicker(false);
-                                }}
-                                className={cn(
-                                  "px-2 py-1.5 rounded-lg text-xs font-medium transition-colors",
-                                  retourTime === time
-                                    ? "bg-[#43B0E6] text-white"
-                                    : "bg-gray-50 text-gray-700 hover:bg-gray-100"
-                                )}
-                              >
-                                {time}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Submit */}
-                <div className="px-4 py-3 sm:px-5 sm:py-4 flex items-center justify-center">
-                  <a
-                    href="#vehicules"
-                    className="w-full lg:w-auto px-8 py-3 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90 whitespace-nowrap inline-flex items-center justify-center gap-2"
-                    style={{ backgroundColor: "#43B0E6" }}
-                  >
-                    Voir les véhicules
-                    <ArrowRight className="w-4 h-4" />
-                  </a>
-                </div>
-              </div>
-
-              {/* ── Pickup detail (address for domicile) ── */}
-              {pickupType === "domicile" && (
-                <div className="border-t border-gray-100 px-4 py-3 sm:px-6 bg-gray-50/50">
-                  <p className="text-[11px] font-bold uppercase tracking-widest mb-1.5 text-gray-500">
-                    Adresse de retrait
-                  </p>
-                  <input
-                    type="text"
-                    placeholder="Saisissez votre adresse"
-                    value={pickupAddress}
-                    onChange={(e) => setPickupAddress(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-900 placeholder:font-normal placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#43B0E6]/30 focus:border-[#43B0E6]"
-                  />
-                </div>
-              )}
-
-              {/* ── Different return checkbox ── */}
-              <div className="border-t border-gray-100 px-4 py-3 flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
-                <button
-                  type="button"
-                  onClick={() => setDifferentReturn(!differentReturn)}
-                  className="flex items-center gap-1.5 text-sm font-semibold transition-colors flex-shrink-0"
-                  style={{ color: "#9ca3af" }}
-                >
-                  <span
-                    className={cn(
-                      "w-4 h-4 rounded border-2 flex items-center justify-center transition-all flex-shrink-0",
-                      differentReturn
-                        ? "border-[#43B0E6] bg-[#43B0E6]"
-                        : "border-gray-300 bg-transparent"
-                    )}
-                  >
-                    {differentReturn && (
-                      <svg
-                        className="w-3 h-3 text-white"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={3}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M4.5 12.75l6 6 9-13.5"
-                        />
-                      </svg>
-                    )}
-                  </span>
-                  Retour dans un lieu différent
-                </button>
-              </div>
-
-              {/* ── Return location detail ── */}
-              {differentReturn && (
-                <div className="border-t border-gray-100 px-4 py-3 sm:px-6 bg-gray-50/50">
-                  <p className="text-[11px] font-bold uppercase tracking-widest mb-2 text-gray-500">
-                    Lieu de retour
-                  </p>
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setReturnType("agence")}
-                        className={cn(
-                          "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors",
-                          returnType === "agence"
-                            ? "bg-[#43B0E6] text-white"
-                            : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
-                        )}
-                      >
-                        <Building2 className="w-3 h-3" />
-                        En agence
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setReturnType("domicile")}
-                        className={cn(
-                          "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors",
-                          returnType === "domicile"
-                            ? "bg-[#43B0E6] text-white"
-                            : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
-                        )}
-                      >
-                        <Home className="w-3 h-3" />
-                        À domicile
-                      </button>
-                    </div>
-                    {returnType === "agence" ? (
-                      <select
-                        value={returnAgency}
-                        onChange={(e) => setReturnAgency(e.target.value)}
-                        className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#43B0E6]/30 focus:border-[#43B0E6] bg-white"
-                      >
-                        {agencies.map((a) => (
-                          <option key={a} value={a}>
-                            {a}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <input
-                        type="text"
-                        placeholder="Adresse de retour"
-                        value={returnAddress}
-                        onChange={(e) => setReturnAddress(e.target.value)}
-                        className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-900 placeholder:font-normal placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#43B0E6]/30 focus:border-[#43B0E6]"
-                      />
-                    )}
-                  </div>
-                </div>
-              )}
-            </form>
+              <WhatsAppIcon className="h-5 w-5" />
+              {t("Réserver sur WhatsApp")}
+            </a>
+            <a
+              href="#vehicules"
+              className="inline-flex h-14 items-center gap-2 rounded-full border-2 border-navy px-6 text-[15px] font-bold text-navy transition-colors hover:bg-navy hover:text-white"
+            >
+              {t("Voir la flotte")}
+              <ArrowDown className="h-4 w-4" />
+            </a>
           </div>
-        </div>
+
+          <ul className="fade-up flex flex-wrap gap-x-6 gap-y-2 text-[13px] font-semibold text-muted" style={{ animationDelay: "0.45s" }}>
+            {trust.map((item) => (
+              <li key={item} className="flex items-center gap-2">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-sky-soft">
+                  <Check className="h-3 w-3 text-sky-text" strokeWidth={3} />
+                </span>
+                {t(item)}
+              </li>
+            ))}
+          </ul>
+        </motion.div>
+
+        {/* ── Groupe de voitures, comme sur les posts ── */}
+        <HeroCars scrollYProgress={scrollYProgress} reduce={reduce} />
       </div>
 
-      {/* ── Feature cards ── */}
-      <div className="mx-3 sm:mx-4 mt-6 pb-3">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {features.map((feature) => {
-            const Icon = feature.icon;
-            return (
-              <div
-                key={feature.title}
-                className="rounded-2xl px-4 py-5 cursor-default transition-all duration-500 flex flex-col items-center text-center"
-                style={{
-                  backgroundColor: feature.active
-                    ? "rgba(255,255,255,0.22)"
-                    : "rgba(255,255,255,0.10)",
-                  border: feature.active
-                    ? "1px solid rgba(255,255,255,0.45)"
-                    : "1px solid rgba(255,255,255,0.14)",
-                  transform: feature.active ? "translateY(-3px)" : "none",
-                  boxShadow: feature.active
-                    ? "0 10px 30px rgba(0,0,0,0.10)"
-                    : "none",
-                }}
-              >
-                <div
-                  className="w-8 h-8 rounded-xl flex items-center justify-center mb-3 transition-all duration-500"
-                  style={{
-                    backgroundColor: feature.active
-                      ? "#43B0E6"
-                      : "rgba(255,255,255,0.18)",
-                  }}
+      {/* ── Recherche ── */}
+      <div className="relative z-20 mx-auto max-w-7xl px-4 pb-14 pt-6 sm:px-6 lg:px-8 lg:pb-20">
+        <motion.form
+          initial={reduce ? false : { opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.9, delay: 0.9, ease }}
+          onSubmit={handleSubmit}
+          // Validation faite par handleSubmit (message stylé plutôt que la bulle du navigateur)
+          noValidate
+          data-wa-hide
+          aria-label={t("Rechercher un véhicule")}
+          className="rounded-3xl border border-line bg-white p-2 shadow-[0_30px_60px_-30px_rgba(15,27,45,0.3)] lg:p-3"
+        >
+          <div className="flex flex-col lg:flex-row lg:items-stretch">
+            <label className="flex flex-col gap-1.5 rounded-2xl px-5 py-4 focus-within:bg-mist lg:flex-[1.5] lg:px-6">
+              <span className={fieldLabel}>{t("Retrait")}</span>
+              <select className={fieldInput} value={pickup} onChange={(e) => setPickup(e.target.value)}>
+                {site.agencies.map((a) => (
+                  <option key={a} value={a}>
+                    {t(a)}
+                  </option>
+                ))}
+                <option value={HOME}>{t("Livraison à domicile")}</option>
+              </select>
+              {pickup === HOME && (
+                <input
+                  type="text"
+                  value={pickupAddress}
+                  onChange={(e) => setPickupAddress(e.target.value)}
+                  placeholder={t("Votre adresse")}
+                  aria-label={t("Adresse de livraison")}
+                  className={`${fieldInput} mt-1 border-b border-line pb-1 text-sm`}
+                />
+              )}
+            </label>
+
+            <span className="mx-5 h-px bg-line lg:mx-0 lg:my-3 lg:h-auto lg:w-px" />
+
+            <div className="grid grid-cols-2 lg:flex lg:flex-[2]">
+              <label className="flex flex-col gap-1.5 rounded-2xl px-5 py-4 focus-within:bg-mist lg:flex-1 lg:px-6">
+                <span className={fieldLabel}>{t("Départ")}</span>
+                <input type="date" min={today || undefined} value={departDate} onChange={(e) => setDepartDate(e.target.value)} className={fieldInput} />
+              </label>
+              <label className="flex flex-col gap-1.5 rounded-2xl border-s border-line px-5 py-4 focus-within:bg-mist lg:flex-1 lg:px-6">
+                <span className={fieldLabel}>{t("Retour||date")}</span>
+                <input
+                  type="date"
+                  min={departDate || today || undefined}
+                  value={retourDate}
+                  onChange={(e) => setRetourDate(e.target.value)}
+                  className={fieldInput}
+                />
+              </label>
+            </div>
+
+            <span className="mx-5 h-px bg-line lg:mx-0 lg:my-3 lg:h-auto lg:w-px" />
+
+            <label className="flex flex-col gap-1.5 rounded-2xl px-5 py-4 focus-within:bg-mist lg:flex-1 lg:px-6">
+              <span className={fieldLabel}>{t("Catégorie")}</span>
+              <select className={fieldInput} value={category} onChange={(e) => setCategory(e.target.value)}>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {t(c.label)}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <button
+              type="submit"
+              className="shine m-1 mt-2 flex h-14 items-center justify-center gap-2.5 rounded-2xl bg-navy px-8 text-[15px] font-bold text-white transition-colors hover:bg-navy-soft lg:m-0 lg:ms-2 lg:h-auto lg:self-stretch"
+            >
+              <Search className="h-[18px] w-[18px]" />
+              {departDate && retourDate ? t("Voir les dispos") : t("Rechercher")}
+            </button>
+          </div>
+          {formError && (
+            <p role="alert" className="mx-3 mb-1 mt-2 rounded-2xl bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700">
+              {formError}
+            </p>
+          )}
+
+          <div className="flex flex-col gap-3 border-t border-line px-5 pb-2 pt-3 sm:flex-row sm:items-center lg:mt-2 lg:px-6">
+            <label className="flex cursor-pointer items-center gap-2.5 text-sm font-semibold text-muted">
+              <input
+                type="checkbox"
+                checked={differentReturn}
+                onChange={(e) => setDifferentReturn(e.target.checked)}
+                className="h-[18px] w-[18px] accent-sky"
+              />
+              {t("Retour dans un autre lieu")}
+            </label>
+            {differentReturn && (
+              <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
+                <select
+                  aria-label={t("Lieu de retour")}
+                  value={returnPlace}
+                  onChange={(e) => setReturnPlace(e.target.value)}
+                  className="h-10 rounded-xl bg-mist px-3 text-sm font-semibold text-navy outline-none"
                 >
-                  <Icon
-                    className="w-4 h-4 transition-all duration-500"
-                    style={{
-                      color: feature.active
-                        ? "#fff"
-                        : "rgba(255,255,255,0.75)",
-                    }}
+                  {site.agencies.map((a) => (
+                    <option key={a} value={a}>
+                      {t(a)}
+                    </option>
+                  ))}
+                  <option value={HOME}>{t("Récupération à domicile")}</option>
+                </select>
+                {returnPlace === HOME && (
+                  <input
+                    type="text"
+                    value={returnAddress}
+                    onChange={(e) => setReturnAddress(e.target.value)}
+                    placeholder={t("Adresse de récupération")}
+                    aria-label={t("Adresse de récupération")}
+                    className="h-10 flex-1 rounded-xl bg-mist px-3 text-sm font-semibold text-navy outline-none placeholder:text-muted/70"
                   />
-                </div>
-                <p className="font-black text-white text-sm sm:text-base leading-tight mb-1">
-                  {feature.title}
-                </p>
-                <p className="text-white/60 text-xs leading-snug hidden sm:block">
-                  {feature.desc}
-                </p>
+                )}
               </div>
-            );
-          })}
-        </div>
+            )}
+            <a
+              href={whatsappLink(waMessage)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm font-bold text-whatsapp hover:underline sm:ms-auto"
+            >
+              <WhatsAppIcon className="h-4 w-4" />
+              {t("Envoyer ma demande sur WhatsApp")}
+            </a>
+          </div>
+        </motion.form>
       </div>
     </section>
   );

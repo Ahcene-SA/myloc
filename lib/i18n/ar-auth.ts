@@ -1,0 +1,160 @@
+/** Connexion / inscription + messages d'erreur de l'API (clés = texte exact renvoyé par le serveur). */
+export const arAuth: Record<string, string> = {
+  // ── Mise en page (AuthShell) ──
+  "Location de véhicules en": "كراء السيارات في",
+  "Algérie": "الجزائر",
+  "Votre mobilité": "تنقّلك",
+  "notre priorité": "أولويتنا",
+  "Infos & réservation via WhatsApp": "معلومات وحجز عبر واتساب",
+  "Tous droits réservés.": "جميع الحقوق محفوظة.",
+
+  // ── Champs communs ──
+  "Mot de passe": "كلمة المرور",
+  "8 caractères minimum": "8 أحرف على الأقل",
+  "Masquer le mot de passe": "إخفاء كلمة المرور",
+  "Afficher le mot de passe": "إظهار كلمة المرور",
+  "vous@exemple.com": "email@example.com",
+  "Adresse email": "البريد الإلكتروني",
+  "Email": "البريد الإلكتروني",
+  "Téléphone": "الهاتف",
+  "Nom complet": "الاسم الكامل",
+  "Prénom Nom": "الاسم واللقب",
+
+  // ── Connexion ──
+  "Espace client": "فضاء الزبائن",
+  "Bon retour": "مرحبًا بعودتك",
+  "parmi nous.": "إلينا.",
+  "Connectez-vous pour gérer vos réservations MYLOC.DZ.": "سجّل دخولك لإدارة حجوزاتك في MYLOC.DZ.",
+  "Votre session a expiré : reconnectez-vous.": "انتهت صلاحية جلستك: يرجى تسجيل الدخول من جديد.",
+  "Votre session a expirée : reconnectez-vous.": "انتهت صلاحية جلستك: يرجى تسجيل الدخول من جديد.",
+  "Se souvenir de moi": "تذكّرني",
+  "Mot de passe oublié ?": "نسيت كلمة المرور؟",
+  "Connexion...": "جارٍ تسجيل الدخول...",
+  "Se connecter": "تسجيل الدخول",
+  "Pas encore de compte ?": "ليس لديك حساب بعد؟",
+  "Créer un compte": "إنشاء حساب",
+  "Échec de la connexion.": "تعذّر تسجيل الدخول.",
+
+  // ── Inscription ──
+  "Inscription": "التسجيل",
+  "Créez votre": "أنشئ",
+  "compte.": "حسابك.",
+  "Un compte MYLOC.DZ pour réserver votre véhicule en deux minutes et suivre vos locations.":
+    "حساب MYLOC.DZ لحجز سيارتك في دقيقتين ومتابعة كل عمليات الكراء.",
+  "Inscription...": "جارٍ التسجيل...",
+  "Créer mon compte": "إنشاء حسابي",
+  "Déjà un compte ?": "لديك حساب بالفعل؟",
+  "Échec de l'inscription.": "تعذّر إنشاء الحساب.",
+
+  // ── Messages de secours (AuthContext, lib/api.ts) ──
+  "Identifiants invalides.": "بيانات الدخول غير صحيحة.",
+  "Impossible de charger le profil.": "تعذّر تحميل الملف الشخصي.",
+  "Erreur de connexion.": "خطأ في الاتصال.",
+  "Inscription échouée.": "فشل التسجيل.",
+  "Erreur d'inscription.": "خطأ أثناء التسجيل.",
+  "Réponse invalide du serveur.": "استجابة غير صالحة من الخادم.",
+  "Impossible de joindre le serveur.": "تعذّر الاتصال بالخادم.",
+  "Failed to fetch": "تعذّر الاتصال بالخادم.",
+  "Profil utilisateur introuvable.": "الملف الشخصي غير موجود.",
+  "Aucune URL d'image reçue.": "لم يتم استلام رابط الصورة.",
+  "Photo non enregistrée.": "لم يتم حفظ الصورة.",
+
+  // ── API : général / authentification ──
+  "Service temporarily unavailable.": "الخدمة غير متاحة مؤقتًا.",
+  "An unexpected error occurred.": "حدث خطأ غير متوقع.",
+  "Champs obligatoires manquants.": "بعض الحقول الإلزامية ناقصة.",
+  "Adresse email invalide.": "البريد الإلكتروني غير صالح.",
+  "Le nom doit contenir entre 2 et 100 caractères.": "يجب أن يتراوح الاسم بين 2 و100 حرف.",
+  "Le téléphone doit contenir entre 5 et 20 caractères.": "يجب أن يتراوح رقم الهاتف بين 5 و20 خانة.",
+  "Le mot de passe doit contenir au moins 8 caractères.": "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل.",
+  "Un compte existe déjà avec cet email.": "يوجد حساب مسجّل بهذا البريد الإلكتروني.",
+  "Registration successful.": "تم التسجيل بنجاح.",
+  "Login successful.": "تم تسجيل الدخول بنجاح.",
+  "User profile.": "الملف الشخصي.",
+  "Utilisateur introuvable.": "المستخدم غير موجود.",
+  "Profil mis à jour.": "تم تحديث الملف الشخصي.",
+  "Mot de passe actuel incorrect.": "كلمة المرور الحالية غير صحيحة.",
+  "Le nouveau mot de passe doit contenir au moins 8 caractères.": "يجب أن تتكون كلمة المرور الجديدة من 8 أحرف على الأقل.",
+  "Mot de passe modifié.": "تم تغيير كلمة المرور.",
+  "Veuillez vous connecter.": "يرجى تسجيل الدخول.",
+  "Session expirée : reconnectez-vous.": "انتهت صلاحية الجلسة: يرجى تسجيل الدخول من جديد.",
+  "Session invalide : reconnectez-vous.": "جلسة غير صالحة: يرجى تسجيل الدخول من جديد.",
+  "Accès réservé à l'administration.": "الدخول مخصص للإدارة فقط.",
+  "Accès réservé aux clients.": "الدخول مخصص للزبائن فقط.",
+
+  // ── API : réservations ──
+  "Véhicule invalide.": "سيارة غير صالحة.",
+  "Les dates doivent être au format AAAA-MM-JJ.": "يجب أن تكون التواريخ بصيغة YYYY-MM-DD.",
+  "La date de départ ne peut pas être dans le passé.": "لا يمكن أن يكون تاريخ الانطلاق في الماضي.",
+  "La date de retour doit être après la date de départ.": "يجب أن يكون تاريخ الإرجاع بعد تاريخ الانطلاق.",
+  "Ce véhicule n'est pas disponible.": "هذه السيارة غير متاحة.",
+  "Ce véhicule est déjà réservé sur ces dates. Choisissez d'autres dates ou un autre véhicule.":
+    "هذه السيارة محجوزة في هذه التواريخ. اختر تواريخ أخرى أو سيارة أخرى.",
+  "Ce véhicule est déjà réservé sur ces dates.": "هذه السيارة محجوزة في هذه التواريخ.",
+  "Réservation envoyée.": "تم إرسال الحجز.",
+  "Réservations récupérées.": "تم تحميل الحجوزات.",
+  "Réservation introuvable.": "الحجز غير موجود.",
+  "Cette réservation ne peut plus être annulée.": "لم يعد من الممكن إلغاء هذا الحجز.",
+  "La location a déjà commencé : contactez l'agence pour toute modification.":
+    "لقد بدأ الكراء بالفعل: اتصل بالوكالة لأي تعديل.",
+  "Réservation annulée.": "تم إلغاء الحجز.",
+  "Disponibilités récupérées.": "تم تحميل التوفر.",
+  "Heure invalide (format HH:MM).": "وقت غير صالح (الصيغة HH:MM).",
+  "Moyen de paiement invalide.": "طريقة الدفع غير صالحة.",
+  "Le message est trop long (1000 caractères maximum).": "الرسالة طويلة جدًا (1000 حرف كحد أقصى).",
+
+  // ── API : tarifs et codes promo ──
+  "Véhicule ou dates manquants.": "السيارة أو التواريخ ناقصة.",
+  "Véhicule introuvable.": "السيارة غير موجودة.",
+  "Devis calculé.": "تم حساب السعر.",
+  "Ce code promo n'existe pas ou n'est plus actif.": "رمز التخفيض هذا غير موجود أو لم يعد صالحًا.",
+  "Ce code a expiré.": "انتهت صلاحية هذا الرمز.",
+  "Ce code a déjà été utilisé le nombre maximum de fois.": "بلغ هذا الرمز الحد الأقصى لعدد الاستخدامات.",
+  "Code appliqué.": "تم تطبيق الرمز.",
+  "Code valide, mais votre remise actuelle est plus avantageuse (remises non cumulables).":
+    "الرمز صالح، لكن تخفيضك الحالي أفضل (التخفيضات غير قابلة للجمع).",
+
+  // ── API : véhicules ──
+  "Véhicules récupérés.": "تم تحميل السيارات.",
+  "Véhicule récupéré.": "تم تحميل السيارة.",
+  "Choisissez une date de départ et une date de retour.": "اختر تاريخ الانطلاق وتاريخ الإرجاع.",
+  "Catégorie invalide.": "فئة غير صالحة.",
+  "Pour plus de 90 jours, contactez-nous directement.": "لأكثر من 90 يومًا، اتصل بنا مباشرة.",
+  "Disponibilités calculées.": "تم حساب التوفر.",
+
+  // ── API : états des lieux ──
+  "États des lieux.": "محاضر معاينة السيارة.",
+  "Aller à l'espace agence": "الذهاب إلى فضاء الوكالة",
+  "Ce compte appartient à l'équipe de l'agence : connectez-vous depuis l'espace agence.":
+    "هذا الحساب تابع لفريق الوكالة: سجّلوا الدخول من فضاء الوكالة.",
+
+  // ── Mot de passe oublié ──
+  "Espace agence": "فضاء الوكالة",
+  "oublié ?": "منسية؟",
+  "Choisissez votre nouveau mot de passe.": "اختر كلمة مرورك الجديدة.",
+  "Indiquez l'adresse e-mail de votre compte : nous vous envoyons un lien pour en choisir un nouveau.":
+    "أدخل البريد الإلكتروني لحسابك: سنرسل لك رابطًا لاختيار كلمة مرور جديدة.",
+  "Si un compte existe avec cette adresse, un e-mail vient de lui être envoyé. Pensez à vérifier vos courriers indésirables.":
+    "إذا كان هناك حساب بهذا العنوان، فقد أُرسل إليه بريد إلكتروني للتو. تحقّق أيضًا من البريد غير المرغوب فيه.",
+  "Le lien est valable 30 minutes et ne fonctionne qu'une seule fois.": "الرابط صالح لمدة 30 دقيقة ويُستعمل مرة واحدة فقط.",
+  "Retour à la connexion": "العودة إلى تسجيل الدخول",
+  "Je n'ai rien reçu : renvoyer un lien": "لم يصلني شيء: أعد إرسال الرابط",
+  "Envoi...": "جارٍ الإرسال...",
+  "Recevoir le lien": "استلام الرابط",
+  "Demander un nouveau lien": "طلب رابط جديد",
+  "Lien invalide.": "رابط غير صالح.",
+  "Lien invalide. Demandez-en un nouveau.": "رابط غير صالح. اطلب رابطًا جديدًا.",
+  "Lien invalide ou déjà remplacé par un plus récent. Demandez-en un nouveau.": "رابط غير صالح أو تم استبداله برابط أحدث. اطلب رابطًا جديدًا.",
+  "Ce lien a déjà été utilisé. Demandez-en un nouveau.": "تم استعمال هذا الرابط من قبل. اطلب رابطًا جديدًا.",
+  "Ce lien a expiré (30 minutes). Demandez-en un nouveau.": "انتهت صلاحية هذا الرابط (30 دقيقة). اطلب رابطًا جديدًا.",
+  "Ce compte est désactivé.": "هذا الحساب معطّل.",
+  "Mot de passe modifié. Vous pouvez vous connecter.": "تم تغيير كلمة المرور. يمكنك تسجيل الدخول الآن.",
+  "Votre code à 6 chiffres vous sera demandé comme d'habitude.": "سيُطلب منك رمزك المكوّن من 6 أرقام كالمعتاد.",
+  "Les deux mots de passe ne sont pas identiques.": "كلمتا المرور غير متطابقتين.",
+  "Bonjour {name} !": "مرحبًا {name}!",
+  "Nouveau mot de passe": "كلمة المرور الجديدة",
+  "Confirmez le mot de passe": "أكّد كلمة المرور",
+  "Enregistrement...": "جارٍ الحفظ...",
+  "Enregistrer le mot de passe": "حفظ كلمة المرور",
+  "Choisissez un mot de passe différent de l'ancien.": "اختر كلمة مرور مختلفة عن السابقة.",
+};

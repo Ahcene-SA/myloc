@@ -1,0 +1,202 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { motion, useMotionValue, useSpring, useTransform, type MotionValue } from "framer-motion";
+
+const ease = [0.16, 1, 0.3, 1] as const;
+
+interface HeroCar {
+  src: string;
+  alt: string;
+  className: string;
+  delay: number;
+  /** Profondeur : plus c'est grand, plus la voiture bouge avec la souris */
+  depth: number;
+}
+
+// Les voitures sont photographiées de 3/4 avant, capot à gauche : elles arrivent par la droite.
+const cars: HeroCar[] = [
+  { src: "images/cars/renault-captur.png", alt: "Renault Captur", className: "z-0 -mr-[14%] w-[42%] max-w-[300px]", delay: 0.55, depth: 10 },
+  { src: "images/cars/jetour-x70-plus.png", alt: "Jetour X70 Plus", className: "z-10 w-[56%] max-w-[400px]", delay: 0.2, depth: 18 },
+  { src: "images/cars/clio5-alpino.png", alt: "Renault Clio 5 Alpino", className: "z-20 -ml-[16%] w-[42%] max-w-[300px]", delay: 0.8, depth: 26 },
+];
+
+/** Traînées de vitesse derrière une voiture pendant son arrivée. */
+function SpeedLines({ delay }: { delay: number }) {
+  return (
+    <span aria-hidden="true" className="pointer-events-none absolute inset-y-[30%] -right-[20%] left-[60%]">
+      {[0, 1, 2, 3].map((i) => (
+        <motion.span
+          key={i}
+          className="absolute right-0 h-[3px] rounded-full bg-gradient-to-l from-transparent via-sky to-sky/0"
+          style={{ top: `${15 + i * 22}%`, width: `${70 - i * 12}%` }}
+          initial={{ opacity: 0, scaleX: 0.2, x: 0 }}
+          animate={{ opacity: [0, 0.9, 0], scaleX: [0.2, 1, 0.4], x: [0, -30, -60] }}
+          transition={{ duration: 1.1, delay: delay + 0.05 + i * 0.04, ease: "easeOut" }}
+        />
+      ))}
+    </span>
+  );
+}
+
+/** Deux phares qui s'allument une fois le SUV arrêté (positions calées sur la photo). */
+function Headlights({ delay }: { delay: number }) {
+  const spots = [
+    { left: "4%", top: "41%", size: "18%" },
+    { left: "35%", top: "41%", size: "16%" },
+  ];
+  return (
+    <>
+      {spots.map((s, i) => (
+        <motion.span
+          key={i}
+          aria-hidden="true"
+          className="pointer-events-none absolute z-30 aspect-square -translate-x-1/2 -translate-y-1/2 rounded-full mix-blend-screen"
+          style={{
+            left: s.left,
+            top: s.top,
+            width: s.size,
+            background: "radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(190,230,255,0.55) 25%, rgba(67,176,230,0) 70%)",
+          }}
+          initial={{ opacity: 0, scale: 0.4 }}
+          animate={{ opacity: [0, 1, 0.3, 1, 0.55], scale: [0.4, 1.3, 0.9, 1.2, 1] }}
+          transition={{ duration: 1.2, delay, times: [0, 0.2, 0.4, 0.6, 1] }}
+        />
+      ))}
+      {/* faisceau vers l'avant (à gauche) */}
+      <motion.span
+        aria-hidden="true"
+        className="pointer-events-none absolute right-[62%] top-[30%] z-0 h-[26%] w-[70%] origin-right rounded-l-full"
+        style={{ background: "linear-gradient(to left, rgba(190,230,255,0.55), rgba(190,230,255,0))", filter: "blur(10px)" }}
+        initial={{ opacity: 0, scaleX: 0 }}
+        animate={{ opacity: [0, 0.8, 0.35], scaleX: [0, 1, 1] }}
+        transition={{ duration: 1.4, delay: delay + 0.1 }}
+      />
+    </>
+  );
+}
+
+export function HeroCars({ scrollYProgress, reduce }: { scrollYProgress: MotionValue<number>; reduce: boolean }) {
+  // Parallaxe au scroll
+  const stageY = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : -70]);
+  const stageScale = useTransform(scrollYProgress, [0, 1], [1, reduce ? 1 : 1.12]);
+  const sceneY = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : -30]);
+
+  // Parallaxe à la souris (ordinateur uniquement)
+  const mx = useMotionValue(0);
+  const my = useMotionValue(0);
+  const sx = useSpring(mx, { stiffness: 60, damping: 18 });
+  const sy = useSpring(my, { stiffness: 60, damping: 18 });
+  const tilt = useTransform(sx, [-1, 1], [4, -4]);
+
+  useEffect(() => {
+    if (reduce || !window.matchMedia("(pointer: fine)").matches) return;
+    const onMove = (e: PointerEvent) => {
+      mx.set((e.clientX / window.innerWidth) * 2 - 1);
+      my.set((e.clientY / window.innerHeight) * 2 - 1);
+    };
+    window.addEventListener("pointermove", onMove);
+    return () => window.removeEventListener("pointermove", onMove);
+  }, [reduce, mx, my]);
+
+  // Une fois les voitures arrivées, on passe en « ralenti » (légère respiration)
+  const [parked, setParked] = useState(reduce);
+  useEffect(() => {
+    if (reduce) return;
+    const t = window.setTimeout(() => setParked(true), 2300);
+    return () => window.clearTimeout(t);
+  }, [reduce]);
+
+  return (
+    <div className="relative h-[280px] [perspective:1200px] sm:h-[380px] lg:h-[500px]">
+      {/* Vraie photo de la baie d'Alger, adoucie et fondue derrière les voitures */}
+      <motion.div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-[-14%] bottom-8 h-[80%]"
+        style={{
+          y: sceneY,
+          maskImage: "radial-gradient(ellipse 50% 55% at 50% 55%, #000 45%, transparent 100%)",
+          WebkitMaskImage: "radial-gradient(ellipse 50% 55% at 50% 55%, #000 45%, transparent 100%)",
+        }}
+        initial={reduce ? false : { opacity: 0, scale: 1.04 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 1.8, ease }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="images/decor/baie-alger.webp"
+          alt=""
+          className="h-full w-full object-cover object-[50%_30%] opacity-55 blur-[2px] saturate-[0.9]"
+        />
+      </motion.div>
+      <motion.div className="absolute inset-x-0 bottom-10 sm:bottom-14" style={{ y: stageY, scale: stageScale, rotateY: tilt }}>
+        {/* ombre au sol */}
+        <motion.span
+          aria-hidden="true"
+          className="absolute inset-x-[12%] -bottom-2 h-6 rounded-[50%] bg-navy/20 blur-xl"
+          initial={reduce ? false : { opacity: 0, scaleX: 0.3 }}
+          animate={{ opacity: 1, scaleX: 1 }}
+          transition={{ duration: 1.6, delay: 0.3, ease }}
+        />
+        <div className="flex items-end justify-center">
+          {cars.map((car) => (
+            <CarLayer key={car.src} car={car} reduce={reduce} parked={parked} sx={sx} sy={sy} />
+          ))}
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+function CarLayer({
+  car,
+  reduce,
+  parked,
+  sx,
+  sy,
+}: {
+  car: HeroCar;
+  reduce: boolean;
+  parked: boolean;
+  sx: MotionValue<number>;
+  sy: MotionValue<number>;
+}) {
+  const x = useTransform(sx, [-1, 1], [-car.depth, car.depth]);
+  const y = useTransform(sy, [-1, 1], [-car.depth * 0.35, car.depth * 0.35]);
+  const isHero = car.src.includes("jetour");
+  const arrive = 1.35;
+
+  return (
+    <motion.div className={`relative ${car.className}`} style={{ x, y }}>
+      {/* arrivée depuis la droite + freinage (le capot plonge puis se relève) */}
+      <motion.div
+        className="relative origin-bottom"
+        initial={reduce ? false : { x: "140%", opacity: 0, filter: "blur(8px)" }}
+        animate={{ x: 0, opacity: 1, filter: "blur(0px)" }}
+        transition={{ duration: arrive, delay: car.delay, ease }}
+      >
+        <motion.div
+          className="origin-bottom"
+          initial={false}
+          animate={reduce ? undefined : parked ? { y: [0, -1.5, 0] } : { rotate: [0, 0, -1.6, 0.6, 0] }}
+          transition={
+            parked
+              ? { duration: 3.2, repeat: Infinity, ease: "easeInOut", delay: car.delay }
+              : { duration: arrive + 0.6, delay: car.delay, times: [0, 0.6, 0.72, 0.86, 1] }
+          }
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={car.src}
+            alt={car.alt}
+            className="car-reflect relative block w-full"
+            fetchPriority={isHero ? "high" : undefined}
+            draggable={false}
+          />
+          {isHero && !reduce && <Headlights delay={car.delay + arrive + 0.1} />}
+        </motion.div>
+        {!reduce && <SpeedLines delay={car.delay} />}
+      </motion.div>
+    </motion.div>
+  );
+}

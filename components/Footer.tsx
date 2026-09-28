@@ -1,103 +1,111 @@
 "use client";
 
-import Image from "next/image";
-import { Phone, Mail, Globe, type LucideIcon } from "lucide-react";
+import { Phone, Mail } from "lucide-react";
+import { AlgiersSkyline, Logo } from "./Brand";
+import { WhatsAppIcon } from "./FloatingWhatsApp";
+import { site } from "@/lib/site";
+import { useLang } from "@/lib/i18n";
+
+function InstagramIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <rect x="3" y="3" width="18" height="18" rx="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.5" cy="6.5" r="0.6" fill="currentColor" />
+    </svg>
+  );
+}
 
 const footerLinks = [
   { label: "Accueil", href: "#accueil" },
   { label: "Véhicules", href: "#vehicules" },
   { label: "Avantages", href: "#avantages" },
+  { label: "Agences", href: "#agences" },
   { label: "À propos", href: "#a-propos" },
   { label: "Contact", href: "#contact" },
 ];
 
-type SocialLink =
-  | { type: "image"; src: string; href: string; label: string }
-  | { type: "icon"; icon: LucideIcon; href: string; label: string };
-
-const socialLinks: SocialLink[] = [
-  { type: "image", src: "images/logo-instagram.png", href: "https://instagram.com/myloc.dz", label: "Instagram" },
-  { type: "icon", icon: Globe, href: "#", label: "Site web" },
-  { type: "icon", icon: Phone, href: "tel:+213555000000", label: "Téléphone" },
-  { type: "icon", icon: Mail, href: "mailto:contact@myloc.dz", label: "Email" },
+const socials = [
+  { label: "Instagram", href: site.instagram, icon: InstagramIcon },
+  { label: "WhatsApp", href: site.whatsappHref, icon: WhatsAppIcon },
+  { label: "Téléphone", href: site.phoneHref, icon: Phone },
+  { label: "Email", href: `mailto:${site.email}`, icon: Mail },
 ];
 
 export function Footer() {
-  const currentYear = new Date().getFullYear();
+  // Année lue à l'affichage : suppressHydrationWarning couvre le passage au 1er janvier
+  const year = new Date().getFullYear();
+  const { t } = useLang();
 
   return (
-    <footer className="mx-3 sm:mx-4 mt-6 mb-6 bg-slate-900 rounded-[2.5rem] overflow-hidden py-12 text-slate-300">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
-          <div className="lg:col-span-2">
-            <Image
-              src="images/logo.svg"
-              alt="MYLOC.DZ Car Rental"
-              width={150}
-              height={40}
-              className="h-9 w-auto"
-            />
-            <p className="mt-4 max-w-sm text-sm leading-relaxed">
-              MYLOC.DZ, votre agence de location de voitures en Algérie. Des citadines
-              aux SUV, réservez simplement et roulez en toute sérénité.
+    <footer className="relative overflow-hidden bg-navy text-white/70">
+      <AlgiersSkyline className="inset-x-0 bottom-0 h-40 w-full text-white opacity-[0.025] lg:h-52" />
+      {/* pb-[88px] sur mobile : la dernière ligne n'est pas cachée par le bouton WhatsApp flottant */}
+      <div className="relative mx-auto flex max-w-7xl flex-col gap-12 px-4 pb-[88px] pt-16 sm:px-6 lg:px-8 lg:pb-8 lg:pt-20">
+        <div className="grid gap-12 lg:grid-cols-[minmax(0,380px)_1fr]">
+          <div className="flex flex-col gap-5">
+            <Logo light />
+            <p className="text-sm leading-relaxed">
+              {t(
+                "Agence de location de voitures à Alger. Citadines, compactes et SUV : réservez simplement et roulez en toute sérénité, partout en Algérie."
+              )}
             </p>
-            <div className="mt-6 flex gap-3">
-              {socialLinks.map((social) => (
+            <div className="flex gap-2.5">
+              {socials.map(({ label, href, icon: Icon }) => (
                 <a
-                  key={social.label}
-                  href={social.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={social.label}
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-800 text-slate-300 transition-colors hover:bg-brand hover:text-white"
+                  key={label}
+                  href={href}
+                  aria-label={t(label)}
+                  target={href.startsWith("http") ? "_blank" : undefined}
+                  rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
+                  className="flex h-11 w-11 items-center justify-center rounded-full bg-white/5 text-white transition-colors hover:bg-sky hover:text-navy"
                 >
-                  {social.type === "image" ? (
-                    <Image
-                      src={social.src}
-                      alt={social.label}
-                      width={20}
-                      height={20}
-                      className="h-5 w-5 object-contain brightness-90 invert transition-all hover:brightness-100"
-                    />
-                  ) : (
-                    <social.icon className="h-5 w-5" />
-                  )}
+                  <Icon className="h-[18px] w-[18px]" />
                 </a>
               ))}
             </div>
           </div>
 
-          <div>
-            <h4 className="text-sm font-bold uppercase tracking-wider text-white">Liens rapides</h4>
-            <ul className="mt-4 space-y-2">
-              {footerLinks.map((link) => (
-                <li key={link.label}>
-                  <a
-                    href={link.href}
-                    className="text-sm transition-colors hover:text-brand"
-                  >
-                    {link.label}
-                  </a>
-                </li>
+          <div className="grid grid-cols-2 gap-10 text-sm sm:grid-cols-3 lg:justify-items-end">
+            <div className="flex flex-col gap-3">
+              <span className="text-xs font-extrabold uppercase tracking-[0.2em] text-white">{t("Liens")}</span>
+              {footerLinks.map((l) => (
+                <a key={l.href} href={l.href} className="transition-colors hover:text-sky">
+                  {t(l.label)}
+                </a>
               ))}
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="text-sm font-bold uppercase tracking-wider text-white">Contact</h4>
-            <ul className="mt-4 space-y-2 text-sm">
-              <li>+213 555 00 00 00</li>
-              <li>contact@myloc.dz</li>
-              <li>Alger, Algérie</li>
-              <li>Service 24/7</li>
-            </ul>
+            </div>
+            <div className="flex flex-col gap-3">
+              <span className="text-xs font-extrabold uppercase tracking-[0.2em] text-white">{t("Points de retrait")}</span>
+              {site.agencies.map((a) => (
+                <span key={a}>{t(a).replace(/^(Agence|وكالة)\s+/, "")}</span>
+              ))}
+            </div>
+            <div className="flex flex-col gap-3">
+              <span className="text-xs font-extrabold uppercase tracking-[0.2em] text-white">{t("Contact")}</span>
+              {/* bdi : « @myloc.dz » ne doit pas devenir « myloc.dz@ » en arabe */}
+              <a href={site.phoneHref} className="transition-colors hover:text-sky">
+                <bdi dir="ltr">{site.phoneDisplay}</bdi>
+              </a>
+              <a href={`mailto:${site.email}`} className="break-all transition-colors hover:text-sky">
+                <bdi dir="ltr">{site.email}</bdi>
+              </a>
+              <a href={site.instagram} target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-sky">
+                <bdi dir="ltr">{site.instagramHandle}</bdi>
+              </a>
+              <span>{t("Service 24/7")}</span>
+            </div>
           </div>
         </div>
 
-        <div className="mt-12 border-t border-slate-800 pt-8 text-center text-xs">
-          <p>
-            © {currentYear} MYLOC.DZ Car Rental. Tous droits réservés.
-          </p>
+        <div className="flex flex-col justify-between gap-3 border-t border-white/10 pt-6 text-xs sm:flex-row">
+          <span>
+            <bdi dir="ltr" suppressHydrationWarning>
+              © {year} MYLOC.DZ Car Rental.
+            </bdi>{" "}
+            {t("Tous droits réservés.")}
+          </span>
+          <span className="font-semibold uppercase tracking-[0.2em]">{t("Alger, Algérie")}</span>
         </div>
       </div>
     </footer>

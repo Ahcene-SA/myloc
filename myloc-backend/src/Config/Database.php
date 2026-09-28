@@ -10,6 +10,13 @@ use PDOException;
 class Database
 {
     private ?PDO $pdo = null;
+    private static ?Database $shared = null;
+
+    /** Une seule connexion par requête, partagée par tout le code. */
+    public static function shared(): Database
+    {
+        return self::$shared ??= new Database();
+    }
 
     public function __construct()
     {
@@ -30,6 +37,8 @@ class Database
 
         try {
             $this->pdo = new PDO($dsn, $user, $pass, $options);
+            // Même fuseau que PHP (APP_TIMEZONE) pour NOW(), CURDATE(), TIMESTAMP
+            $this->pdo->exec("SET time_zone = '" . Timezone::mysqlOffset() . "'");
         } catch (PDOException $e) {
             throw new \RuntimeException('Database connection failed.');
         }

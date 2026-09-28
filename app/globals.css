@@ -1,25 +1,58 @@
 @import "tailwindcss";
 
+/* ─────────────────────────────────────────────
+   MYLOC.DZ — charte de la marque (Instagram @myloc.dz)
+   blanc / gris-bleu très clair · bleu ciel #43B0E6 · bleu nuit
+   ───────────────────────────────────────────── */
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
-  --brand: #43b0e6;
-  --brand-dark: #0f172a;
-  --brand-light: #f8fafc;
-  --brand-gray: #e2e8f0;
-  --brand-hover: #2b9ed6;
+  --background: #ffffff;
+  --foreground: #0f1b2d;
+
+  --sky: #43b0e6; /* bleu de la marque : fonds, décor, boutons (texte bleu nuit dessus) */
+  --sky-soft: #e3f2fb; /* fonds teintés */
+  --sky-mid: #2e93cc; /* grands titres bleus */
+  --sky-text: #1a7ab2; /* petit texte bleu sur blanc (contraste AA) */
+  --navy: #0f1b2d;
+  --navy-soft: #1f2d42;
+  --mist: #f3f6fa;
+  --line: #e3e9f0;
+  --ink-soft: #3e4a5c;
+  --muted: #5b6778;
+  --whatsapp: #15803d;
+
+  /* Anciennes classes "brand" des espaces client / admin */
+  --brand: #1a7ab2; /* bleu marque assombri : texte blanc lisible sur les boutons */
+  --brand-dark: #0f1b2d;
+  --brand-light: #f3f6fa;
+  --brand-gray: #e3e9f0;
+  --brand-hover: #176fa3;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
+  --color-sky: var(--sky);
+  --color-sky-soft: var(--sky-soft);
+  --color-sky-mid: var(--sky-mid);
+  --color-sky-text: var(--sky-text);
+  --color-navy: var(--navy);
+  --color-navy-soft: var(--navy-soft);
+  --color-mist: var(--mist);
+  --color-line: var(--line);
+  --color-ink-soft: var(--ink-soft);
+  --color-muted: var(--muted);
+  --color-whatsapp: var(--whatsapp);
+
   --color-brand: var(--brand);
   --color-brand-dark: var(--brand-dark);
   --color-brand-light: var(--brand-light);
   --color-brand-gray: var(--brand-gray);
   --color-brand-hover: var(--brand-hover);
-  --font-sans: var(--font-inter);
-  --animate-slide-left: slide-left 10s linear infinite;
+
+  --font-sans: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
+
+  --animate-slide-left: slide-left 40s linear infinite;
 }
 
 @keyframes slide-left {
@@ -27,7 +60,7 @@
     transform: translateX(0);
   }
   to {
-    transform: translateX(-100%);
+    transform: translateX(-50%);
   }
 }
 
@@ -37,12 +70,13 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 88px;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
 }
 
 @layer utilities {
@@ -50,109 +84,183 @@ body {
     text-wrap: balance;
   }
 
-  .perspective-1000 {
-    perspective: 1000px;
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
 
-  .preserve-3d {
-    transform-style: preserve-3d;
+  /* Surtitre façon Instagram : « NOTRE SÉLECTION DE » */
+  .kicker {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
   }
 
-  .backface-hidden {
-    backface-visibility: hidden;
+  /* Grand titre bleu dégradé (CITADINES, SUV, MOBILITÉ…) */
+  .text-sky-gradient {
+    background: linear-gradient(180deg, #5dbdea 0%, #2e93cc 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
 
-  .hero-title-wrapper {
+  /* Fond clair de la marque avec léger dégradé */
+  .bg-brand-mist {
+    background: linear-gradient(180deg, #eef3f8 0%, #f7f9fc 55%, #ffffff 100%);
+  }
+
+  /* Ombre au sol sous les voitures détourées */
+  .car-reflect {
+    filter: drop-shadow(0 22px 16px rgba(15, 27, 45, 0.22));
+  }
+
+  .fade-up {
     opacity: 0;
-    animation: hero-fade-in 0.6s ease-out forwards;
-    animation-delay: 0.3s;
+    animation: fade-up 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   }
 
-  @keyframes hero-fade-in {
-    0% {
+  @keyframes fade-up {
+    from {
       opacity: 0;
-      transform: translateY(10px);
+      transform: translateY(18px);
     }
-    100% {
+    to {
       opacity: 1;
       transform: translateY(0);
     }
   }
 
-  .shimmer-text {
-    background: linear-gradient(
-      90deg,
-      #ffffff 0%,
-      #e0f0fa 20%,
-      #43B0E6 40%,
-      #43B0E6 60%,
-      #e0f0fa 80%,
-      #ffffff 100%
-    );
-    background-size: 300% 100%;
+  /* « mobilité » : dégradé bleu avec un reflet qui passe */
+  .text-sky-shimmer {
+    background: linear-gradient(100deg, #2e93cc 0%, #5dbdea 35%, #d9f1ff 50%, #5dbdea 65%, #2e93cc 100%);
+    background-size: 250% 100%;
     -webkit-background-clip: text;
     background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: shimmer 4s ease-in-out infinite;
-    filter: drop-shadow(0 0 20px rgba(67, 176, 230, 0.4));
+    color: transparent;
+    animation: shimmer 5s ease-in-out 1.6s infinite;
   }
 
   @keyframes shimmer {
     0% {
-      background-position: 150% 0;
+      background-position: 100% 0;
     }
-    50% {
+    45%,
+    100% {
       background-position: -50% 0;
     }
+  }
+
+  /* Palmiers qui bougent doucement avec le vent */
+  .palm-sway {
+    transform-origin: 0 0;
+    animation: sway 7s ease-in-out infinite;
+  }
+  .palm-sway-slow {
+    transform-origin: 100% 0;
+    animation: sway 11s ease-in-out infinite reverse;
+  }
+
+  @keyframes sway {
+    0%,
     100% {
-      background-position: -250% 0;
+      rotate: 0deg;
+    }
+    50% {
+      rotate: 2.5deg;
     }
   }
 
-  .letter-reveal {
-    opacity: 0;
-    transform: translateY(60%) scale(0.85);
-    animation: letter-reveal 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  /* Arc lumineux qui tourne autour du grand cercle */
+  .orbit {
+    animation: orbit 14s linear infinite;
   }
 
-  @keyframes letter-reveal {
+  @keyframes orbit {
+    to {
+      rotate: 360deg;
+    }
+  }
+
+  /* Reflet qui traverse un bouton */
+  .shine {
+    position: relative;
+    overflow: hidden;
+  }
+  .shine::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.28) 50%, transparent 70%);
+    translate: -120% 0;
+    animation: shine 4.5s ease-in-out 2.5s infinite;
+  }
+
+  @keyframes shine {
     0% {
-      opacity: 0;
-      transform: translateY(60%) scale(0.85);
+      translate: -120% 0;
     }
-    60% {
-      opacity: 1;
-      transform: translateY(-8%) scale(1.02);
-    }
+    30%,
     100% {
-      opacity: 1;
-      transform: translateY(0) scale(1);
+      translate: 120% 0;
     }
   }
 
-  .jitter-reveal {
+  /* Anneau de contour : on ne garde que la bordure (2 px) d'un fond en dégradé conique */
+  .trace-ring {
+    padding: 2px;
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#000 0 0) content-box exclude,
+      linear-gradient(#000 0 0);
+  }
+
+  .drive-in {
     opacity: 0;
-    transform: translateY(12px) rotate(-2deg);
-    animation: jitter-reveal 0.45s ease-out forwards;
+    animation: drive-in 1.1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   }
 
-  @keyframes jitter-reveal {
-    0% {
+  @keyframes drive-in {
+    from {
       opacity: 0;
-      transform: translateY(12px) rotate(-2deg);
+      transform: translateX(60px);
     }
-    40% {
+    to {
       opacity: 1;
-      transform: translateY(-3px) rotate(1.5deg);
-    }
-    70% {
-      transform: translateY(2px) rotate(-0.5deg);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(0) rotate(0deg);
+      transform: translateX(0);
     }
   }
+}
+
+/* ── Version arabe ── */
+html[lang="ar"] body {
+  font-family: var(--font-cairo), "Segoe UI", Tahoma, var(--font-montserrat), sans-serif;
+}
+/* L'espacement des lettres casse les liaisons de l'écriture arabe */
+html[lang="ar"] * {
+  letter-spacing: 0 !important;
+}
+/* Lisibilité en arabe : les petites tailles pensées pour des majuscules latines espacées
+   sont trop petites pour l'écriture arabe (surtitres, étiquettes, chiffres clés). */
+html[lang="ar"] .kicker,
+html[lang="ar"] .text-\[9\.5px\],
+html[lang="ar"] .text-\[10px\],
+html[lang="ar"] .text-\[11px\] {
+  font-size: 13px;
+  line-height: 1.5;
+}
+html[lang="ar"] .nav-link {
+  font-size: 14px;
+}
+/* Flèches et chevrons pointent dans le sens de lecture */
+html[dir="rtl"] .flip-rtl {
+  transform: scaleX(-1);
 }
 
 /* Reduced motion support */
@@ -166,3 +274,4 @@ body {
     scroll-behavior: auto !important;
   }
 }
+

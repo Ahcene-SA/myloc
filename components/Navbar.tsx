@@ -1,14 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
-import { Menu, X, FileText, User } from "lucide-react";
+import { Menu, X, UserRound } from "lucide-react";
+import { Logo } from "./Brand";
+import { WhatsAppIcon } from "./FloatingWhatsApp";
+import { site } from "@/lib/site";
 import { cn } from "@/lib/utils";
+import { pageUrl } from "@/lib/routes";
+import { LangSwitch, useLang } from "@/lib/i18n";
 
 const mainLinks = [
-  { href: "#accueil", label: "Accueil" },
-  { href: "#vehicules", label: "Nos véhicules" },
-  { href: "#avantages", label: "Pourquoi nous" },
+  { href: "#vehicules", label: "Véhicules" },
+  { href: "#avantages", label: "Avantages" },
+  { href: "#agences", label: "Agences" },
   { href: "#a-propos", label: "À propos" },
   { href: "#contact", label: "Contact" },
 ];
@@ -17,11 +21,12 @@ export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState("accueil");
+  const { t } = useLang();
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 40);
+    const handleScroll = () => setScrolled(window.scrollY > 24);
     handleScroll();
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -29,203 +34,151 @@ export function Navbar() {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setActiveSection(entry.target.id);
-          }
+          if (entry.isIntersecting) setActiveSection(entry.target.id);
         });
       },
       { rootMargin: "-50% 0px -50% 0px", threshold: 0 }
     );
-
-    const sections = ["accueil", "vehicules", "avantages", "a-propos", "contact"];
-    sections.forEach((id) => {
+    ["accueil", "vehicules", "avantages", "agences", "a-propos", "contact"].forEach((id) => {
       const el = document.getElementById(id);
       if (el) observer.observe(el);
     });
-
     return () => observer.disconnect();
   }, []);
 
-  // Lock page scroll while the mobile menu is open.
+  // Menu mobile ouvert : page bloquée derrière, fermeture avec Échap
   useEffect(() => {
-    if (typeof document === "undefined") return;
-    document.body.style.overflow = isOpen ? "hidden" : "";
+    if (!isOpen) return;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setIsOpen(false);
+    window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = "";
+      window.removeEventListener("keydown", onKey);
     };
   }, [isOpen]);
 
-  const isTransparent = !scrolled;
-
   return (
+    <>
+    {/* Voile sombre derrière le menu mobile : un clic le referme */}
+    <div
+      aria-hidden="true"
+      onClick={() => setIsOpen(false)}
+      className={cn(
+        "fixed inset-0 z-[65] bg-navy/50 backdrop-blur-[2px] transition-opacity duration-300 lg:hidden",
+        isOpen ? "opacity-100" : "pointer-events-none opacity-0"
+      )}
+    />
     <header
       className={cn(
         "fixed inset-x-0 top-0 z-[70] transition-all duration-500",
-        isTransparent
-          ? "bg-transparent"
-          : "bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100"
+        scrolled || isOpen ? "bg-white/90 shadow-[0_1px_0_var(--line)] backdrop-blur-md" : "bg-transparent"
       )}
     >
-      <div className="mx-auto flex h-16 md:h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Logo */}
-        <a href="#accueil" className="flex items-center flex-shrink-0 group">
-          <Image
-            src="images/logo.svg"
-            alt="MYLOC.DZ Car Rental"
-            width={220}
-            height={60}
-            className={cn(
-              "h-12 md:h-16 w-auto transition-all duration-300",
-              isTransparent && "brightness-0 invert"
-            )}
-            priority
-          />
+      <div className="mx-auto flex h-18 max-w-7xl items-center justify-between px-4 sm:px-6 lg:h-22 lg:px-8">
+        <a href="#accueil" aria-label={t("MYLOC.DZ, retour à l'accueil")} className="flex-shrink-0">
+          <Logo />
         </a>
 
-        {/* Desktop Nav */}
-        <div className="hidden lg:flex items-center gap-3">
-          {/* Main nav pill */}
-          <div
-            className={cn(
-              "flex items-center gap-0.5 px-1.5 py-1.5 rounded-full transition-all duration-300 border",
-              isTransparent
-                ? "bg-white/10 backdrop-blur-md border-white/20"
-                : "bg-gray-100 border-gray-200"
-            )}
-          >
-            {mainLinks.map((link) => {
-              const isActive = activeSection === link.href.slice(1);
-              return (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  className={cn(
-                    "text-[11px] xl:text-xs font-semibold px-3.5 py-1.5 rounded-full whitespace-nowrap transition-all duration-200",
-                    isTransparent
-                      ? isActive
-                        ? "text-white bg-white/20 shadow-sm"
-                        : "text-white/75 hover:text-white hover:bg-white/15"
-                      : isActive
-                        ? "text-[#43B0E6] bg-white shadow-sm"
-                        : "text-gray-600 hover:text-gray-900 hover:bg-white"
-                  )}
-                >
-                  {link.label}
-                </a>
-              );
-            })}
-          </div>
-
-          {/* Utility nav pill */}
-          <div
-            className={cn(
-              "flex items-center gap-0.5 px-1.5 py-1.5 rounded-full transition-all duration-300 border",
-              isTransparent
-                ? "bg-white/10 backdrop-blur-md border-white/20"
-                : "bg-gray-100 border-gray-200"
-            )}
-          >
-            <a
-              href="admin.html"
-              className={cn(
-                "flex items-center gap-1.5 text-[11px] xl:text-xs font-semibold px-3.5 py-1.5 rounded-full whitespace-nowrap transition-all duration-200",
-                isTransparent
-                  ? "text-white/75 hover:text-white hover:bg-white/15"
-                  : "text-gray-600 hover:text-gray-900 hover:bg-white"
-              )}
-            >
-              <FileText className="w-3 h-3" />
-              Admin
-            </a>
-            <span
-              className={cn(
-                "w-px h-4 mx-0.5",
-                isTransparent ? "bg-white/20" : "bg-gray-300"
-              )}
-            />
-            <a
-              href="client.html"
-              className={cn(
-                "flex items-center gap-1.5 text-[11px] xl:text-xs font-semibold px-3.5 py-1.5 rounded-full whitespace-nowrap transition-all duration-200",
-                isTransparent
-                  ? "text-white/75 hover:text-white hover:bg-white/15"
-                  : "text-gray-600 hover:text-gray-900 hover:bg-white"
-              )}
-            >
-              <User className="w-3 h-3" />
-              Mon espace
-            </a>
-          </div>
-        </div>
-
-        {/* Mobile Menu Button */}
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className={cn(
-            "lg:hidden p-2.5 rounded-xl transition-colors",
-            isTransparent
-              ? "text-white hover:bg-white/10"
-              : "text-gray-700 hover:bg-gray-100"
-          )}
-          aria-label={isOpen ? "Fermer le menu" : "Ouvrir le menu"}
-        >
-          {isOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
-      </div>
-
-      {/* Mobile Nav */}
-      <div
-        className={cn(
-          "lg:hidden transition-all duration-300 overflow-hidden border-t border-gray-100 bg-white",
-          isOpen ? "max-h-[32rem] opacity-100" : "max-h-0 opacity-0"
-        )}
-      >
-        <nav className="flex flex-col gap-1 px-4 py-4">
+        <nav className="hidden items-center gap-8 lg:flex" aria-label={t("Navigation principale")}>
           {mainLinks.map((link) => {
             const isActive = activeSection === link.href.slice(1);
             return (
               <a
                 key={link.href}
                 href={link.href}
-                onClick={() => setIsOpen(false)}
+                aria-current={isActive ? "true" : undefined}
                 className={cn(
-                  "flex items-center py-2.5 px-3 rounded-xl text-sm font-medium transition-colors",
-                  isActive
-                    ? "text-[#43B0E6] bg-[#43B0E6]/5"
-                    : "text-gray-700 hover:text-[#43B0E6] hover:bg-gray-50"
+                  "nav-link relative text-[13px] font-bold uppercase tracking-[0.12em] transition-colors hover:text-sky-text",
+                  isActive ? "text-sky-text" : "text-navy"
                 )}
               >
-                {link.label}
+                {t(link.label)}
+                <span
+                  className={cn(
+                    "absolute -bottom-2 start-0 h-[3px] rounded-full bg-sky transition-all duration-300",
+                    isActive ? "w-6" : "w-0"
+                  )}
+                />
               </a>
             );
           })}
-          <div className="pt-3 border-t border-gray-100 flex flex-col gap-2">
+        </nav>
+
+        <div className="hidden items-center gap-2 lg:flex">
+          <LangSwitch />
+          <a
+            href={pageUrl("client")}
+            className="flex h-11 items-center gap-2 rounded-full px-4 text-[13px] font-bold text-navy transition-colors hover:text-sky-text"
+          >
+            <UserRound className="h-4 w-4" />
+            {t("Mon espace")}
+          </a>
+          <a
+            href={site.whatsappHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex h-11 items-center gap-2 rounded-full bg-sky px-5 text-[13px] font-bold text-navy transition-colors hover:bg-sky-mid hover:text-white"
+          >
+            <WhatsAppIcon className="h-4 w-4" />
+            {t("Réserver")}
+          </a>
+        </div>
+
+        <div className="flex items-center gap-2 lg:hidden">
+        <LangSwitch />
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-navy text-white lg:hidden"
+          aria-label={isOpen ? t("Fermer le menu") : t("Ouvrir le menu")}
+          aria-expanded={isOpen}
+        >
+          {isOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
+        </div>
+      </div>
+
+      <div
+        className={cn(
+          "overflow-hidden bg-white transition-all duration-300 lg:hidden",
+          isOpen
+            ? "max-h-[calc(100svh-4.5rem)] overflow-y-auto rounded-b-3xl opacity-100 shadow-[0_24px_40px_-12px_rgba(15,27,45,0.35)]"
+            : "pointer-events-none max-h-0 opacity-0"
+        )}
+      >
+        <nav className="flex flex-col px-4 pb-6 pt-2" aria-label={t("Navigation mobile")}>
+          {mainLinks.map((link) => (
             <a
-              href="admin.html"
+              key={link.href}
+              href={link.href}
               onClick={() => setIsOpen(false)}
-              className="flex items-center gap-2 text-sm font-semibold text-gray-700 py-2.5 px-3 rounded-xl hover:bg-gray-50"
+              className="border-b border-line py-4 text-lg font-extrabold uppercase tracking-wide text-navy"
             >
-              <FileText className="w-4 h-4" />
-              Admin
+              {t(link.label)}
             </a>
-            <a
-              href="client.html"
-              onClick={() => setIsOpen(false)}
-              className="flex items-center gap-2 text-sm font-semibold text-gray-700 py-2.5 px-3 rounded-xl hover:bg-gray-50"
-            >
-              <User className="w-4 h-4" />
-              Mon Espace
-            </a>
-            <a
-              href="#vehicules"
-              onClick={() => setIsOpen(false)}
-              className="flex items-center justify-center gap-2 text-sm font-bold text-white py-3 px-4 rounded-xl bg-[#43B0E6] hover:opacity-90 transition-opacity"
-            >
-              Réserver maintenant →
-            </a>
-          </div>
+          ))}
+          <a
+            href={pageUrl("client")}
+            onClick={() => setIsOpen(false)}
+            className="mt-5 flex h-12 items-center justify-center gap-2 rounded-full border-2 border-navy text-sm font-bold text-navy"
+          >
+            <UserRound className="h-4 w-4" />
+            {t("Mon espace")}
+          </a>
+          <a
+            href={site.whatsappHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => setIsOpen(false)}
+            className="mt-2 flex h-13 items-center justify-center gap-2 rounded-full bg-sky text-base font-bold text-navy"
+          >
+            <WhatsAppIcon className="h-5 w-5" />
+            {t("Réserver sur WhatsApp")}
+          </a>
         </nav>
       </div>
     </header>
+    </>
   );
 }

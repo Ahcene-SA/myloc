@@ -1,18 +1,26 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Cairo, Montserrat } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/AuthContext";
+import { LangProvider } from "@/lib/i18n";
 
-const inter = Inter({
-  variable: "--font-inter",
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
   subsets: ["latin"],
+  display: "swap",
+});
+
+// Police arabe (version العربية du site)
+const cairo = Cairo({
+  variable: "--font-cairo",
+  subsets: ["arabic"],
   display: "swap",
 });
 
 export const metadata: Metadata = {
   title: "MYLOC.DZ | Location de voitures en Algérie",
   description:
-    "Louez une voiture facilement avec MYLOC.DZ. Large gamme de citadines, SUV et berlines. Tarifs abordables, réservation rapide et service 24/7.",
+    "MYLOC.DZ, agence de location de voitures à Alger. Citadines, compactes et SUV récents. Infos et réservation via WhatsApp, service 24/7.",
 };
 
 export default function RootLayout({
@@ -21,16 +29,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={`${inter.variable} h-full antialiased`}>
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: 'window.MYLOC_API_URL = "https://significant-happiness-allowed-hereby.trycloudflare.com";',
-          }}
-        />
-      </head>
+    <html lang="fr" className={`${montserrat.variable} ${cairo.variable} h-full antialiased`}
+      suppressHydrationWarning>
       <body className="min-h-full flex flex-col font-sans">
-        <AuthProvider>{children}</AuthProvider>
+        <LangProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </LangProvider>
       </body>
     </html>
   );

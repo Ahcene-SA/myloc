@@ -1,292 +1,347 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { CalendarCheck2, CarFront, RotateCw, X } from "lucide-react";
 import { CarCard, type Car } from "./CarCard";
 import { cn } from "@/lib/utils";
-import { fetchCars, mapApiCarToCar } from "@/lib/api";
-
-const categories = [
-  { id: "all", label: "Tous" },
-  { id: "citadine", label: "Citadines" },
-  { id: "suv", label: "SUV" },
-  { id: "berline", label: "Berlines" },
-];
-
-const fallbackCars: Car[] = [
-  {
-    id: "clio5-alpino",
-    name: "Clio 5 Alpino",
-    category: "citadine",
-    image: "images/clio5-alpino.png",
-    price: 55,
-    priceUnit: "jour",
-    transmission: "Automatique",
-    seats: 5,
-    year: 2024,
-  },
-  {
-    id: "clio5-techno",
-    name: "Clio 5 Techno",
-    category: "citadine",
-    image: "images/clio5-techno.png",
-    price: 52,
-    priceUnit: "jour",
-    transmission: "Automatique",
-    seats: 5,
-    year: 2024,
-  },
-  {
-    id: "citroen-c3",
-    name: "Citroën C3",
-    category: "citadine",
-    image: "images/citroen-c3.png",
-    price: 48,
-    priceUnit: "jour",
-    transmission: "Manuelle",
-    seats: 5,
-    year: 2024,
-  },
-  {
-    id: "opel-astra",
-    name: "Opel Astra",
-    category: "berline",
-    image: "images/opel-astra.png",
-    price: 75,
-    priceUnit: "jour",
-    transmission: "Automatique",
-    seats: 5,
-    year: 2024,
-  },
-  {
-    id: "opel-mocca",
-    name: "Opel Mocca",
-    category: "suv",
-    image: "images/opel-mocca.png",
-    price: 80,
-    priceUnit: "jour",
-    transmission: "Automatique",
-    seats: 5,
-    year: 2024,
-  },
-  {
-    id: "renault-captur",
-    name: "Renault Captur",
-    category: "suv",
-    image: "images/renault-captur.png",
-    price: 72,
-    priceUnit: "jour",
-    transmission: "Automatique",
-    seats: 5,
-    year: 2024,
-  },
-  {
-    id: "jetour-x70+",
-    name: "Jetour X70+",
-    category: "suv",
-    image: "images/jetour-x70+.png",
-    price: 95,
-    priceUnit: "jour",
-    transmission: "Automatique",
-    seats: 7,
-    year: 2025,
-    featured: true,
-  },
-];
+import { fetchAvailableCars, fetchCars, fetchPricingRules, mapApiCarToCar, type AvailableCar, type PricingRules } from "@/lib/api";
+import { AVAILABILITY_EVENT, saveBookingIntent, type AvailabilitySearch } from "@/lib/booking";
+import { pageUrl } from "@/lib/routes";
+import { FILTER_EVENT, categoryInfo } from "@/lib/site";
+import { BlueBar, PalmShadow } from "./Brand";
+import { dateLocale, translate, useLang } from "@/lib/i18n";
 
 export function Fleet() {
+  const { t } = useLang();
   const [activeCategory, setActiveCategory] = useState("all");
   const [cars, setCars] = useState<Car[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [currentPage, setCurrentPage] = useState(0);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  // Recherche par dates depuis l'accueil
+  const [search, setSearch] = useState<AvailabilitySearch | null>(null);
+  const [free, setFree] = useState<AvailableCar[] | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState("");
+  const [rules, setRules] = useState<PricingRules | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-
-    fetchCars()
-      .then((apiCars) => {
-        if (cancelled) return;
-        const available = apiCars.filter((c) => c.status === "available");
-        const mapped = available.map(mapApiCarToCar);
-        setCars(mapped.length > 0 ? mapped : fallbackCars);
-      })
-      .catch((e) => {
-        if (cancelled) return;
-        setError(e instanceof Error ? e.message : "Impossible de charger les véhicules.");
-        setCars(fallbackCars);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
+    fetchPricingRules()
+      .then((r) => !cancelled && setRules(r))
+      .catch(() => {});
     return () => {
       cancelled = true;
     };
   }, []);
 
-  const filteredCars = useMemo(() => {
-    return activeCategory === "all"
-      ? cars
-      : cars.filter((car) => car.category === activeCategory);
-  }, [activeCategory, cars]);
+  // Erreur de chargement de la flotte : état honnête + bouton « Réessayer » (pas de flotte fictive)
+  const [loadError, setLoadError] = useState(false);
+  const loadSeq = useRef(0);
 
-  /* reset carousel when category changes */
-  useEffect(() => {
-    setCurrentPage(0);
-    if (scrollRef.current) scrollRef.current.scrollLeft = 0;
-  }, [activeCategory]);
-
-  /* responsive page size */
-  const [pageSize, setPageSize] = useState(2);
-  useEffect(() => {
-    const update = () => {
-      if (typeof window === "undefined") return;
-      let size = 1;
-      if (window.innerWidth >= 1280) size = 4;
-      else if (window.innerWidth >= 1024) size = 3;
-      else if (window.innerWidth >= 640) size = 2;
-      setPageSize(size);
-    };
-    update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
+  // Requête de la flotte (états mis à jour uniquement à la réponse)
+  const fetchFleet = useCallback(() => {
+    const seq = ++loadSeq.current;
+    fetchCars()
+      .then((apiCars) => {
+        if (seq !== loadSeq.current) return;
+        setCars(apiCars.filter((c) => c.status === "available").map(mapApiCarToCar));
+      })
+      .catch(() => {
+        if (seq !== loadSeq.current) return;
+        setCars([]);
+        setLoadError(true);
+      })
+      .finally(() => {
+        if (seq === loadSeq.current) setLoading(false);
+      });
   }, []);
 
-  const totalPages = Math.max(1, Math.ceil(filteredCars.length / pageSize));
-
-  const scrollToPage = (page: number) => {
-    if (!scrollRef.current) return;
-    const container = scrollRef.current;
-    const pageWidth = container.clientWidth;
-    container.scrollTo({ left: pageWidth * page, behavior: "smooth" });
-    setCurrentPage(page);
+  // Bouton « Réessayer »
+  const retry = () => {
+    setLoading(true);
+    setLoadError(false);
+    fetchFleet();
   };
 
-  const goPrev = () => scrollToPage(Math.max(0, currentPage - 1));
-  const goNext = () => scrollToPage(Math.min(totalPages - 1, currentPage + 1));
-
-  /* sync dot when user swipes / scrolls manually */
   useEffect(() => {
-    const container = scrollRef.current;
-    if (!container) return;
-    const onScroll = () => {
-      const pageWidth = container.clientWidth;
-      if (pageWidth === 0) return;
-      const page = Math.round(container.scrollLeft / pageWidth);
-      setCurrentPage(Math.min(page, totalPages - 1));
+    fetchFleet();
+    // Démontage : on invalide toute réponse encore en vol
+    const seqRef = loadSeq;
+    return () => {
+      seqRef.current++;
     };
-    container.addEventListener("scroll", onScroll);
-    return () => container.removeEventListener("scroll", onScroll);
-  }, [totalPages]);
+  }, [fetchFleet]);
+
+  // Filtre envoyé par le formulaire de recherche du Hero.
+  useEffect(() => {
+    const onFilter = (e: Event) => {
+      const cat = (e as CustomEvent<string>).detail;
+      if (cat === "all" || cat in categoryInfo) setActiveCategory(cat);
+    };
+    window.addEventListener(FILTER_EVENT, onFilter);
+    return () => window.removeEventListener(FILTER_EVENT, onFilter);
+  }, []);
+
+  // Recherche de disponibilités envoyée par le Hero.
+  // Numéro de séquence : seule la réponse de la dernière recherche est prise en compte.
+  const searchSeq = useRef(0);
+  useEffect(() => {
+    const onSearch = (e: Event) => {
+      const q = (e as CustomEvent<AvailabilitySearch>).detail;
+      const seq = ++searchSeq.current;
+      setSearch(q);
+      setFree(null);
+      setSearching(true);
+      setSearchError("");
+      setActiveCategory(q.category in categoryInfo ? q.category : "all");
+      fetchAvailableCars(q.start, q.end)
+        .then((list) => {
+          if (seq === searchSeq.current) setFree(list);
+        })
+        .catch((err) => {
+          if (seq !== searchSeq.current) return;
+          setFree(null);
+          setSearchError(err instanceof Error ? err.message : translate("Impossible de vérifier les disponibilités."));
+        })
+        .finally(() => {
+          if (seq === searchSeq.current) setSearching(false);
+        });
+    };
+    window.addEventListener(AVAILABILITY_EVENT, onSearch);
+    return () => window.removeEventListener(AVAILABILITY_EVENT, onSearch);
+  }, []);
+
+  const clearSearch = () => {
+    searchSeq.current++; // ignore une recherche encore en cours
+    setSearching(false);
+    setSearch(null);
+    setFree(null);
+    setSearchError("");
+  };
+
+  const quotes = useMemo(() => {
+    const m = new Map<string, AvailableCar>();
+    free?.forEach((c) => m.set(String(c.id), c));
+    return m;
+  }, [free]);
+
+  const shortDate = (d: string) =>
+    new Date(`${d}T00:00:00`).toLocaleDateString(dateLocale(), {
+      day: "numeric",
+      month: "short",
+    });
+  const quoteLabel = search
+    ? t("Du {start} au {end}", {
+        start: shortDate(search.start),
+        end: shortDate(search.end),
+      })
+    : "";
+  // Version courte pour les cartes (évite « Du 18 oct. au 22 / oct. »)
+  const quoteRange = search ? `${shortDate(search.start)} – ${shortDate(search.end)}` : "";
+
+  const book = (carId: string) => {
+    if (!search) return;
+    saveBookingIntent({
+      carId: Number(carId),
+      start: search.start,
+      end: search.end,
+      pickupPlace: search.pickupPlace,
+      pickupAddress: search.pickupAddress,
+      returnPlace: search.returnPlace,
+      returnAddress: search.returnAddress,
+    });
+    window.location.assign(pageUrl("client"));
+  };
+
+  // Pendant une recherche par dates : uniquement les véhicules libres
+  const pool = useMemo(() => (search && free ? free.map((c) => ({ ...mapApiCarToCar(c) })) : cars), [search, free, cars]);
+
+  const counts = useMemo(() => {
+    const out: Record<string, number> = { all: pool.length };
+    pool.forEach((c) => {
+      const k = c.category?.toLowerCase();
+      out[k] = (out[k] ?? 0) + 1;
+    });
+    return out;
+  }, [pool]);
+
+  // Onglets : uniquement les catégories présentes dans la flotte.
+  const categories = useMemo(
+    () => [
+      { id: "all", label: "Tous" },
+      ...Object.entries(categoryInfo)
+        .filter(([id]) => (counts[id] ?? 0) > 0 || id === activeCategory)
+        .map(([id, c]) => ({ id, label: c.plural })),
+    ],
+    [counts, activeCategory],
+  );
+
+  const active = categoryInfo[activeCategory];
+
+  const filteredCars = useMemo(
+    () => (activeCategory === "all" ? pool : pool.filter((car) => car.category?.toLowerCase() === activeCategory)),
+    [activeCategory, pool],
+  );
 
   return (
-    <section id="vehicules" className="mx-3 sm:mx-4 mt-6 bg-white rounded-[2.5rem] overflow-hidden shadow-2xl py-20 lg:py-28">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="text-center">
-          <span className="inline-block rounded-full bg-brand/10 px-4 py-1.5 text-sm font-bold uppercase tracking-wider text-brand">
-            Notre flotte
-          </span>
-          <h2 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
-            Notre sélection de véhicules
+    <section id="vehicules" className="relative overflow-hidden bg-white py-20 lg:py-28">
+      <PalmShadow flip className="-right-40 -top-20 w-[520px] opacity-[0.12]" />
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <span className="kicker text-navy/80">{t("Notre sélection de")}</span>
+          <h2
+            key={activeCategory}
+            className="fade-up text-sky-gradient text-5xl font-extrabold uppercase leading-none tracking-[-0.01em] sm:text-6xl lg:text-[84px]"
+          >
+            {active ? t(active.plural) : t("Véhicules")}
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-lg text-slate-600">
-            Des citadines économiques aux SUV spacieux, trouvez le véhicule parfait
-            pour votre prochain trajet.
+          <BlueBar />
+          <p className="max-w-md text-sm font-semibold uppercase tracking-[0.08em] text-ink-soft sm:text-[15px]">
+            {active ? t(active.tagline) : t("Citadines, compactes et SUV récents, entretenus avant chaque location")}
           </p>
         </div>
 
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-2">
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setActiveCategory(cat.id)}
-              className={cn(
-                "rounded-full px-5 py-2.5 text-sm font-semibold transition-all",
-                activeCategory === cat.id
-                  ? "bg-brand text-white shadow-md shadow-brand/25"
-                  : "bg-slate-50 text-slate-600 hover:bg-slate-100"
-              )}
+        {rules && rules.duration.length > 0 && (
+          <p className="mx-auto mt-6 flex w-fit max-w-full items-center gap-2.5 rounded-2xl bg-emerald-50 py-2 pe-4 ps-2 text-start text-xs font-bold uppercase tracking-wide text-emerald-800 sm:rounded-full">
+            {/* Pastille « % » : ne passe jamais seule à la ligne */}
+            <span
+              aria-hidden="true"
+              className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-emerald-600 text-[11px] text-white"
             >
-              {cat.label}
-            </button>
-          ))}
-        </div>
-
-        {error && (
-          <p className="mt-4 text-center text-sm text-red-600">
-            {error}
+              %
+            </span>
+            <span className="min-w-0">
+              {t("Remise automatique :")}{" "}
+              {rules.duration
+                .map((r) =>
+                  t("-{percent} % dès {days} jours", {
+                    percent: r.percent,
+                    days: r.min_days,
+                  }),
+                )
+                .join(" · ")}
+            </span>
           </p>
         )}
 
-        <div className="relative mx-auto mt-10 w-full">
-          {loading ? (
-            <div className="flex h-64 items-center justify-center">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand/30 border-t-brand" />
+        {search && (
+          <div className="mx-auto mt-10 flex max-w-3xl flex-col items-center justify-between gap-3 rounded-3xl border-2 border-sky bg-sky-soft/60 px-5 py-4 text-navy sm:flex-row">
+            <p className="flex items-center gap-3 text-sm font-semibold">
+              <CalendarCheck2 className="h-5 w-5 flex-shrink-0 text-sky-text" />
+              <span>
+                <strong className="font-extrabold">{quoteLabel}</strong>
+                {searching
+                  ? ` · ${t("recherche des véhicules libres…")}`
+                  : searchError
+                    ? ` · ${searchError}`
+                    : free
+                      ? ` · ${t(free.length > 1 ? "{count} véhicules libres" : "{count} véhicule libre", { count: free.length })}${
+                          cars.length > free.length
+                            ? t(", {count} déjà pris", {
+                                count: cars.length - free.length,
+                              })
+                            : ""
+                        }`
+                      : ""}
+              </span>
+            </p>
+            <button
+              type="button"
+              onClick={clearSearch}
+              className="inline-flex h-9 flex-shrink-0 items-center gap-1.5 rounded-full bg-white px-4 text-xs font-bold uppercase tracking-wide text-navy hover:bg-navy hover:text-white"
+            >
+              <X className="h-3.5 w-3.5" /> {t("Toute la flotte")}
+            </button>
+          </div>
+        )}
+
+        {/* Onglets masqués quand il n'y a rien à filtrer (flotte vide ou erreur) */}
+        {(pool.length > 0 || search) && (
+          <div
+            className="no-scrollbar -mx-4 mt-10 flex gap-2.5 overflow-x-auto px-4 sm:mx-0 sm:justify-center sm:px-0"
+            role="group"
+            aria-label={t("Filtrer par catégorie")}
+            data-wa-hide
+          >
+            {categories.map((cat) => {
+              const isActive = activeCategory === cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => setActiveCategory(cat.id)}
+                  aria-pressed={isActive}
+                  className={cn(
+                    "flex h-11 flex-shrink-0 items-center gap-2 rounded-full border-2 px-5 text-[13px] font-bold uppercase tracking-[0.1em] transition-colors",
+                    isActive ? "border-navy bg-navy text-white" : "border-line text-navy hover:border-navy",
+                  )}
+                >
+                  {t(cat.label)}
+                  <span className={cn("text-[11px]", isActive ? "text-sky" : "text-muted")}>{counts[cat.id] ?? 0}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="mt-12">
+          {loading || searching ? (
+            <div className="flex h-72 items-center justify-center" role="status" aria-label={t("Chargement des véhicules")}>
+              <div className="h-9 w-9 animate-spin rounded-full border-4 border-line border-t-sky" />
+            </div>
+          ) : loadError && !search ? (
+            <div
+              role="alert"
+              className="mx-auto flex max-w-md flex-col items-center gap-4 rounded-3xl border border-line bg-mist px-6 py-12 text-center"
+            >
+              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-navy">
+                <CarFront className="h-6 w-6" strokeWidth={1.8} />
+              </span>
+              <p className="font-semibold text-navy">{t("Impossible de charger les véhicules pour le moment.")}</p>
+              <button
+                type="button"
+                onClick={retry}
+                className="inline-flex h-11 items-center gap-2 rounded-full bg-navy px-5 text-sm font-bold text-white transition-colors hover:bg-navy-soft"
+              >
+                <RotateCw className="h-4 w-4" /> {t("Réessayer")}
+              </button>
             </div>
           ) : filteredCars.length > 0 ? (
-            <>
-              {/* Left Arrow */}
-              <button
-                onClick={goPrev}
-                disabled={currentPage === 0}
-                className="hidden sm:flex absolute left-0 top-1/2 z-10 w-10 h-10 -translate-y-1/2 -translate-x-4 rounded-full items-center justify-center shadow-md border border-gray-100 bg-white hover:scale-110 active:scale-95 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <ChevronLeft className="w-5 h-5 text-brand" />
-              </button>
-
-              {/* Right Arrow */}
-              <button
-                onClick={goNext}
-                disabled={currentPage === totalPages - 1}
-                className="hidden sm:flex absolute right-0 top-1/2 z-10 w-10 h-10 -translate-y-1/2 translate-x-4 rounded-full items-center justify-center shadow-md border border-gray-100 bg-white hover:scale-110 active:scale-95 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <ChevronRight className="w-5 h-5 text-brand" />
-              </button>
-
-              {/* Scrollable Track */}
-              <div
-                ref={scrollRef}
-                className="flex overflow-x-auto snap-x snap-mandatory pb-12"
-                style={{
-                  scrollbarWidth: "none",
-                  msOverflowStyle: "none",
-                  WebkitOverflowScrolling: "touch",
-                }}
-              >
-                {filteredCars.map((car, index) => (
-                  <div
-                    key={car.id}
-                    className="w-full sm:w-1/2 lg:w-1/3 xl:w-1/4 flex-shrink-0 snap-start px-2"
-                  >
-                    <CarCard car={car} index={index} />
-                  </div>
-                ))}
-              </div>
-
-              {/* Pagination Dots */}
-              {totalPages > 1 && (
-                <div className="flex justify-center gap-2 -mt-4">
-                  {Array.from({ length: totalPages }).map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => scrollToPage(i)}
-                      className="rounded-full transition-all duration-300"
-                      style={{
-                        width: i === currentPage ? 28 : 10,
-                        height: 10,
-                        backgroundColor: i === currentPage ? "#43B0E6" : "#e5e7eb",
-                      }}
-                    />
-                  ))}
+            <div className="no-scrollbar -mx-4 flex snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-6 sm:overflow-visible sm:px-0 lg:grid-cols-3 xl:grid-cols-4">
+              {filteredCars.map((car, index) => (
+                <div key={car.id} className="w-[80%] flex-shrink-0 snap-start sm:w-auto">
+                  <CarCard
+                    car={car}
+                    index={index}
+                    quote={
+                      search && quotes.has(car.id)
+                        ? {
+                            days: quotes.get(car.id)!.days,
+                            total: Number(quotes.get(car.id)!.total_price),
+                            base: Number(quotes.get(car.id)!.base_price),
+                            discountLabel: quotes.get(car.id)!.discount_label,
+                            label: quoteLabel,
+                            range: quoteRange,
+                          }
+                        : undefined
+                    }
+                    onBook={() => book(car.id)}
+                  />
                 </div>
-              )}
-            </>
+              ))}
+            </div>
           ) : (
-            <p className="mt-8 text-center text-slate-500">
-              Aucun véhicule ne correspond à votre recherche.
-            </p>
+            <div className="mx-auto flex max-w-md flex-col items-center gap-4 rounded-3xl border border-line bg-mist px-6 py-12 text-center">
+              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-navy">
+                <CarFront className="h-6 w-6" strokeWidth={1.8} />
+              </span>
+              <p className="font-semibold text-muted">
+                {search && free
+                  ? t("Aucun véhicule libre dans cette catégorie sur ces dates. Essayez d'autres dates ou une autre catégorie.")
+                  : cars.length === 0 && !search
+                    ? t("Aucun véhicule disponible pour le moment.")
+                    : t("Aucun véhicule dans cette catégorie pour le moment.")}
+              </p>
+            </div>
           )}
         </div>
       </div>
