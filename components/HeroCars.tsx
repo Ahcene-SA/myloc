@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, useMotionValue, useSpring, useTransform, type MotionValue } from "framer-motion";
+import { AlgiersSkyline } from "./Brand";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
@@ -80,6 +81,7 @@ export function HeroCars({ scrollYProgress, reduce }: { scrollYProgress: MotionV
   // Parallaxe au scroll
   const stageY = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : -70]);
   const stageScale = useTransform(scrollYProgress, [0, 1], [1, reduce ? 1 : 1.12]);
+  const skylineY = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : -30]);
 
   // Parallaxe à la souris (ordinateur uniquement)
   const mx = useMotionValue(0);
@@ -108,6 +110,23 @@ export function HeroCars({ scrollYProgress, reduce }: { scrollYProgress: MotionV
 
   return (
     <div className="relative h-[280px] [perspective:1200px] sm:h-[380px] lg:h-[500px]">
+      {/* Baie d'Alger et Maqam Echahid en filigrane derrière les voitures */}
+      <motion.div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-[-8%] bottom-16 h-[62%] sm:bottom-20"
+        style={{
+          y: skylineY,
+          // Bords fondus : la ville se perd doucement dans le décor
+          maskImage: "linear-gradient(to right, transparent, #000 22%, #000 78%, transparent)",
+          WebkitMaskImage: "linear-gradient(to right, transparent, #000 22%, #000 78%, transparent)",
+        }}
+        initial={reduce ? false : { opacity: 0, y: 30 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1.6, ease }}
+      >
+        <AlgiersSkyline className="inset-0 h-full w-full text-navy opacity-[0.08]" />
+        <span className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-navy/15 to-transparent" />
+      </motion.div>
       <motion.div className="absolute inset-x-0 bottom-10 sm:bottom-14" style={{ y: stageY, scale: stageScale, rotateY: tilt }}>
         {/* ombre au sol */}
         <motion.span
