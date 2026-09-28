@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { motion, useMotionValue, useSpring, useTransform, type MotionValue } from "framer-motion";
-import { CasbahHouses } from "./Casbah";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
@@ -110,70 +109,25 @@ export function HeroCars({ scrollYProgress, reduce }: { scrollYProgress: MotionV
 
   return (
     <div className="relative h-[280px] [perspective:1200px] sm:h-[380px] lg:h-[500px]">
-      {/* Horizon méditerranéen : soleil pâle, mer qui ondule, mouettes */}
+      {/* Vraie photo de la baie d'Alger, adoucie et fondue derrière les voitures */}
       <motion.div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-[-12%] bottom-4 h-[88%]"
+        className="pointer-events-none absolute inset-x-[-14%] bottom-8 h-[80%]"
         style={{
           y: sceneY,
-          // bords fondus : la scène se perd dans le décor
-          maskImage: "radial-gradient(ellipse 50% 60% at 50% 50%, #000 55%, transparent 100%)",
-          WebkitMaskImage: "radial-gradient(ellipse 50% 60% at 50% 50%, #000 55%, transparent 100%)",
+          maskImage: "radial-gradient(ellipse 50% 55% at 50% 55%, #000 45%, transparent 100%)",
+          WebkitMaskImage: "radial-gradient(ellipse 50% 55% at 50% 55%, #000 45%, transparent 100%)",
         }}
-        initial={reduce ? false : { opacity: 0 }}
-        animate={{ opacity: 1 }}
+        initial={reduce ? false : { opacity: 0, scale: 1.04 }}
+        animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 1.8, ease }}
       >
-        <svg viewBox="0 0 800 400" preserveAspectRatio="xMidYMax slice" className="h-full w-full overflow-visible">
-          <defs>
-            <radialGradient id="med-sun-glow">
-              <stop offset="0" stopColor="#ffd9a0" stopOpacity="0.55" />
-              <stop offset="0.45" stopColor="#ffe6c2" stopOpacity="0.25" />
-              <stop offset="1" stopColor="#ffe6c2" stopOpacity="0" />
-            </radialGradient>
-            <linearGradient id="med-sea" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stopColor="#43b0e6" stopOpacity="0.26" />
-              <stop offset="1" stopColor="#43b0e6" stopOpacity="0.04" />
-            </linearGradient>
-            <clipPath id="med-sky">
-              <rect x="-200" y="0" width="1200" height="262" />
-            </clipPath>
-          </defs>
-
-          <g transform="translate(0 -85)">
-          {/* soleil qui se lève sur l'horizon */}
-          <g clipPath="url(#med-sky)">
-            <circle cx="400" cy="262" r="210" fill="url(#med-sun-glow)" />
-            <circle className="med-sun" cx="400" cy="262" r="78" fill="#fff1d9" fillOpacity="0.75" />
-          </g>
-
-          {/* mer */}
-          <rect x="-200" y="262" width="1200" height="230" fill="url(#med-sea)" />
-          <line x1="-200" y1="262" x2="1000" y2="262" stroke="#43b0e6" strokeOpacity="0.35" strokeWidth="1.2" />
-          {/* reflet du soleil */}
-          <g fill="#fff6e6" fillOpacity="0.7">
-            <rect x="350" y="270" width="100" height="3" rx="1.5" />
-            <rect x="366" y="282" width="68" height="3" rx="1.5" />
-            <rect x="380" y="296" width="40" height="3" rx="1.5" />
-            <rect x="390" y="312" width="20" height="3" rx="1.5" />
-          </g>
-          {/* vagues qui ondulent (trois vitesses) */}
-          <g fill="none" strokeLinecap="round">
-            <path className="med-wave med-wave-1" d="M0 275 q30.0 -3 60.0 0 t60.0 0 q30.0 -3 60.0 0 t60.0 0 q30.0 -3 60.0 0 t60.0 0 q30.0 -3 60.0 0 t60.0 0 q30.0 -3 60.0 0 t60.0 0 q30.0 -3 60.0 0 t60.0 0 q30.0 -3 60.0 0 t60.0 0 q30.0 -3 60.0 0 t60.0 0 q30.0 -3 60.0 0 t60.0 0 q30.0 -3 60.0 0 t60.0 0 q30.0 -3 60.0 0 t60.0 0 q30.0 -3 60.0 0 t60.0 0 q30.0 -3 60.0 0 t60.0 0 q30.0 -3 60.0 0 t60.0 0 q30.0 -3 60.0 0 t60.0 0" stroke="#ffffff" strokeOpacity="0.8" strokeWidth="1.6" transform="translate(-460 0)" />
-            <path className="med-wave med-wave-2" d="M0 300 q40.0 -4 80.0 0 t80.0 0 q40.0 -4 80.0 0 t80.0 0 q40.0 -4 80.0 0 t80.0 0 q40.0 -4 80.0 0 t80.0 0 q40.0 -4 80.0 0 t80.0 0 q40.0 -4 80.0 0 t80.0 0 q40.0 -4 80.0 0 t80.0 0 q40.0 -4 80.0 0 t80.0 0 q40.0 -4 80.0 0 t80.0 0 q40.0 -4 80.0 0 t80.0 0 q40.0 -4 80.0 0 t80.0 0" stroke="#43b0e6" strokeOpacity="0.28" strokeWidth="1.6" transform="translate(-460 0)" />
-            <path className="med-wave med-wave-3" d="M0 335 q50.0 -5 100.0 0 t100.0 0 q50.0 -5 100.0 0 t100.0 0 q50.0 -5 100.0 0 t100.0 0 q50.0 -5 100.0 0 t100.0 0 q50.0 -5 100.0 0 t100.0 0 q50.0 -5 100.0 0 t100.0 0 q50.0 -5 100.0 0 t100.0 0 q50.0 -5 100.0 0 t100.0 0 q50.0 -5 100.0 0 t100.0 0" stroke="#43b0e6" strokeOpacity="0.2" strokeWidth="2" transform="translate(-460 0)" />
-          </g>
-
-          {/* Casbah blanche qui descend vers la mer */}
-          <CasbahHouses />
-
-          {/* mouettes */}
-          <g fill="none" stroke="#0b1f3a" strokeOpacity="0.35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path className="med-gull" d="M250 120 q9 -9 18 0 q9 -9 18 0" />
-            <path className="med-gull med-gull-2" d="M300 92 q6 -6 12 0 q6 -6 12 0" />
-          </g>
-          </g>
-        </svg>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="images/decor/baie-alger.webp"
+          alt=""
+          className="h-full w-full object-cover object-[50%_30%] opacity-55 blur-[2px] saturate-[0.9]"
+        />
       </motion.div>
       <motion.div className="absolute inset-x-0 bottom-10 sm:bottom-14" style={{ y: stageY, scale: stageScale, rotateY: tilt }}>
         {/* ombre au sol */}

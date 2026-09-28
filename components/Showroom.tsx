@@ -81,6 +81,15 @@ function PinnedShowroom({ cars }: { cars: ShowCar[] }) {
   return (
     <section ref={ref} aria-label={t("La flotte en scène")} className="relative bg-navy" style={{ height: `${n * 90 + 40}vh` }}>
       <div className="sticky top-0 flex h-[100svh] flex-col overflow-hidden text-white">
+        {/* Alger au coucher du soleil en arrière-plan, assombri pour garder les voitures en vedette */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="images/decor/alger-coucher.webp"
+          alt=""
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover object-[50%_40%] opacity-60 blur-[1px]"
+        />
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-b from-navy/95 via-navy/35 to-navy" />
         <div
           aria-hidden="true"
           className="absolute left-1/2 top-[38%] h-[80vmin] w-[80vmin] -translate-x-1/2 -translate-y-1/2 rounded-full"
