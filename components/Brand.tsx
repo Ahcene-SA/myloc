@@ -30,9 +30,15 @@ export function Logo({ light = false, compact = false, className }: { light?: bo
           MYLOC<span className="text-sky">.DZ</span>
         </span>
         {!compact && (
-          <span className={cn("mt-1 text-[9.5px] font-medium tracking-[0.34em]", light ? "text-white/70" : "text-navy/75")}>
-            CAR RENTAL
-          </span>
+          <>
+            {/* Slogan traduit par CSS (variante rtl, basée sur :lang : pas d'attribut lang ici) : le logo reste utilisable hors du contexte de langue */}
+            <span className={cn("mt-1 text-[9.5px] font-medium tracking-[0.34em] rtl:hidden", light ? "text-white/70" : "text-navy/75")}>
+              CAR RENTAL
+            </span>
+            <span className={cn("mt-1 hidden text-[12px] font-semibold rtl:block", light ? "text-white/70" : "text-navy/75")}>
+              تأجير السيارات
+            </span>
+          </>
         )}
       </span>
     </span>

@@ -13,6 +13,7 @@ import {
   LogOut,
   PlusCircle,
   Wallet,
+  X,
 } from "lucide-react";
 import { useAdmin } from "../AdminContext";
 import { useAuth } from "../AuthContext";
@@ -50,6 +51,9 @@ export function DashboardView() {
   const pending = reservations
     .filter((r) => r.status === "pending")
     .sort((a, b) => (a.created_at || "").localeCompare(b.created_at || ""));
+  // Demandes dont la date de départ est passée : à refuser (ou à régulariser), pas à confirmer
+  const pendingFresh = pending.filter((r) => (r.start_date || "") >= today);
+  const pendingOverdue = pending.filter((r) => (r.start_date || "") < today);
   const confirmed = reservations.filter((r) => r.status === "confirmed");
   const ongoing = confirmed.filter((r) => phaseOf(r, today) === "ongoing");
   const onSite = cars.filter((c) => c.status === "available");
@@ -73,7 +77,11 @@ export function DashboardView() {
     {
       label: "À traiter",
       value: String(pending.length),
-      hint: pending.length ? "demande(s) en attente" : "rien en attente",
+      hint: pendingOverdue.length
+        ? `dont ${pendingOverdue.length} à date dépassée`
+        : pending.length
+          ? "demande(s) en attente"
+          : "rien en attente",
       icon: Inbox,
       go: () => showReservations("pending"),
       alert: pending.length > 0,
@@ -148,7 +156,8 @@ export function DashboardView() {
         ))}
       </div>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[1.25fr_1fr]">
+      {/* items-start : la carte « Aujourd'hui et demain » garde sa hauteur naturelle */}
+      <div className="mt-6 grid items-start gap-6 xl:grid-cols-[1.25fr_1fr]">
         {/* Demandes à traiter */}
         <Card className="p-6">
           <div className="mb-4 flex items-center justify-between">
@@ -164,11 +173,28 @@ export function DashboardView() {
               Aucune demande en attente. Les nouvelles réservations du site arriveront ici.
             </p>
           ) : (
-            <ul className="flex flex-col gap-3">
-              {pending.slice(0, 5).map((r) => (
-                <PendingRow key={r.id} r={r} onOpen={() => openReservation(r.id)} />
-              ))}
-            </ul>
+            <>
+              {pendingFresh.length > 0 && (
+                <ul className="flex flex-col gap-3">
+                  {pendingFresh.slice(0, 5).map((r) => (
+                    <PendingRow key={r.id} r={r} onOpen={() => openReservation(r.id)} />
+                  ))}
+                </ul>
+              )}
+              {pendingOverdue.length > 0 && (
+                <div className={cn(pendingFresh.length > 0 && "mt-5 border-t border-line pt-4")}>
+                  <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.16em] text-red-700">
+                    Date de départ dépassée ({pendingOverdue.length})
+                  </p>
+                  <p className="mb-3 text-xs text-muted">Demandes restées sans réponse : refusez-les, ou ouvrez-les pour changer les dates.</p>
+                  <ul className="flex flex-col gap-3">
+                    {pendingOverdue.slice(0, 5).map((r) => (
+                      <PendingRow key={r.id} r={r} overdue onOpen={() => openReservation(r.id)} />
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </>
           )}
         </Card>
 
@@ -244,17 +270,18 @@ export function DashboardView() {
   );
 }
 
-function PendingRow({ r, onOpen }: { r: ReservationFromApi; onOpen: () => void }) {
+function PendingRow({ r, onOpen, overdue = false }: { r: ReservationFromApi; onOpen: () => void; overdue?: boolean }) {
   const { upsertReservation } = useAdmin();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
-  const confirm = async () => {
+  // Date dépassée : l'action proposée est de refuser la demande (et non de la confirmer)
+  const decide = async (status: "confirmed" | "rejected") => {
     setBusy(true);
     setErr("");
     try {
-      const updated = await updateReservationStatus(r.id, "confirmed");
-      upsertReservation({ ...r, ...(updated || {}), status: "confirmed" });
+      const updated = await updateReservationStatus(r.id, status, status === "rejected" ? "Date de départ dépassée." : undefined);
+      upsertReservation({ ...r, ...(updated || {}), status });
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Action impossible.");
       setBusy(false);
@@ -262,11 +289,16 @@ function PendingRow({ r, onOpen }: { r: ReservationFromApi; onOpen: () => void }
   };
 
   return (
-    <li className="rounded-2xl border border-line p-4">
+    <li className={cn("rounded-2xl border p-4", overdue ? "border-red-200 bg-red-50/40" : "border-line")}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <button type="button" onClick={onOpen} className="min-w-0 text-left">
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
             {reservationRef(r.id)} · reçue {formatDateTime(r.created_at)} <SourceBadge source={r.source} />
+            {overdue && (
+              <span className="ms-1 inline-flex rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold normal-case tracking-normal text-red-700">
+                Date dépassée
+              </span>
+            )}
           </p>
           <p className="mt-1 font-extrabold text-navy">
             {r.full_name} <span className="font-semibold text-muted">· {r.car_name}</span>
@@ -283,15 +315,27 @@ function PendingRow({ r, onOpen }: { r: ReservationFromApi; onOpen: () => void }
           >
             Détails
           </button>
-          <button
-            type="button"
-            onClick={confirm}
-            disabled={busy}
-            className="inline-flex h-10 items-center gap-1.5 rounded-full bg-emerald-600 px-4 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-60"
-          >
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-            Confirmer
-          </button>
+          {overdue ? (
+            <button
+              type="button"
+              onClick={() => decide("rejected")}
+              disabled={busy}
+              className="inline-flex h-10 items-center gap-1.5 rounded-full bg-red-600 px-4 text-xs font-bold text-white hover:bg-red-700 disabled:opacity-60"
+            >
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
+              Refuser
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => decide("confirmed")}
+              disabled={busy}
+              className="inline-flex h-10 items-center gap-1.5 rounded-full bg-emerald-600 px-4 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-60"
+            >
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+              Confirmer
+            </button>
+          )}
         </div>
       </div>
       {err && <p className="mt-2 text-sm font-semibold text-red-700">{err}</p>}

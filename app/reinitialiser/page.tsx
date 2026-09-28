@@ -1,11 +1,16 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { Mail, Lock, Eye, EyeOff, ArrowRight, MailCheck, CheckCircle2, Loader2 } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowRight, MailCheck, CheckCircle2, Loader2, RefreshCw } from "lucide-react";
 import { AuthShell, AuthField, AuthError, authSubmitClass } from "@/components/AuthShell";
-import { checkResetToken, requestPasswordReset, resetPassword } from "@/lib/api";
+import { HttpError, checkResetToken, requestPasswordReset, resetPassword } from "@/lib/api";
 import { pageUrl } from "@/lib/routes";
 import { useLang } from "@/lib/i18n";
+
+/** Page « mot de passe oublié », en gardant ?equipe=1 pour l'espace agence. */
+function resetPageUrl(team: boolean): string {
+  return team ? `${pageUrl("reinitialiser")}?equipe=1` : pageUrl("reinitialiser");
+}
 
 type Params = { token: string; team: boolean };
 const noParams: Params = { token: "", team: false };
@@ -47,7 +52,7 @@ export default function ResetPasswordPage() {
       image="images/cars/jetour-x70-plus.png"
       imageAlt="Jetour X70 Plus"
     >
-      {!mounted ? null : params.token ? <NewPasswordForm token={params.token} /> : <RequestForm team={params.team} />}
+      {!mounted ? null : params.token ? <NewPasswordForm token={params.token} team={params.team} /> : <RequestForm team={params.team} />}
     </AuthShell>
   );
 }
@@ -67,7 +72,7 @@ function RequestForm({ team }: { team: boolean }) {
     try {
       setSent(await requestPasswordReset(email.trim()));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossible de joindre le serveur.");
+      setError(err instanceof Error ? err.message : t("Impossible de joindre le serveur."));
     } finally {
       setLoading(false);
     }
@@ -123,9 +128,11 @@ function RequestForm({ team }: { team: boolean }) {
   );
 }
 
-function NewPasswordForm({ token }: { token: string }) {
+function NewPasswordForm({ token, team }: { token: string; team: boolean }) {
   const { t } = useLang();
-  const [check, setCheck] = useState<{ ok: boolean; firstName?: string; staff?: boolean; error?: string } | null>(null);
+  // invalid : le serveur a refusé le lien (410) ; sinon (réseau, serveur) on propose de réessayer
+  const [check, setCheck] = useState<{ ok: boolean; firstName?: string; staff?: boolean; error?: string; invalid?: boolean } | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [show, setShow] = useState(false);
@@ -137,11 +144,20 @@ function NewPasswordForm({ token }: { token: string }) {
     let cancelled = false;
     checkResetToken(token)
       .then((r) => !cancelled && setCheck({ ok: true, firstName: r.first_name, staff: r.staff }))
-      .catch((e) => !cancelled && setCheck({ ok: false, error: e instanceof Error ? e.message : "Lien invalide." }));
+      .catch((e) => {
+        if (cancelled) return;
+        const invalid = e instanceof HttpError && (e.status === 410 || e.status === 400 || e.status === 404);
+        setCheck({ ok: false, invalid, error: e instanceof Error ? e.message : undefined });
+      });
     return () => {
       cancelled = true;
     };
-  }, [token]);
+  }, [token, attempt]);
+
+  const retry = () => {
+    setCheck(null);
+    setAttempt((n) => n + 1);
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -157,7 +173,7 @@ function NewPasswordForm({ token }: { token: string }) {
       localStorage.removeItem("myloc_token");
       localStorage.removeItem("myloc_user");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossible de joindre le serveur.");
+      setError(err instanceof Error ? err.message : t("Impossible de joindre le serveur."));
     } finally {
       setLoading(false);
     }
@@ -171,11 +187,24 @@ function NewPasswordForm({ token }: { token: string }) {
     );
   }
 
+  if (!check.ok && !check.invalid) {
+    // Coupure réseau ou serveur indisponible : le lien est peut-être encore bon
+    return (
+      <div className="flex flex-col gap-5">
+        <AuthError message={check.error || t("Impossible de joindre le serveur. Vérifiez votre connexion.")} />
+        <button type="button" onClick={retry} className={authSubmitClass}>
+          <RefreshCw className="h-5 w-5" />
+          {t("Réessayer")}
+        </button>
+      </div>
+    );
+  }
+
   if (!check.ok) {
     return (
       <div className="flex flex-col gap-5">
-        <AuthError message={t(check.error ?? "Lien invalide.")} />
-        <a href={pageUrl("reinitialiser")} className={authSubmitClass}>
+        <AuthError message={check.error || t("Lien invalide.")} />
+        <a href={resetPageUrl(team || !!check.staff)} className={authSubmitClass}>
           {t("Demander un nouveau lien")}
           <ArrowRight className="flip-rtl h-5 w-5" />
         </a>

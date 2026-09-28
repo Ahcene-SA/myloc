@@ -13,6 +13,7 @@ import {
   daysLabel,
   formatDate,
   formatPrice,
+  isExpiredPending,
   isPast,
   paymentLabels,
   reservationRef,
@@ -36,7 +37,8 @@ export function PaiementsView() {
   if (error) return <ErrorBlock message={error} onRetry={refresh} />;
 
   const billable = reservations
-    .filter((r) => r.status === "pending" || r.status === "confirmed")
+    // Une demande restée en attente après sa date de départ n'est pas à régler
+    .filter((r) => r.status === "confirmed" || (r.status === "pending" && !isExpiredPending(r)))
     .sort((a, b) => (b.start_date || "").localeCompare(a.start_date || ""));
   const toPay = billable.filter((r) => !isPast(r)).reduce((s, r) => s + amount(r.total_price), 0);
   const finished = billable.filter((r) => r.status === "confirmed" && isPast(r)).reduce((s, r) => s + amount(r.total_price), 0);
@@ -85,7 +87,9 @@ export function PaiementsView() {
                 {billable.map((r) => (
                   <tr key={r.id}>
                     <td className="px-6 py-4">
-                      <p className="font-bold text-navy">{r.car_name}</p>
+                      <p className="font-bold text-navy">
+                        <bdi dir="ltr">{r.car_name}</bdi>
+                      </p>
                       <p className="text-xs text-muted">{reservationRef(r.id)}</p>
                     </td>
                     <td className="px-3 py-4 text-ink-soft">

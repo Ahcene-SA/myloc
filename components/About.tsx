@@ -14,7 +14,7 @@ const points = [
 ];
 
 export function About() {
-  const { t, lang } = useLang();
+  const { t } = useLang();
   return (
     <section id="a-propos" className="relative overflow-hidden bg-white py-20 lg:py-28">
       <div className="mx-auto grid max-w-7xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-2 lg:gap-20 lg:px-8">
@@ -27,19 +27,10 @@ export function About() {
               {t("Location de véhicules en")} <strong className="font-extrabold text-navy">{t("Algérie")}</strong>
             </span>
             <p className="mt-4 text-[30px] font-extrabold uppercase leading-[1.02] text-navy sm:text-4xl">
-              {lang === "ar" ? (
-                <>
-                  <Sky>{t("Votre mobilité,")}</Sky>
-                  <br />
-                  {t("notre priorité")}
-                </>
-              ) : (
-                <>
-                  Votre <Sky>mobilité</Sky>,
-                  <br />
-                  notre priorité
-                </>
-              )}
+              {/* Accroche propre à cette carte (le titre du hero n'est pas répété) */}
+              {t("Prenez la route")}
+              <br />
+              <Sky>{t("l'esprit léger")}</Sky>
             </p>
             <span className="mt-4 block h-[3px] w-14 rounded-full bg-sky" />
             <motion.div

@@ -246,6 +246,18 @@ html[lang="ar"] body {
 html[lang="ar"] * {
   letter-spacing: 0 !important;
 }
+/* Lisibilité en arabe : les petites tailles pensées pour des majuscules latines espacées
+   sont trop petites pour l'écriture arabe (surtitres, étiquettes, chiffres clés). */
+html[lang="ar"] .kicker,
+html[lang="ar"] .text-\[9\.5px\],
+html[lang="ar"] .text-\[10px\],
+html[lang="ar"] .text-\[11px\] {
+  font-size: 13px;
+  line-height: 1.5;
+}
+html[lang="ar"] .nav-link {
+  font-size: 14px;
+}
 /* Flèches et chevrons pointent dans le sens de lecture */
 html[dir="rtl"] .flip-rtl {
   transform: scaleX(-1);

@@ -205,4 +205,32 @@ export const arClient: Record<string, string> = {
     "الوفاء: بقيت {n} كراءات منتهية للاستفادة من تخفيض {percent}% على حجوزاتك القادمة.",
   "Prix final, assurance et assistance incluses. Réglé à la remise des clés.":
     "السعر نهائي، التأمين والمساعدة مشمولان. يُدفع عند تسليم المفاتيح.",
+
+  // Réserver : étapes, prix, brouillon
+  "Étape {n}/{total} · {label}": "الخطوة {n}/{total} · {label}",
+  "Étapes de la réservation": "مراحل الحجز",
+  "Prix à confirmer par l'agence": "السعر تؤكده الوكالة",
+
+  // Mes réservations : demande restée sans réponse
+  "Expirée": "منتهية",
+  "L'agence n'a pas confirmé cette demande avant la date de départ. Contactez-la ou faites une nouvelle demande.":
+    "لم تؤكد الوكالة هذا الطلب قبل تاريخ الانطلاق. اتصلوا بها أو قدّموا طلبًا جديدًا.",
+
+  // État des lieux : photos
+  "{title} : photo {n} sur {total} (nouvel onglet)": "{title}: الصورة {n} من {total} (علامة تبويب جديدة)",
+
+  // Réseau
+  "Impossible de joindre le serveur. Vérifiez votre connexion.": "تعذّر الاتصال بالخادم. تحقّق من اتصالك بالإنترنت.",
+
+  // Messages du serveur visibles par le client
+  "Email ou mot de passe invalide.": "البريد الإلكتروني أو كلمة المرور غير صالحة.",
+  "Choisissez un mot de passe différent de l'actuel.": "اختر كلمة مرور مختلفة عن الحالية.",
+  "Mot de passe modifié. Vos autres appareils ont été déconnectés.": "تم تغيير كلمة المرور. تم تسجيل خروج أجهزتك الأخرى.",
+  "Route not found.": "الخدمة غير متاحة حاليًا. أعد المحاولة لاحقًا.",
+  "Session fermée : reconnectez-vous.": "تم إغلاق الجلسة: سجّل الدخول من جديد.",
+  "Connectez-vous depuis l'espace agence.": "سجّل الدخول من فضاء الوكالة.",
+  "Montant trop élevé : contactez l'agence.": "المبلغ مرتفع جدًا: اتصلوا بالوكالة.",
+  "Les réservations en ligne sont possibles jusqu'à 12 mois à l'avance.": "الحجز عبر الإنترنت ممكن حتى 12 شهرًا مسبقًا.",
+  "Vous avez déjà 3 demandes en attente : attendez la réponse de l'agence avant d'en faire une autre.":
+    "لديك بالفعل 3 طلبات قيد الانتظار: انتظر رد الوكالة قبل تقديم طلب آخر.",
 };

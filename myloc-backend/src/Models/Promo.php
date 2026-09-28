@@ -59,10 +59,30 @@ class Promo
         $stmt->execute([':id' => $id]);
     }
 
-    public function incrementUses(string $code): void
+    /**
+     * Compte une utilisation seulement s'il en reste (max_uses) : false si le code est épuisé.
+     * La condition est dans l'UPDATE, deux réservations simultanées ne peuvent pas dépasser la limite.
+     */
+    public function incrementUses(string $code): bool
+    {
+        $stmt = $this->pdo->prepare('UPDATE promo_codes SET uses = uses + 1
+            WHERE code = :code AND (max_uses IS NULL OR uses < max_uses)');
+        $stmt->execute([':code' => strtoupper(trim($code))]);
+        return $stmt->rowCount() === 1;
+    }
+
+    /** Compte une utilisation sans vérifier la limite (réactivation décidée par l'agence). */
+    public function forceIncrementUses(string $code): void
     {
         $stmt = $this->pdo->prepare('UPDATE promo_codes SET uses = uses + 1 WHERE code = :code');
-        $stmt->execute([':code' => $code]);
+        $stmt->execute([':code' => strtoupper(trim($code))]);
+    }
+
+    /** Rend une utilisation (réservation refusée ou annulée), sans descendre sous 0. */
+    public function decrementUses(string $code): void
+    {
+        $stmt = $this->pdo->prepare('UPDATE promo_codes SET uses = uses - 1 WHERE code = :code AND uses > 0');
+        $stmt->execute([':code' => strtoupper(trim($code))]);
     }
 
     private function params(array $d): array

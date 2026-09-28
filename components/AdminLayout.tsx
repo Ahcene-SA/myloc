@@ -24,7 +24,7 @@ export function AdminLayout() {
   // L'administration et le contrat sont en français
   const { lang } = useLang();
   useEffect(() => {
-    if (lang !== "fr") setLang("fr");
+    if (lang !== "fr") setLang("fr", { persist: false }); // sans effacer le choix du client
   }, [lang]);
 
   // Accès réservé à l'équipe de l'agence (connexion par l'espace agence)

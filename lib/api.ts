@@ -18,11 +18,15 @@ export function getApiBase(): string {
     return (window as unknown as Record<string, string>).MYLOC_API_URL.replace(/\/$/, "");
   }
 
-  try {
-    const stored = localStorage.getItem("myloc_api_url");
-    if (stored) return stored.replace(/\/$/, "");
-  } catch {
-    // localStorage may be unavailable (private mode, file://, etc.)
+  // Surcharge locale (tests) : jamais en production, sinon un script injecté
+  // pourrait détourner toutes les requêtes (et le jeton) vers un autre serveur.
+  if (process.env.NODE_ENV !== "production") {
+    try {
+      const stored = localStorage.getItem("myloc_api_url");
+      if (stored) return stored.replace(/\/$/, "");
+    } catch {
+      // localStorage may be unavailable (private mode, file://, etc.)
+    }
   }
 
   const envUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -40,6 +44,15 @@ export class HttpError extends Error {
   constructor(message: string, status: number) {
     super(message);
     this.status = status;
+  }
+}
+
+export const NETWORK_ERROR_MESSAGE = "Impossible de joindre le serveur. Vérifiez votre connexion.";
+
+/** Le serveur n'a pas pu être joint (aucune réponse HTTP). */
+export class NetworkError extends Error {
+  constructor() {
+    super(translate(NETWORK_ERROR_MESSAGE));
   }
 }
 
@@ -139,11 +152,17 @@ async function request<T>(
     headers["Authorization"] = `Bearer ${sentToken}`;
   }
 
-  const response = await fetch(url, {
-    method,
-    headers,
-    body: body ? (body instanceof FormData ? body : JSON.stringify(body)) : undefined,
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method,
+      headers,
+      body: body ? (body instanceof FormData ? body : JSON.stringify(body)) : undefined,
+    });
+  } catch {
+    // Coupure réseau / serveur éteint : pas de « Failed to fetch » brut à l'écran
+    throw new NetworkError();
+  }
 
   const data = (await response.json().catch(() => ({
     success: false,
@@ -357,11 +376,12 @@ export async function uploadCarImage(file: File): Promise<string> {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers,
-    body: formData,
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, { method: "POST", headers, body: formData });
+  } catch {
+    throw new NetworkError();
+  }
 
   const data = (await response.json().catch(() => ({
     success: false,
@@ -492,13 +512,28 @@ export async function updateProfile(fullName: string, phone: string): Promise<Us
   return res.user;
 }
 
-export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
-  await request<unknown>(
+/**
+ * Change le mot de passe. Le serveur révoque les autres sessions et renvoie un nouveau
+ * jeton pour celle-ci : on l'enregistre comme à la connexion (clé myloc_token), sinon
+ * la session courante serait déconnectée à la requête suivante.
+ * Renvoie le nouveau jeton (ou null si le serveur n'en envoie pas).
+ */
+export async function changePassword(currentPassword: string, newPassword: string): Promise<string | null> {
+  const res = await request<{ success: boolean; token?: string }>(
     "PUT",
     "/auth/password",
     { current_password: currentPassword, new_password: newPassword },
     true
   );
+  const token = typeof res.token === "string" && res.token ? res.token : null;
+  if (token && typeof window !== "undefined") {
+    try {
+      localStorage.setItem("myloc_token", token);
+    } catch {
+      /* navigation privée */
+    }
+  }
+  return token;
 }
 
 /** URL complète d'une image renvoyée par l'API (chemin relatif → servi par le backend). */

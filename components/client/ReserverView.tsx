@@ -12,7 +12,6 @@ import {
   fetchQuote,
   type BookedRange,
   type PricingQuote,
-  type CarFromApi,
   type PaymentMethod,
   type ReservationFromApi,
 } from "@/lib/api";
@@ -23,6 +22,7 @@ import {
   Card,
   EmptyState,
   ErrorBlock,
+  HOME_PICKUP_PREFIX,
   LoadingBlock,
   PageTitle,
   categoryLabel,
@@ -72,8 +72,43 @@ interface FormState {
   accepted: boolean;
 }
 
-function priceOf(car?: CarFromApi | null) {
-  return car ? parseFloat(String(car.price_per_day)) || 0 : 0;
+/**
+ * Brouillon de la réservation en cours (onglet courant uniquement) : changer de langue
+ * ré-affiche toute l'application, le formulaire est ainsi retrouvé tel quel.
+ * Effacé à l'envoi et à la déconnexion (voir AuthContext).
+ */
+const DRAFT_KEY = "myloc_reserver_draft";
+const DRAFT_TTL = 2 * 3600_000;
+
+interface Draft {
+  origin: string;
+  savedAt: number;
+  step: number;
+  carId: number | null;
+  category: string;
+  form: FormState;
+  promoInput: string;
+  appliedCode: string;
+}
+
+function readDraft(origin: string): Draft | null {
+  try {
+    const raw = sessionStorage.getItem(DRAFT_KEY);
+    if (!raw) return null;
+    const d = JSON.parse(raw) as Draft;
+    if (d.origin !== origin || !d.form || Date.now() - d.savedAt > DRAFT_TTL) return null;
+    return d;
+  } catch {
+    return null;
+  }
+}
+
+function clearDraft() {
+  try {
+    sessionStorage.removeItem(DRAFT_KEY);
+  } catch {
+    /* navigation privée */
+  }
 }
 
 function transmissionLabel(t?: string) {
@@ -86,15 +121,19 @@ export function ReserverView() {
   const { t } = useLang();
   const { cars, loading, error, refresh, preselectedCarId, bookingPrefill, upsertReservation, setActiveTab } = useClient();
 
-  const [step, setStep] = useState(preselectedCarId ? 2 : 1);
-  const [carId, setCarId] = useState<number | null>(preselectedCarId);
-  const [category, setCategory] = useState("all");
+  // Même clé que dans ClientContent : un brouillon ne sert que pour la même entrée
+  const origin = String(preselectedCarId ?? "all");
+  const [draft] = useState(() => (bookingPrefill ? null : readDraft(origin)));
+
+  const [step, setStep] = useState(draft?.step ?? (preselectedCarId ? 2 : 1));
+  const [carId, setCarId] = useState<number | null>(draft ? draft.carId : preselectedCarId);
+  const [category, setCategory] = useState(draft?.category ?? "all");
   const [bookedState, setBookedState] = useState<{ carId: number | null; ranges: BookedRange[] }>({ carId: null, ranges: [] });
   const [stepError, setStepError] = useState("");
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState<ReservationFromApi | null>(null);
 
-  const [form, setForm] = useState<FormState>(() => ({
+  const [form, setForm] = useState<FormState>(() => draft?.form ?? {
     pickupPlace: bookingPrefill?.pickupPlace || site.agencies[0],
     pickupAddress: bookingPrefill?.pickupAddress || "",
     pickupDate: bookingPrefill?.start || "",
@@ -112,7 +151,7 @@ export function ReserverView() {
     note: "",
     payment: "especes",
     accepted: false,
-  }));
+  });
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => setForm((f) => ({ ...f, [key]: value }));
 
   const car = cars.find((c) => c.id === carId) || null;
@@ -132,16 +171,20 @@ export function ReserverView() {
   const days = daysBetween(form.pickupDate, form.returnDate);
 
   // Devis serveur : remise durée / fidélité / code promo (la plus avantageuse)
-  const [promoInput, setPromoInput] = useState("");
-  const [appliedCode, setAppliedCode] = useState("");
+  const [promoInput, setPromoInput] = useState(draft?.promoInput ?? "");
+  const [appliedCode, setAppliedCode] = useState(draft?.appliedCode ?? "");
   const quoteKey = car && days > 0 ? `${car.id}|${form.pickupDate}|${form.returnDate}|${appliedCode}` : "";
-  const [quoteState, setQuoteState] = useState<{ key: string; quote: PricingQuote | null }>({ key: "", quote: null });
+  const [quoteState, setQuoteState] = useState<{ key: string; quote: PricingQuote | null; failed: boolean }>({
+    key: "",
+    quote: null,
+    failed: false,
+  });
   useEffect(() => {
     if (!quoteKey || !car) return;
     let cancelled = false;
     fetchQuote(car.id, form.pickupDate, form.returnDate, appliedCode || undefined)
-      .then((q) => !cancelled && setQuoteState({ key: quoteKey, quote: q }))
-      .catch(() => !cancelled && setQuoteState({ key: quoteKey, quote: null }));
+      .then((q) => !cancelled && setQuoteState({ key: quoteKey, quote: q, failed: false }))
+      .catch(() => !cancelled && setQuoteState({ key: quoteKey, quote: null, failed: true }));
     return () => {
       cancelled = true;
     };
@@ -149,7 +192,20 @@ export function ReserverView() {
   }, [quoteKey]);
   const quote = quoteState.key === quoteKey ? quoteState.quote : null;
   const quoting = !!quoteKey && quoteState.key !== quoteKey;
-  const total = quote ? quote.total_price : days * priceOf(car);
+  // Devis impossible (réseau, serveur) : pas de total inventé, l'agence confirmera le prix
+  const quoteFailed = !!quoteKey && quoteState.key === quoteKey && quoteState.failed;
+  const totalLabel = !car || days < 1 ? "—" : quote ? formatPrice(quote.total_price) : quoteFailed ? null : "…";
+
+  // Sauvegarde du brouillon à chaque modification
+  useEffect(() => {
+    if (done) return;
+    try {
+      const d: Draft = { origin, savedAt: Date.now(), step, carId, category, form, promoInput, appliedCode };
+      sessionStorage.setItem(DRAFT_KEY, JSON.stringify(d));
+    } catch {
+      /* navigation privée */
+    }
+  }, [origin, step, carId, category, form, promoInput, appliedCode, done]);
   const conflict = useMemo(
     () =>
       !!form.pickupDate &&
@@ -224,13 +280,14 @@ export function ReserverView() {
         phone: form.phone.trim(),
         pickup_place: form.pickupPlace,
         pickup_time: form.pickupTime,
-        return_place: returnPlace === HOME ? `Récupération à domicile : ${returnAddress.trim()}`.slice(0, 150) : returnPlace,
+        return_place: returnPlace === HOME ? `${HOME_PICKUP_PREFIX}${returnAddress.trim()}`.slice(0, 150) : returnPlace,
         return_time: form.returnTime,
         delivery_address: form.pickupPlace === HOME ? form.pickupAddress.trim() : undefined,
         license_number: form.license.trim(),
         payment_method: form.payment,
         client_note: form.note.trim() || undefined,
-        promo_code: quote?.promo_code || undefined,
+        // Le code saisi est envoyé tel quel : le serveur recalcule la meilleure remise
+        promo_code: appliedCode || undefined,
       });
       const saved: ReservationFromApi = {
         ...(res.reservation as ReservationFromApi),
@@ -239,6 +296,7 @@ export function ReserverView() {
         car_image_url: car.image_url,
       };
       upsertReservation(saved);
+      clearDraft();
       setDone(saved);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (e) {
@@ -292,7 +350,10 @@ export function ReserverView() {
       <PageTitle kicker={t("Nouvelle réservation")} title={t("Réserver un véhicule")} />
 
       {/* Étapes */}
-      <ol className="mb-6 grid grid-cols-4 gap-2">
+      <p className="mb-2 text-xs font-bold text-navy sm:hidden" aria-live="polite">
+        {t("Étape {n}/{total} · {label}", { n: step, total: STEPS.length, label: t(STEPS[step - 1]) })}
+      </p>
+      <ol className="mb-6 grid grid-cols-4 gap-2" aria-label={t("Étapes de la réservation")}>
         {STEPS.map((label, i) => {
           const n = i + 1;
           const state = n < step ? "done" : n === step ? "current" : "todo";
@@ -302,6 +363,8 @@ export function ReserverView() {
                 type="button"
                 onClick={() => n < step && goTo(n)}
                 disabled={n >= step}
+                aria-current={state === "current" ? "step" : undefined}
+                aria-label={t("Étape {n}/{total} · {label}", { n, total: STEPS.length, label: t(label) })}
                 className="flex w-full flex-col gap-2 text-start disabled:cursor-default"
               >
                 <span className={cn("h-1.5 rounded-full", state === "todo" ? "bg-line" : "bg-sky")} />
@@ -381,7 +444,9 @@ export function ReserverView() {
                         <span className="flex flex-1 flex-col gap-2 p-4">
                           <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted">{categoryLabel(c.category)}</span>
                           <span className="text-lg font-extrabold uppercase leading-tight text-navy">
-                            {brand} <span className="text-sky-gradient">{model}</span>
+                            <bdi dir="ltr">
+                              {brand} <span className="text-sky-gradient">{model}</span>
+                            </bdi>
                           </span>
                           <span className="flex gap-3 text-xs font-semibold text-muted">
                             <span className="flex items-center gap-1">
@@ -662,31 +727,54 @@ export function ReserverView() {
             </p>
           )}
 
-          <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
-            {step > 1 ? (
-              <button type="button" onClick={() => goTo(step - 1)} className={secondaryBtn}>
-                <ArrowLeft className="flip-rtl h-4 w-4" />
-                {t("Retour")}
-              </button>
-            ) : (
-              <span />
+          {/* Actions : barre collante en bas de l'écran sur mobile/tablette, avec le total
+              (le récapitulatif complet est plus bas), en ligne sur grand écran. */}
+          <div className="sticky bottom-0 z-20 mt-6 rounded-t-3xl border border-b-0 border-line bg-white/95 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 shadow-[0_-8px_24px_-12px_rgba(10,31,68,0.25)] backdrop-blur xl:static xl:rounded-none xl:border-0 xl:bg-transparent xl:p-0 xl:shadow-none xl:backdrop-blur-none">
+            {car && days > 0 && (
+              <div className="mb-3 flex items-center justify-between gap-3 xl:hidden">
+                <span className="flex-shrink-0 whitespace-nowrap text-xs font-bold uppercase tracking-wide text-muted">
+                  {t("Total")} · {daysLabel(days)}
+                </span>
+                {totalLabel === null ? (
+                  <span className="min-w-0 text-end text-sm font-bold leading-tight text-amber-800">{t("Prix à confirmer par l'agence")}</span>
+                ) : (
+                  <span className={cn("text-xl font-extrabold text-navy transition-opacity", quoting && "opacity-40")}>{totalLabel}</span>
+                )}
+              </div>
             )}
-            {step < 4 ? (
-              <button type="button" onClick={() => goTo(step + 1)} className={primaryBtn}>
-                {t("Continuer")}
-                <ArrowRight className="flip-rtl h-4 w-4" />
-              </button>
-            ) : (
-              <button type="button" onClick={submit} disabled={sending} className={primaryBtn}>
-                {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                {t("Envoyer ma demande")}
-              </button>
-            )}
+            <div className="flex gap-3 sm:justify-between">
+              {step > 1 ? (
+                <button type="button" onClick={() => goTo(step - 1)} className={cn(secondaryBtn, "px-4 sm:px-6")}>
+                  <ArrowLeft className="flip-rtl h-4 w-4" />
+                  <span className="sr-only sm:not-sr-only">{t("Retour")}</span>
+                </button>
+              ) : (
+                <span className="hidden sm:block" />
+              )}
+              {step < 4 ? (
+                <button type="button" onClick={() => goTo(step + 1)} className={cn(primaryBtn, "flex-1 sm:flex-none")}>
+                  {t("Continuer")}
+                  <ArrowRight className="flip-rtl h-4 w-4" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={submit}
+                  // Pas d'envoi pendant le calcul du devis (le code promo doit être vérifié)
+                  disabled={sending || quoting}
+                  className={cn(primaryBtn, "flex-1 sm:flex-none")}
+                >
+                  {sending || quoting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                  {t("Envoyer ma demande")}
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
         {/* ── Récapitulatif ── */}
-        <aside className="xl:sticky xl:top-8 xl:self-start">
+        {/* Sur mobile, pas de récapitulatif vide tant qu'aucun véhicule n'est choisi */}
+        <aside className={cn("xl:sticky xl:top-8 xl:self-start", !car && "hidden xl:block")}>
           <Card className="overflow-hidden">
             <div className="bg-brand-mist flex h-36 items-center justify-center px-6">
               {car ? (
@@ -700,7 +788,9 @@ export function ReserverView() {
               <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted">{t("Récapitulatif")}</p>
               {car && (
                 <p className="text-xl font-extrabold uppercase text-navy">
-                  {splitCarName(car.name).brand} <span className="text-sky-gradient">{splitCarName(car.name).model}</span>
+                  <bdi dir="ltr">
+                    {splitCarName(car.name).brand} <span className="text-sky-gradient">{splitCarName(car.name).model}</span>
+                  </bdi>
                 </p>
               )}
               <dl className="flex flex-col gap-2 text-sm">
@@ -729,15 +819,19 @@ export function ReserverView() {
                   </div>
                   <div className="flex justify-between gap-3">
                     <dt className="font-semibold text-emerald-800">{t(quote.discount_label ?? "")}</dt>
-                    <dd className="font-bold text-emerald-800">-{formatPrice(quote.discount_amount)}</dd>
+                    <dd className="font-bold text-emerald-800">
+                      <bdi dir="ltr">-{formatPrice(quote.discount_amount)}</bdi>
+                    </dd>
                   </div>
                 </dl>
               )}
               <div className="flex items-end justify-between border-t border-line pt-4">
                 <span className="text-sm font-bold uppercase tracking-wide text-navy">{t("Total")}</span>
-                <span className={cn("text-3xl font-extrabold text-navy transition-opacity", quoting && "opacity-40")}>
-                  {days > 0 && car ? formatPrice(total) : "—"}
-                </span>
+                {totalLabel === null ? (
+                  <span className="text-end text-sm font-bold text-amber-800">{t("Prix à confirmer par l'agence")}</span>
+                ) : (
+                  <span className={cn("text-3xl font-extrabold text-navy transition-opacity", quoting && "opacity-40")}>{totalLabel}</span>
+                )}
               </div>
               {quote?.loyalty && quote.loyalty.rentals < quote.loyalty.needed && (
                 <p className="rounded-2xl bg-sky-soft/60 p-3 text-xs font-semibold text-navy">

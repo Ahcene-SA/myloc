@@ -35,11 +35,24 @@ export function addDays(iso: string, n: number): string {
   return new Date(d.getTime() - tz).toISOString().slice(0, 10);
 }
 
+/**
+ * Horodatage du serveur (« YYYY-MM-DD HH:MM:SS », sans fuseau, déjà à l'heure d'Alger) :
+ * affiché tel quel, sans conversion par le fuseau du navigateur (PC ou téléphone
+ * réglé sur un autre pays, anciens Safari qui lisent ces dates comme de l'UTC).
+ */
 export function formatDateTime(value?: string | null): string {
   if (!value) return "—";
-  const d = new Date(value.replace(" ", "T"));
+  const opts: Intl.DateTimeFormatOptions = { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" };
+  const m = value.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?$/);
+  if (m) {
+    // Heure « murale » : construite en UTC et formatée en UTC, donc jamais décalée
+    const wall = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] ?? 0)));
+    return wall.toLocaleString("fr-FR", { ...opts, timeZone: "UTC" });
+  }
+  // Date avec fuseau explicite (Z, +01:00…) : affichée à l'heure de l'agence
+  const d = new Date(value);
   if (Number.isNaN(d.getTime())) return value;
-  return d.toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleString("fr-FR", { ...opts, timeZone: "Africa/Algiers" });
 }
 
 /* ─────────────── Contact client ─────────────── */

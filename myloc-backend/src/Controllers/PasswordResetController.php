@@ -9,6 +9,7 @@ use Myloc\Middleware\AuthMiddleware;
 use Myloc\Models\User;
 use Myloc\Services\Emails;
 use Myloc\Utils\Audit;
+use Myloc\Utils\ClientIp;
 use Myloc\Utils\RateLimiter;
 use Myloc\Utils\Response;
 use Myloc\Utils\Validator;
@@ -40,12 +41,12 @@ class PasswordResetController
     public function request(): void
     {
         $input = $this->input();
-        $email = strtolower(Validator::sanitizeString((string) ($input['email'] ?? '')));
+        $email = strtolower(Validator::sanitizeString($input['email'] ?? ''));
         if (!Validator::email($email)) {
             Response::error('Adresse email invalide.', 422);
         }
 
-        $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+        $ip = ClientIp::get();
         foreach (['reset:' . $email, 'reset-ip:' . $ip] as $key) {
             if (!$this->limiter->isAllowed($key)) {
                 $min = (int) ceil($this->limiter->remainingLockoutSeconds($key) / 60);
@@ -77,7 +78,7 @@ class PasswordResetController
     /** Le lien est-il encore valable ? (affichage de la page) */
     public function check(): void
     {
-        $row = $this->find((string) ($_GET['token'] ?? ''));
+        $row = $this->find(Validator::str($_GET['token'] ?? ''));
         Response::success('Lien valable.', [
             'first_name' => explode(' ', (string) $row['full_name'])[0],
             'staff' => AuthMiddleware::isStaffRole($row['role']),
@@ -87,8 +88,8 @@ class PasswordResetController
     public function reset(): void
     {
         $input = $this->input();
-        $row = $this->find((string) ($input['token'] ?? ''));
-        $password = (string) ($input['password'] ?? '');
+        $row = $this->find(Validator::str($input['token'] ?? ''));
+        $password = Validator::str($input['password'] ?? '');
         if (!Validator::stringLength($password, 8, 128)) {
             Response::error('Le mot de passe doit contenir au moins 8 caractères.', 422);
         }

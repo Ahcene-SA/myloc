@@ -46,14 +46,29 @@ export function Navbar() {
     return () => observer.disconnect();
   }, []);
 
+  // Menu mobile ouvert : page bloquée derrière, fermeture avec Échap
   useEffect(() => {
-    document.body.style.overflow = isOpen ? "hidden" : "";
+    if (!isOpen) return;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setIsOpen(false);
+    window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = "";
+      window.removeEventListener("keydown", onKey);
     };
   }, [isOpen]);
 
   return (
+    <>
+    {/* Voile sombre derrière le menu mobile : un clic le referme */}
+    <div
+      aria-hidden="true"
+      onClick={() => setIsOpen(false)}
+      className={cn(
+        "fixed inset-0 z-[65] bg-navy/50 backdrop-blur-[2px] transition-opacity duration-300 lg:hidden",
+        isOpen ? "opacity-100" : "pointer-events-none opacity-0"
+      )}
+    />
     <header
       className={cn(
         "fixed inset-x-0 top-0 z-[70] transition-all duration-500",
@@ -74,7 +89,7 @@ export function Navbar() {
                 href={link.href}
                 aria-current={isActive ? "true" : undefined}
                 className={cn(
-                  "relative text-[13px] font-bold uppercase tracking-[0.12em] transition-colors hover:text-sky-text",
+                  "nav-link relative text-[13px] font-bold uppercase tracking-[0.12em] transition-colors hover:text-sky-text",
                   isActive ? "text-sky-text" : "text-navy"
                 )}
               >
@@ -127,7 +142,9 @@ export function Navbar() {
       <div
         className={cn(
           "overflow-hidden bg-white transition-all duration-300 lg:hidden",
-          isOpen ? "max-h-[36rem] opacity-100" : "pointer-events-none max-h-0 opacity-0"
+          isOpen
+            ? "max-h-[calc(100svh-4.5rem)] overflow-y-auto rounded-b-3xl opacity-100 shadow-[0_24px_40px_-12px_rgba(15,27,45,0.35)]"
+            : "pointer-events-none max-h-0 opacity-0"
         )}
       >
         <nav className="flex flex-col px-4 pb-6 pt-2" aria-label={t("Navigation mobile")}>
@@ -162,5 +179,6 @@ export function Navbar() {
         </nav>
       </div>
     </header>
+    </>
   );
 }

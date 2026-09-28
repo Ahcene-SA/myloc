@@ -26,7 +26,7 @@ function Feedback({ ok, error }: { ok: string; error: string }) {
 }
 
 export function ProfilView() {
-  const { user, updateUser, logout } = useAuth();
+  const { user, updateUser, logout, renewToken } = useAuth();
   const { t } = useLang();
 
   const [fullName, setFullName] = useState(user?.full_name || "");
@@ -62,7 +62,8 @@ export function ProfilView() {
     if (next !== confirm) return setPwdMsg({ ok: "", error: t("Les deux mots de passe ne correspondent pas.") });
     setChanging(true);
     try {
-      await changePassword(current, next);
+      // Nouveau jeton : les autres sessions sont révoquées, celle-ci continue
+      renewToken(await changePassword(current, next));
       setCurrent("");
       setNext("");
       setConfirm("");

@@ -13,6 +13,9 @@ use Myloc\Utils\Validator;
 
 class CarController
 {
+    /** Plus grand montant accepté par une colonne DECIMAL(10, 2). */
+    public const MAX_AMOUNT = 99999999.99;
+
     private Car $carModel;
     private Database $db;
 
@@ -24,7 +27,10 @@ class CarController
 
     public function index(): void
     {
-        $category = $_GET['category'] ?? null;
+        if (isset($_GET['category']) && !is_string($_GET['category'])) {
+            Response::error('Catégorie invalide.', 422);
+        }
+        $category = isset($_GET['category']) ? Validator::sanitizeString($_GET['category']) : null;
         $cars = array_map([$this, 'publicCar'], $this->carModel->findAllAvailable($category));
         Response::success('Véhicules récupérés.', ['cars' => $cars]);
     }
@@ -32,9 +38,9 @@ class CarController
     /** Public : véhicules libres entre deux dates, avec le prix total. */
     public function availableForDates(): void
     {
-        $start = (string) ($_GET['start'] ?? '');
-        $end = (string) ($_GET['end'] ?? '');
-        $category = isset($_GET['category']) && $_GET['category'] !== 'all' ? (string) $_GET['category'] : null;
+        $start = Validator::str($_GET['start'] ?? '');
+        $end = Validator::str($_GET['end'] ?? '');
+        $category = isset($_GET['category']) && $_GET['category'] !== 'all' ? Validator::str($_GET['category']) : null;
         if (!Validator::date($start) || !Validator::date($end)) {
             Response::error('Choisissez une date de départ et une date de retour.', 422);
         }
@@ -250,7 +256,7 @@ class CarController
         }
 
         if (array_key_exists('plate', $input)) {
-            $plate = strtoupper(Validator::sanitizeString((string) $input['plate']));
+            $plate = strtoupper(Validator::sanitizeString($input['plate']));
             if (mb_strlen($plate) > 20) {
                 Response::error('Immatriculation trop longue.', 422);
             }
@@ -266,7 +272,11 @@ class CarController
             if ($price === false || $price <= 0) {
                 Response::error('Le prix par jour doit être un nombre positif.', 422);
             }
-            $data['price_per_day'] = $price;
+            // DECIMAL(10, 2) en base : au-delà, MySQL refuserait la valeur (erreur 500)
+            if ($price > self::MAX_AMOUNT) {
+                Response::error('Le prix par jour est trop élevé (99 999 999,99 maximum).', 422);
+            }
+            $data['price_per_day'] = round((float) $price, 2);
         }
 
         if (array_key_exists('transmission', $input)) {

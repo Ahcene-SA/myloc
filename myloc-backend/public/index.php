@@ -13,6 +13,7 @@ require __DIR__ . '/../vendor/autoload.php';
 
 use Dotenv\Dotenv;
 use Myloc\Config\Database;
+use Myloc\Config\Timezone;
 use Myloc\Controllers\AgencyController;
 use Myloc\Controllers\AuthController;
 use Myloc\Controllers\CarController;
@@ -28,6 +29,9 @@ use Myloc\Utils\Response;
 // Load environment variables from .env in the project root.
 $dotenv = Dotenv::createImmutable(__DIR__ . '/..');
 $dotenv->safeLoad();
+
+// Fuseau horaire de l'agence (APP_TIMEZONE, Africa/Algiers par défaut), aussi appliqué à MySQL
+Timezone::apply();
 
 // Error handling: do not leak internal details in production.
 $appEnv = $_ENV['APP_ENV'] ?? 'production';

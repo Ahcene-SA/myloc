@@ -26,6 +26,8 @@ interface AuthContextValue {
   updateUser: (user: UserFromApi) => void;
   /** Ouvre une session à partir d'un jeton déjà obtenu (connexion de l'espace agence). */
   startSession: (token: string, user: UserFromApi) => void;
+  /** Remplace le jeton de la session courante (après un changement de mot de passe). */
+  renewToken: (token: string | null | undefined) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -139,10 +141,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(newToken);
   };
 
+  const renewToken = (newToken: string | null | undefined) => {
+    if (!newToken) return;
+    localStorage.setItem("myloc_token", newToken);
+    setToken(newToken);
+  };
+
   const logout = () => {
     if (typeof window !== "undefined") {
       localStorage.removeItem("myloc_token");
       localStorage.removeItem("myloc_user");
+      // Réservation en cours (nom, permis…) : rien ne doit rester sur un PC partagé
+      try {
+        sessionStorage.removeItem("myloc_reserver_draft");
+        sessionStorage.removeItem("myloc_client_nav");
+      } catch {
+        /* navigation privée */
+      }
     }
     setToken(null);
     setUser(null);
@@ -159,6 +174,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
         updateUser: persistUser,
         startSession,
+        renewToken,
       }}
     >
       {children}

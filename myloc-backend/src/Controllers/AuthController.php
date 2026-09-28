@@ -8,6 +8,7 @@ use Myloc\Config\Database;
 use Myloc\Middleware\AuthMiddleware;
 use Myloc\Models\User;
 use Myloc\Utils\Audit;
+use Myloc\Utils\ClientIp;
 use Myloc\Utils\JwtHelper;
 use Myloc\Utils\RateLimiter;
 use Myloc\Utils\Response;
@@ -17,11 +18,17 @@ class AuthController
 {
     private User $userModel;
     private RateLimiter $rateLimiter;
+    private RateLimiter $ipLimiter;
+
+    /** Échecs de connexion tolérés par adresse IP sur la fenêtre IP_WINDOW_SECONDS. */
+    public const IP_MAX_FAILURES = 20;
+    public const IP_WINDOW_SECONDS = 900;
 
     public function __construct(Database $db)
     {
         $this->userModel = new User($db);
         $this->rateLimiter = new RateLimiter($db);
+        $this->ipLimiter = new RateLimiter($db, self::IP_MAX_FAILURES, self::IP_WINDOW_SECONDS);
     }
 
     public function register(): void
@@ -36,7 +43,7 @@ class AuthController
         $fullName = Validator::sanitizeString($input['full_name']);
         $email = strtolower(Validator::sanitizeString($input['email']));
         $phone = Validator::sanitizeString($input['phone']);
-        $password = $input['password'];
+        $password = is_string($input['password']) ? $input['password'] : '';
 
         if (!Validator::email($email)) {
             Response::error('Adresse email invalide.', 422);
@@ -75,27 +82,41 @@ class AuthController
         if (!empty($required)) {
             Response::error('Champs obligatoires manquants.', 422, ['missing' => $required]);
         }
+        if (!is_string($input['email']) || !is_string($input['password'])) {
+            Response::error('Email ou mot de passe invalide.', 422);
+        }
 
         $email = strtolower(Validator::sanitizeString($input['email']));
         $password = $input['password'];
 
-        $identifier = $email;
+        // Limite par adresse IP (essais sur de nombreux comptes différents)
+        $ipKey = self::ipKey();
+        if (!$this->ipLimiter->isAllowed($ipKey)) {
+            $min = max(1, (int) ceil($this->ipLimiter->remainingLockoutSeconds($ipKey) / 60));
+            Response::error("Trop de tentatives depuis cette connexion. Réessayez dans {$min} minute(s).", 429);
+        }
+
+        // Un compte de l'équipe partage le compteur de l'espace agence : on ne peut pas
+        // contourner son blocage en essayant les mots de passe depuis la connexion client.
+        $user = $this->userModel->findByEmail($email);
+        $staff = $user && AuthMiddleware::isStaffRole($user['role']);
+        $identifier = $staff ? 'agency:' . $email : $email;
         if (!$this->rateLimiter->isAllowed($identifier)) {
             $remaining = $this->rateLimiter->remainingLockoutSeconds($identifier);
             Response::error("Trop de tentatives. Réessayez dans {$remaining} secondes.", 429);
         }
 
-        $user = $this->userModel->findByEmail($email);
         if (!$user || !password_verify($password, $user['password_hash'])) {
             $this->rateLimiter->recordFailure($identifier);
-            $remaining = $this->maxAttemptsRemaining($identifier);
+            $this->ipLimiter->recordFailure($ipKey);
+            $remaining = $this->rateLimiter->remainingAttempts($identifier);
             Response::error("Email ou mot de passe incorrect ({$remaining} essai(s) restant(s)).", 401);
         }
 
         $this->rateLimiter->reset($identifier);
 
         // L'équipe de l'agence a sa propre porte d'entrée (avec code à 6 chiffres)
-        if (AuthMiddleware::isStaffRole($user['role'])) {
+        if ($staff) {
             Response::error('Ce compte appartient à l\'équipe de l\'agence : connectez-vous depuis l\'espace agence.', 403, ['code' => 'USE_AGENCY_LOGIN']);
         }
 
@@ -106,6 +127,12 @@ class AuthController
             'role' => $user['role'],
             'token' => $token,
         ]);
+    }
+
+    /** Clé du compteur « par adresse IP », partagée par la connexion client et la connexion agence. */
+    public static function ipKey(): string
+    {
+        return 'login-ip:' . ClientIp::get();
     }
 
     public function me(): void
@@ -127,8 +154,8 @@ class AuthController
         $user = AuthMiddleware::requireAuth();
         $input = $this->getJsonInput();
 
-        $fullName = Validator::sanitizeString((string) ($input['full_name'] ?? ''));
-        $phone = Validator::sanitizeString((string) ($input['phone'] ?? ''));
+        $fullName = Validator::sanitizeString($input['full_name'] ?? '');
+        $phone = Validator::sanitizeString($input['phone'] ?? '');
         if (!Validator::stringLength($fullName, 2, 100)) {
             Response::error('Le nom doit contenir entre 2 et 100 caractères.', 422);
         }
@@ -146,8 +173,8 @@ class AuthController
         $user = AuthMiddleware::requireAuth(true);
         $input = $this->getJsonInput();
 
-        $current = (string) ($input['current_password'] ?? '');
-        $new = (string) ($input['new_password'] ?? '');
+        $current = is_string($input['current_password'] ?? null) ? $input['current_password'] : '';
+        $new = is_string($input['new_password'] ?? null) ? $input['new_password'] : '';
         $hash = $this->userModel->getPasswordHash($user['user_id']);
         if ($hash === null || !password_verify($current, $hash)) {
             Response::error('Mot de passe actuel incorrect.', 422);
@@ -160,11 +187,19 @@ class AuthController
         }
 
         $this->userModel->updatePassword($user['user_id'], password_hash($new, PASSWORD_BCRYPT));
-        if (AuthMiddleware::isStaffRole($user['role'])) {
+        // Les autres appareils sont déconnectés ; cet appareil reçoit un nouveau jeton
+        $this->userModel->bumpTokenVersion($user['user_id']);
+        $staff = AuthMiddleware::isStaffRole($user['role']);
+        if ($staff) {
             $this->userModel->clearMustChangePassword($user['user_id']);
             Audit::log('password_changed', 'user', $user['user_id']);
         }
-        Response::success('Mot de passe modifié.');
+        $fresh = $this->userModel->findRawById($user['user_id']);
+        $tv = (int) ($fresh['token_version'] ?? 0);
+        $token = $staff
+            ? JwtHelper::encode($user['user_id'], $user['role'], ['scope' => 'agency', 'tv' => $tv], AuthMiddleware::AGENCY_SESSION_SECONDS)
+            : JwtHelper::encode($user['user_id'], $user['role'], ['scope' => 'client', 'tv' => $tv]);
+        Response::success('Mot de passe modifié. Vos autres appareils ont été déconnectés.', ['token' => $token]);
     }
 
     public function listClients(): void
@@ -179,24 +214,5 @@ class AuthController
         $raw = file_get_contents('php://input');
         $data = json_decode($raw, true);
         return is_array($data) ? $data : [];
-    }
-
-    private function maxAttemptsRemaining(string $identifier): int
-    {
-        $pdo = $this->rateLimiter->getDatabasePdo();
-        $stmt = $pdo->prepare("
-            SELECT attempts
-            FROM login_attempts
-            WHERE identifier = :identifier
-        ");
-        $stmt->execute([':identifier' => $identifier]);
-        $row = $stmt->fetch();
-
-        if (!$row) {
-            return 5;
-        }
-
-        $max = (int) ($_ENV['RATE_LIMIT_MAX_ATTEMPTS'] ?? 5);
-        return max(0, $max - (int) $row['attempts']);
     }
 }

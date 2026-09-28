@@ -19,12 +19,12 @@ import {
   formatPrice,
   formatTime,
   isActiveOrUpcoming,
-  isPast,
   primaryBtn,
   reservationRef,
   reservationWhatsApp,
   secondaryBtn,
   splitCarName,
+  placeLabel,
 } from "./shared";
 
 export function AccueilView() {
@@ -40,7 +40,7 @@ export function AccueilView() {
     .filter(isActiveOrUpcoming)
     .sort((a, b) => (a.start_date || "").localeCompare(b.start_date || ""));
   const next = upcoming[0];
-  const pending = reservations.filter((r) => r.status === "pending" && !isPast(r)).length;
+  const pending = reservations.filter((r) => r.status === "pending" && isActiveOrUpcoming(r)).length;
   const spent = reservations
     .filter((r) => r.status === "confirmed")
     .reduce((sum, r) => sum + (parseFloat(String(r.total_price ?? 0)) || 0), 0);
@@ -88,8 +88,10 @@ export function AccueilView() {
               <div className="flex-1">
                 <span className="kicker text-[11px] text-sky-text">{t("Prochaine location")}</span>
                 <p className="mt-2 text-2xl font-extrabold uppercase text-navy">
-                  {splitCarName(next.car_name).brand}{" "}
-                  <span className="text-sky-gradient">{splitCarName(next.car_name).model}</span>
+                  <bdi dir="ltr">
+                    {splitCarName(next.car_name).brand}{" "}
+                    <span className="text-sky-gradient">{splitCarName(next.car_name).model}</span>
+                  </bdi>
                 </p>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <StatusBadge status={next.status} />
@@ -106,7 +108,7 @@ export function AccueilView() {
                 {next.pickup_place && (
                   <p className="mt-1 flex items-center gap-1.5 text-sm text-muted">
                     <MapPin className="h-3.5 w-3.5" />
-                    {t(next.pickup_place)}
+                    {placeLabel(next.pickup_place)}
                   </p>
                 )}
               </div>
@@ -118,7 +120,7 @@ export function AccueilView() {
                 {next.return_place && (
                   <p className="mt-1 flex items-center gap-1.5 text-sm text-muted">
                     <MapPin className="h-3.5 w-3.5" />
-                    {t(next.return_place)}
+                    {placeLabel(next.return_place)}
                   </p>
                 )}
               </div>
@@ -127,7 +129,7 @@ export function AccueilView() {
                   <span className="block text-xs font-semibold text-muted">
                     {daysLabel(daysBetween(next.start_date || "", next.end_date || ""))}
                   </span>
-                  <span className="text-2xl font-extrabold text-navy">{formatPrice(next.total_price)}</span>
+                  <span className="whitespace-nowrap text-2xl font-extrabold text-navy">{formatPrice(next.total_price)}</span>
                 </p>
                 <a href={reservationWhatsApp(next)} target="_blank" rel="noopener noreferrer" className={secondaryBtn}>
                   <WhatsAppIcon className="h-4 w-4 text-whatsapp" />
@@ -168,7 +170,9 @@ export function AccueilView() {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={apiImageUrl(r.car_image_url)} alt="" className="h-10 w-16 flex-shrink-0 object-contain" />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-bold text-navy">{r.car_name}</p>
+                    <p className="truncate text-sm font-bold text-navy">
+                      <bdi dir="ltr">{r.car_name}</bdi>
+                    </p>
                     <p className="text-xs text-muted">
                       {formatDate(r.start_date)} {t("→")} {formatDate(r.end_date)}
                     </p>

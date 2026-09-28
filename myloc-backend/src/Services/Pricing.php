@@ -54,9 +54,26 @@ class Pricing
         $this->settings->set(self::RULES_KEY, $rules);
     }
 
-    public function usePromo(string $code): void
+    /** Compte une utilisation du code ; false si sa limite (max_uses) est déjà atteinte. */
+    public function usePromo(string $code): bool
     {
-        $this->promos->incrementUses($code);
+        return $this->promos->incrementUses($code);
+    }
+
+    /** Une réservation refusée / annulée rend son utilisation du code promo. */
+    public function releasePromo(?string $code): void
+    {
+        if ($code !== null && $code !== '') {
+            $this->promos->decrementUses($code);
+        }
+    }
+
+    /** Réservation réactivée par l'agence : le code compte de nouveau. */
+    public function reclaimPromo(?string $code): void
+    {
+        if ($code !== null && $code !== '') {
+            $this->promos->forceIncrementUses($code);
+        }
     }
 
     /** Nombre de locations confirmées déjà terminées pour ce client. */

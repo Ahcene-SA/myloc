@@ -54,7 +54,8 @@ export function StatsBand() {
   const stats = [
     { icon: Car, value: fleet, suffix: "", label: t("véhicules récents") },
     { icon: MapPin, value: site.agencies.length, suffix: "", label: t("points de retrait") },
-    { icon: Headphones, value: 24, suffix: "/7", label: t("assistance") },
+    // « 24/7 » est un libellé, pas une quantité : affiché tel quel (pas de 21/7, 22/7…)
+    { icon: Headphones, value: 24, suffix: "/7", label: t("assistance"), fixed: true },
     { icon: Clock3, value: 2, suffix: ` ${t("min")}`, label: t("pour réserver") },
   ];
 
@@ -63,7 +64,7 @@ export function StatsBand() {
       <div aria-hidden="true" className="absolute -left-40 top-1/2 h-80 w-80 -translate-y-1/2 rounded-full bg-sky/20 blur-3xl" />
       <div aria-hidden="true" className="absolute -right-32 -top-20 h-64 w-64 rounded-full bg-sky/10 blur-3xl" />
       <ul className="relative mx-auto grid max-w-7xl grid-cols-2 gap-y-10 px-4 sm:px-6 lg:grid-cols-4 lg:px-8">
-        {stats.map(({ icon: Icon, value, suffix, label }, i) => (
+        {stats.map(({ icon: Icon, value, suffix, label, fixed }, i) => (
           <motion.li
             key={label}
             initial={{ opacity: 0, y: 24 }}
@@ -74,7 +75,14 @@ export function StatsBand() {
           >
             <Icon className="h-6 w-6 text-sky" strokeWidth={1.8} />
             <p className="text-4xl font-extrabold tracking-tight sm:text-5xl">
-              <Counter to={value} suffix={suffix} />
+              {fixed ? (
+                <bdi dir="ltr">
+                  {value}
+                  {suffix}
+                </bdi>
+              ) : (
+                <Counter to={value} suffix={suffix} />
+              )}
             </p>
             <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/60">{label}</p>
           </motion.li>

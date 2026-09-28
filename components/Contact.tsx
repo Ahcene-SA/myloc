@@ -17,9 +17,9 @@ const contacts = [
 export function Contact() {
   const { t, lang } = useLang();
   return (
-    <section id="contact" className="bg-brand-mist relative overflow-hidden px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
+    <section id="contact" className="bg-brand-mist relative overflow-hidden py-20 lg:py-28">
       <PalmShadow flip className="-right-32 bottom-0 w-[520px] opacity-[0.12]" />
-      <div className="relative mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1fr_440px] lg:gap-14">
+      <div className="relative mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[1fr_440px] lg:gap-14 lg:px-8">
         <div className="flex flex-col gap-8">
           <BrandHeading overline={t("Infos & réservation")}>
             {t("Prêt à prendre")} <Sky>{t("la route")}</Sky>
@@ -30,7 +30,7 @@ export function Contact() {
               "Notre équipe vous répond en quelques minutes. Écrivez-nous sur WhatsApp, appelez-nous ou réservez directement en ligne."
             )}
           </p>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2" data-wa-hide>
             {contacts.map(({ label, value, href, icon: Icon }) => {
               const inner = (
                 <>
@@ -39,7 +39,14 @@ export function Contact() {
                   </span>
                   <span className="flex min-w-0 flex-col gap-0.5">
                     <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted">{t(label)}</span>
-                    <span className="truncate text-[15px] font-bold text-navy" dir={label === "Adresse" ? undefined : "ltr"}>{label === "Adresse" ? t(value) : value}</span>
+                    {label === "Adresse" ? (
+                      <span className="truncate text-[15px] font-bold text-navy">{t(value)}</span>
+                    ) : (
+                      // Téléphone / email : isolés en LTR, alignés comme le reste du texte
+                      <span className="truncate text-start text-[15px] font-bold text-navy">
+                        <bdi dir="ltr">{value}</bdi>
+                      </span>
+                    )}
                   </span>
                 </>
               );
@@ -80,7 +87,7 @@ export function Contact() {
               <dd className="font-bold text-sky">{t("24h/24 – 7j/7")}</dd>
             </div>
           </dl>
-          <div className="relative mt-auto flex flex-col gap-3 pt-4">
+          <div className="relative mt-auto flex flex-col gap-3 pt-4" data-wa-hide>
             <a
               href={site.whatsappHref}
               target="_blank"

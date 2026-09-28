@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { interpolate, motion, useReducedMotion, useScroll, useSpring, useTransform, type MotionValue } from "framer-motion";
+import { easeInOut, interpolate, motion, useReducedMotion, useScroll, useSpring, useTransform, type MotionValue } from "framer-motion";
 import { Armchair, ArrowDown, CalendarDays, Cog } from "lucide-react";
 import { apiImageUrl, fetchCars, formatTransmission, type CarFromApi } from "@/lib/api";
 import { categoryInfo, site } from "@/lib/site";
@@ -18,13 +18,6 @@ interface ShowCar {
   seats: number;
   year: number;
 }
-
-const fallback: ShowCar[] = [
-  { id: "jetour", brand: "Jetour", model: "X70+", category: "suv", image: "images/cars/jetour-x70-plus.png", price: 95, transmission: "Automatique", seats: 7, year: 2025 },
-  { id: "mokka", brand: "Opel", model: "Mokka", category: "suv", image: "images/cars/opel-mokka.png", price: 80, transmission: "Automatique", seats: 5, year: 2024 },
-  { id: "astra", brand: "Opel", model: "Astra", category: "compacte", image: "images/cars/opel-astra.png", price: 75, transmission: "Automatique", seats: 5, year: 2024 },
-  { id: "clio", brand: "Clio 5", model: "Alpino", category: "citadine", image: "images/cars/clio5-alpino.png", price: 55, transmission: "Automatique", seats: 5, year: 2024 },
-];
 
 function fromApi(c: CarFromApi): ShowCar {
   const [brand, ...rest] = c.name.trim().split(/\s+/);
@@ -43,17 +36,19 @@ function fromApi(c: CarFromApi): ShowCar {
 
 /**
  * « La flotte en scène » : section épinglée où, au fil du scroll,
- * chaque voiture entre par la droite, s'arrête au centre puis repart par la gauche.
+ * chaque voiture entre par la droite, s'arrête au centre puis repart par la gauche
+ * (sens inversé en arabe). Uniquement les vraies voitures de l'API : rien n'est affiché
+ * si la flotte est vide ou l'API indisponible.
  */
 export function Showroom() {
   const reduce = !!useReducedMotion();
-  const [cars, setCars] = useState<ShowCar[]>(fallback);
+  const [cars, setCars] = useState<ShowCar[]>([]);
 
   useEffect(() => {
     let cancelled = false;
     fetchCars()
       .then((list) => {
-        if (cancelled || list.length < 2) return;
+        if (cancelled || list.length === 0) return;
         // Les plus « premium » d'abord, 5 au maximum
         const picked = [...list]
           .sort((a, b) => (parseFloat(String(b.price_per_day)) || 0) - (parseFloat(String(a.price_per_day)) || 0))
@@ -67,6 +62,7 @@ export function Showroom() {
     };
   }, []);
 
+  if (cars.length === 0) return null;
   if (reduce) return <StaticShowroom cars={cars} />;
   return <PinnedShowroom key={cars.map((c) => c.id).join("-")} cars={cars} />;
 }
@@ -77,8 +73,10 @@ function PinnedShowroom({ cars }: { cars: ShowCar[] }) {
   // Lissage : la molette et le trackpad avancent par à-coups, le ressort les adoucit
   const scrollYProgress = useSpring(rawProgress, { stiffness: 90, damping: 26, mass: 0.35, restDelta: 0.0005 });
   const n = cars.length;
-  const roadX = useTransform(scrollYProgress, [0, 1], ["0%", "-50%"]);
-  const { t } = useLang();
+  const { t, lang } = useLang();
+  // Sens de défilement : droite → gauche en français, miroir en arabe
+  const dir = lang === "ar" ? -1 : 1;
+  const roadX = useTransform(scrollYProgress, [0, 1], ["0%", `${-50 * dir}%`]);
 
   return (
     <section ref={ref} aria-label={t("La flotte en scène")} className="relative bg-navy" style={{ height: `${n * 90 + 40}vh` }}>
@@ -96,7 +94,7 @@ function PinnedShowroom({ cars }: { cars: ShowCar[] }) {
 
         <div className="relative flex-1">
           {cars.map((car, i) => (
-            <Slide key={car.id} car={car} i={i} n={n} progress={scrollYProgress} />
+            <Slide key={car.id} car={car} i={i} n={n} dir={dir} progress={scrollYProgress} />
           ))}
         </div>
 
@@ -144,11 +142,11 @@ function clampKeys<T>(input: number[], output: T[]): [number[], T[]] {
   return [inp, out];
 }
 
-function useKeys<T extends string | number>(progress: MotionValue<number>, input: number[], output: T[]) {
+function useKeys<T extends string | number>(progress: MotionValue<number>, input: number[], output: T[], eased = false) {
   const [i, o] = clampKeys(input, output);
   // Fonction (et non tableaux) : calculé en JS à chaque frame, plus fiable qu'une animation
   // accélérée par le navigateur sur une section épinglée.
-  const mix = interpolate(i, o as never[]) as (v: number) => T;
+  const mix = interpolate(i, o as never[], eased ? { ease: easeInOut } : undefined) as (v: number) => T;
   return useTransform(progress, (v: number) => mix(v));
 }
 
@@ -159,31 +157,44 @@ function windowOf(i: number, n: number) {
   return { c, span };
 }
 
-function Slide({ car, i, n, progress }: { car: ShowCar; i: number; n: number; progress: MotionValue<number> }) {
+function Slide({ car, i, n, dir, progress }: { car: ShowCar; i: number; n: number; dir: number; progress: MotionValue<number>; }) {
   const { c, span } = windowOf(i, n);
   const first = i === 0;
   const last = i === n - 1;
+  const vw = (v: number) => `${v * dir}vw`;
 
+  // Fenêtres qui se chevauchent : la voiture suivante entre (c+0.25 → c+0.75)
+  // pendant que la voiture courante sort, la scène n'est donc jamais vide.
+  // Points d'entrée toujours croissants (sinon l'interpolation plante).
   const x = useKeys(
     progress,
-    [c - span * 0.5, c - span * 0.18, c + span * 0.18, c + span * 0.5],
-    [first ? "0vw" : "120vw", "0vw", "0vw", last ? "0vw" : "-120vw"]
+    [c - span * 0.75, c - span * 0.25, c + span * 0.25, c + span * 0.75],
+    [first ? vw(0) : vw(110), vw(0), vw(0), last ? vw(0) : vw(-110)],
+    true
   );
-  // Fondu léger en entrée/sortie (un flou animé coûte trop cher au navigateur)
+  // Fondu léger en tout début d'entrée / fin de sortie (un flou animé coûte trop cher)
   const carOpacity = useKeys<number>(
     progress,
-    [c - span * 0.5, c - span * 0.3, c + span * 0.3, c + span * 0.5],
+    [c - span * 0.75, c - span * 0.55, c + span * 0.55, c + span * 0.75],
     [first ? 1 : 0, 1, 1, last ? 1 : 0]
   );
   // Freinage : le capot plonge légèrement en arrivant
-  const rotate = useKeys<number>(progress, [c - span * 0.2, c - span * 0.1, c], [first ? 0 : -2, first ? 0 : 0.8, 0]);
+  const rotate = useKeys<number>(
+    progress,
+    [c - span * 0.4, c - span * 0.25, c - span * 0.1],
+    [first ? 0 : -2 * dir, first ? 0 : 0.8 * dir, 0]
+  );
+  // Fondu enchaîné court des textes : la sortie (c+0.36 → c+0.52) croise brièvement
+  // l'entrée de la suivante (c+0.48 → c+0.64), sans superposition prolongée des titres.
   const info = useKeys<number>(
     progress,
-    [c - span * 0.35, c - span * 0.12, c + span * 0.12, c + span * 0.35],
+    [c - span * 0.52, c - span * 0.36, c + span * 0.36, c + span * 0.52],
     [first ? 1 : 0, 1, 1, last ? 1 : 0]
   );
   const infoY = useTransform(info, [0, 1], [30, 0]);
-  const wordX = useKeys(progress, [c - span, c, c + span], ["25%", "0%", "-25%"]);
+  // Bloc invisible : il ne doit pas intercepter les clics destinés au bloc visible
+  const infoEvents = useTransform(info, (v) => (v > 0.5 ? "auto" : "none"));
+  const wordX = useKeys(progress, [c - span, c, c + span], [`${25 * dir}%`, "0%", `${-25 * dir}%`]);
 
   const cat = categoryInfo[car.category?.toLowerCase()];
   const { t } = useLang();
@@ -196,7 +207,7 @@ function Slide({ car, i, n, progress }: { car: ShowCar; i: number; n: number; pr
         className="absolute inset-x-0 top-[6%] whitespace-nowrap text-center text-[22vw] font-extrabold uppercase leading-none text-transparent lg:text-[15vw]"
         style={{ x: wordX, opacity: info, WebkitTextStroke: "1.5px rgba(67,176,230,0.35)", willChange: "transform, opacity" }}
       >
-        {car.model || car.brand}
+        <bdi dir="ltr">{car.model || car.brand}</bdi>
       </motion.p>
 
       <motion.div className="absolute inset-x-0 top-[14%] mx-auto w-[82%] max-w-[560px] sm:top-[12%]" style={{ x, opacity: carOpacity, willChange: "transform, opacity" }}>
@@ -207,13 +218,15 @@ function Slide({ car, i, n, progress }: { car: ShowCar; i: number; n: number; pr
       </motion.div>
 
       <motion.div
-        className="pointer-events-auto absolute inset-x-0 bottom-0 mx-auto flex max-w-7xl flex-col gap-4 px-4 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:px-8"
-        style={{ opacity: info, y: infoY, willChange: "transform, opacity" }}
+        className="absolute inset-x-0 bottom-0 mx-auto flex max-w-7xl flex-col gap-4 px-4 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:px-8"
+        style={{ opacity: info, y: infoY, pointerEvents: infoEvents, willChange: "transform, opacity" }}
       >
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-sky">{t(cat?.label ?? car.category)}</p>
           <p className="text-4xl font-extrabold uppercase leading-none sm:text-5xl">
-            {car.brand} <span className="text-sky-gradient">{car.model}</span>
+            <bdi dir="ltr">
+              {car.brand} <span className="text-sky-gradient">{car.model}</span>
+            </bdi>
           </p>
           <ul className="mt-3 flex flex-wrap gap-4 text-xs font-bold uppercase tracking-wide text-white/70">
             <li className="flex items-center gap-1.5">
@@ -230,7 +243,7 @@ function Slide({ car, i, n, progress }: { car: ShowCar; i: number; n: number; pr
         <div className="flex items-center gap-5">
           <p className="leading-none">
             <span className="block text-[11px] font-semibold uppercase tracking-[0.16em] text-white/50">{t("À partir de")}</span>
-            <span className="mt-1 block text-4xl font-extrabold">
+            <span className="mt-1 block whitespace-nowrap text-4xl font-extrabold">
               {car.price} {site.currency}
               <span className="ms-1 text-sm font-semibold text-white/50">/ {t("jour")}</span>
             </span>
@@ -267,7 +280,9 @@ function StaticShowroom({ cars }: { cars: ShowCar[] }) {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={car.image} alt={`${car.brand} ${car.model}`} className="w-full" />
               <p className="mt-3 text-2xl font-extrabold uppercase">
-                {car.brand} <span className="text-sky-gradient">{car.model}</span>
+                <bdi dir="ltr">
+                  {car.brand} <span className="text-sky-gradient">{car.model}</span>
+                </bdi>
               </p>
               <p className="text-white/60">
                 {car.price} {site.currency} / {t("jour")}

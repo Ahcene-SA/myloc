@@ -12,6 +12,7 @@ use Myloc\Config\Database;
 
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
 $dotenv->safeLoad();
+\Myloc\Config\Timezone::apply();
 
 try {
     $pdo = (new Database())->getPdo();
@@ -215,6 +216,30 @@ try {
             CONSTRAINT fk_reset_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
         echo "✓ table password_resets créée (mot de passe oublié)\n";
+        $changes++;
+    }
+
+    // 8. Sécurité : statut « refusée », compteur de tentatives, code à 6 chiffres à usage unique
+    $statusType = (string) $pdo->query("SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'reservations' AND COLUMN_NAME = 'status'")->fetchColumn();
+    if ($statusType !== '' && !str_contains($statusType, "'rejected'")) {
+        $pdo->exec("ALTER TABLE reservations MODIFY COLUMN status ENUM('pending', 'confirmed', 'rejected', 'cancelled') NOT NULL DEFAULT 'pending'");
+        echo "✓ reservations.status : ajout de « rejected » (refusée)\n";
+        $changes++;
+    }
+    if (!$hasTable('login_attempts')) {
+        $pdo->exec("CREATE TABLE login_attempts (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            identifier VARCHAR(255) NOT NULL UNIQUE,
+            attempts INT NOT NULL DEFAULT 0,
+            last_attempt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_last_attempt (last_attempt)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        echo "✓ table login_attempts créée (limitation des tentatives de connexion)\n";
+        $changes++;
+    }
+    if (!$hasColumn('users', 'totp_last_slice')) {
+        $pdo->exec("ALTER TABLE users ADD COLUMN totp_last_slice INT NULL AFTER totp_enabled");
+        echo "✓ users.totp_last_slice ajoutée (un code à 6 chiffres ne sert qu'une fois)\n";
         $changes++;
     }
 

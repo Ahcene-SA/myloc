@@ -20,6 +20,7 @@ const footerLinks = [
   { label: "Accueil", href: "#accueil" },
   { label: "Véhicules", href: "#vehicules" },
   { label: "Avantages", href: "#avantages" },
+  { label: "Agences", href: "#agences" },
   { label: "À propos", href: "#a-propos" },
   { label: "Contact", href: "#contact" },
 ];
@@ -32,13 +33,15 @@ const socials = [
 ];
 
 export function Footer() {
+  // Année lue à l'affichage : suppressHydrationWarning couvre le passage au 1er janvier
   const year = new Date().getFullYear();
   const { t } = useLang();
 
   return (
     <footer className="relative overflow-hidden bg-navy text-white/70">
       <AlgiersSkyline className="inset-x-0 bottom-0 h-40 w-full text-white opacity-[0.025] lg:h-52" />
-      <div className="relative mx-auto flex max-w-7xl flex-col gap-12 px-4 pb-8 pt-16 sm:px-6 lg:px-8 lg:pt-20">
+      {/* pb-[88px] sur mobile : la dernière ligne n'est pas cachée par le bouton WhatsApp flottant */}
+      <div className="relative mx-auto flex max-w-7xl flex-col gap-12 px-4 pb-[88px] pt-16 sm:px-6 lg:px-8 lg:pb-8 lg:pt-20">
         <div className="grid gap-12 lg:grid-cols-[minmax(0,380px)_1fr]">
           <div className="flex flex-col gap-5">
             <Logo light />
@@ -80,14 +83,15 @@ export function Footer() {
             </div>
             <div className="flex flex-col gap-3">
               <span className="text-xs font-extrabold uppercase tracking-[0.2em] text-white">{t("Contact")}</span>
-              <a href={site.phoneHref} dir="ltr" className="transition-colors hover:text-sky">
-                {site.phoneDisplay}
+              {/* bdi : « @myloc.dz » ne doit pas devenir « myloc.dz@ » en arabe */}
+              <a href={site.phoneHref} className="transition-colors hover:text-sky">
+                <bdi dir="ltr">{site.phoneDisplay}</bdi>
               </a>
-              <a href={`mailto:${site.email}`} className="transition-colors hover:text-sky">
-                {site.email}
+              <a href={`mailto:${site.email}`} className="break-all transition-colors hover:text-sky">
+                <bdi dir="ltr">{site.email}</bdi>
               </a>
               <a href={site.instagram} target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-sky">
-                {site.instagramHandle}
+                <bdi dir="ltr">{site.instagramHandle}</bdi>
               </a>
               <span>{t("Service 24/7")}</span>
             </div>
@@ -95,7 +99,12 @@ export function Footer() {
         </div>
 
         <div className="flex flex-col justify-between gap-3 border-t border-white/10 pt-6 text-xs sm:flex-row">
-          <span>{t("© {year} MYLOC.DZ Car Rental. Tous droits réservés.", { year })}</span>
+          <span>
+            <bdi dir="ltr" suppressHydrationWarning>
+              © {year} MYLOC.DZ Car Rental.
+            </bdi>{" "}
+            {t("Tous droits réservés.")}
+          </span>
           <span className="font-semibold uppercase tracking-[0.2em]">{t("Alger, Algérie")}</span>
         </div>
       </div>

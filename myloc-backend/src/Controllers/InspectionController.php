@@ -74,7 +74,7 @@ class InspectionController
             if (!in_array($zone, self::ZONES, true)) {
                 continue;
             }
-            $note = mb_substr(Validator::sanitizeString((string) ($d['note'] ?? '')), 0, 200);
+            $note = mb_substr(Validator::sanitizeString(($d['note'] ?? '')), 0, 200);
             $damages[] = ['zone' => $zone, 'note' => $note];
         }
 
@@ -86,7 +86,7 @@ class InspectionController
         }
         $photos = array_slice(array_values(array_unique($photos)), 0, 12);
 
-        $notes = mb_substr(Validator::sanitizeString((string) ($in['notes'] ?? '')), 0, 2000);
+        $notes = mb_substr(Validator::sanitizeString($in['notes'] ?? ''), 0, 2000);
 
         $this->inspections->upsert($id, $type, [
             'mileage' => $mileage,

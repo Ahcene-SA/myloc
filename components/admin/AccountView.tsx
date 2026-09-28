@@ -126,6 +126,7 @@ function ProfileCard() {
 }
 
 function PasswordCard() {
+  const { renewToken } = useAuth();
   const [f, setF] = useState({ current: "", next: "", confirm: "" });
   const [busy, setBusy] = useState(false);
   const [ok, setOk] = useState("");
@@ -139,7 +140,8 @@ function PasswordCard() {
     if (f.next !== f.confirm) return setErr("Les deux mots de passe ne correspondent pas.");
     setBusy(true);
     try {
-      await changePassword(f.current, f.next);
+      // Nouveau jeton : les autres sessions sont révoquées, celle-ci continue
+      renewToken(await changePassword(f.current, f.next));
       setF({ current: "", next: "", confirm: "" });
       setOk("Mot de passe modifié.");
     } catch (e) {
@@ -258,7 +260,7 @@ function TwoFactorCard({ owner }: { owner: boolean }) {
                 className="flex flex-col gap-3"
               >
                 <p className="text-sm text-ink-soft">Les anciens codes de secours ne fonctionneront plus. Tapez le code actuel de votre application :</p>
-                <input inputMode="numeric" autoComplete="one-time-code" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="000000" className={`${inputClass} max-w-48 text-center font-mono text-xl tracking-[0.3em]`} />
+                <input aria-label="Code à 6 chiffres de l'application" inputMode="numeric" autoComplete="one-time-code" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="000000" className={`${inputClass} max-w-48 text-center font-mono text-xl tracking-[0.3em]`} />
                 <div className="flex gap-2">
                   <button type="submit" disabled={busy || code.length !== 6} className={primaryBtn}>
                     {busy && <Loader2 className="h-4 w-4 animate-spin" />} Générer
@@ -283,7 +285,7 @@ function TwoFactorCard({ owner }: { owner: boolean }) {
                 className="flex flex-col gap-3"
               >
                 <p className="text-sm text-ink-soft">Confirmez avec votre mot de passe :</p>
-                <input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} className={`${inputClass} max-w-xs`} required />
+                <input aria-label="Votre mot de passe" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} className={`${inputClass} max-w-xs`} required />
                 <div className="flex gap-2">
                   <button type="submit" disabled={busy} className="inline-flex h-12 items-center gap-2 rounded-full bg-red-600 px-5 text-sm font-bold text-white disabled:opacity-60">
                     {busy && <Loader2 className="h-4 w-4 animate-spin" />} Désactiver
@@ -320,7 +322,7 @@ function TwoFactorCard({ owner }: { owner: boolean }) {
                 Ou saisissez la clé : <span className="font-mono font-bold text-navy">{setup.secret.match(/.{1,4}/g)?.join(" ")}</span>
               </p>
               <p>2. Tapez le code à 6 chiffres affiché :</p>
-              <input inputMode="numeric" autoComplete="one-time-code" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="000000" className={`${inputClass} max-w-48 text-center font-mono text-xl tracking-[0.3em]`} />
+              <input aria-label="Code à 6 chiffres de l'application" inputMode="numeric" autoComplete="one-time-code" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="000000" className={`${inputClass} max-w-48 text-center font-mono text-xl tracking-[0.3em]`} />
               <button type="submit" disabled={busy || code.length !== 6} className={`${primaryBtn} w-fit`}>
                 {busy && <Loader2 className="h-4 w-4 animate-spin" />} Activer
               </button>

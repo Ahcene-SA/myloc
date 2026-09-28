@@ -4,6 +4,32 @@ import { createContext, useCallback, useContext, useEffect, useState, ReactNode 
 import type { ClientTab } from "./ClientSidebar";
 import { fetchCars, fetchMyReservations, type CarFromApi, type ReservationFromApi } from "@/lib/api";
 import { takeBookingIntent, type BookingIntent } from "@/lib/booking";
+import { t } from "@/lib/i18n";
+
+// Onglet et voiture présélectionnée, gardés pour la session de l'onglet : changer de
+// langue ré-affiche toute l'application, on retrouve ainsi l'écran où l'on était.
+const NAV_KEY = "myloc_client_nav";
+const TABS: ClientTab[] = ["accueil", "reserver", "reservations", "paiements", "profil"];
+
+function readNav(): { tab: ClientTab; carId: number | null } | null {
+  try {
+    const raw = sessionStorage.getItem(NAV_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw) as { tab?: ClientTab; carId?: number | null };
+    if (!data.tab || !TABS.includes(data.tab)) return null;
+    return { tab: data.tab, carId: typeof data.carId === "number" ? data.carId : null };
+  } catch {
+    return null;
+  }
+}
+
+function saveNav(tab: ClientTab, carId: number | null) {
+  try {
+    sessionStorage.setItem(NAV_KEY, JSON.stringify({ tab, carId }));
+  } catch {
+    /* navigation privée */
+  }
+}
 
 interface ClientContextValue {
   activeTab: ClientTab;
@@ -28,8 +54,11 @@ const ClientContext = createContext<ClientContextValue | undefined>(undefined);
 export function ClientProvider({ children }: { children: ReactNode }) {
   // Le fournisseur n'est rendu que côté navigateur (voir ClientLayout) : lecture directe possible.
   const [bookingPrefill, setBookingPrefill] = useState<BookingIntent | null>(() => takeBookingIntent());
-  const [activeTab, setActiveTabState] = useState<ClientTab>(bookingPrefill ? "reserver" : "accueil");
-  const [preselectedCarId, setPreselectedCarId] = useState<number | null>(bookingPrefill?.carId ?? null);
+  const [savedNav] = useState(() => (bookingPrefill ? null : readNav()));
+  const [activeTab, setActiveTabState] = useState<ClientTab>(bookingPrefill ? "reserver" : savedNav?.tab ?? "accueil");
+  const [preselectedCarId, setPreselectedCarId] = useState<number | null>(bookingPrefill?.carId ?? savedNav?.carId ?? null);
+
+  useEffect(() => saveNav(activeTab, preselectedCarId), [activeTab, preselectedCarId]);
   const [cars, setCars] = useState<CarFromApi[]>([]);
   const [reservations, setReservations] = useState<ReservationFromApi[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,7 +72,7 @@ export function ClientProvider({ children }: { children: ReactNode }) {
       setCars(c.filter((car) => car.status === "available"));
       setReservations(r);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Impossible de joindre le serveur.");
+      setError(e instanceof Error ? e.message : t("Impossible de joindre le serveur."));
     } finally {
       setLoading(false);
     }
@@ -58,7 +87,7 @@ export function ClientProvider({ children }: { children: ReactNode }) {
         setCars(c.filter((car) => car.status === "available"));
         setReservations(r);
       })
-      .catch((e) => !cancelled && setError(e instanceof Error ? e.message : "Impossible de joindre le serveur."))
+      .catch((e) => !cancelled && setError(e instanceof Error ? e.message : t("Impossible de joindre le serveur.")))
       .finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;

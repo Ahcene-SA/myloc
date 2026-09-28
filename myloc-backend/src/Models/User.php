@@ -229,4 +229,16 @@ class User
         $this->pdo->prepare('UPDATE users SET recovery_codes = :rc WHERE id = :id')
             ->execute([':rc' => json_encode(array_values($hashedRecoveryCodes)), ':id' => $id]);
     }
+
+    /**
+     * Enregistre la tranche TOTP utilisée. Échoue (false) si une tranche égale ou plus récente
+     * a déjà servi : un même code à 6 chiffres ne peut pas être utilisé deux fois.
+     */
+    public function claimTotpSlice(int $id, int $slice): bool
+    {
+        $stmt = $this->pdo->prepare('UPDATE users SET totp_last_slice = :s
+            WHERE id = :id AND (totp_last_slice IS NULL OR totp_last_slice < :s2)');
+        $stmt->execute([':s' => $slice, ':s2' => $slice, ':id' => $id]);
+        return $stmt->rowCount() === 1;
+    }
 }

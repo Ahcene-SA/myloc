@@ -12,6 +12,7 @@ export interface AvailabilitySearch {
   category: string;
   pickupPlace?: string;
   pickupAddress?: string;
+  /** Vide = retour au lieu de retrait (pas de « retour ailleurs »). */
   returnPlace?: string;
   returnAddress?: string;
 }

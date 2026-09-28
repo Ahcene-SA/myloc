@@ -31,8 +31,8 @@ class PricingController
     {
         $input = $this->json();
         $carId = filter_var($input['car_id'] ?? null, FILTER_VALIDATE_INT);
-        $start = (string) ($input['start_date'] ?? '');
-        $end = (string) ($input['end_date'] ?? '');
+        $start = Validator::str($input['start_date'] ?? '');
+        $end = Validator::str($input['end_date'] ?? '');
         if (!$carId || !Validator::date($start) || !Validator::date($end)) {
             Response::error('Véhicule ou dates manquants.', 422);
         }
@@ -46,7 +46,7 @@ class PricingController
         }
         $user = AuthMiddleware::optionalUser();
         $userId = $user && $user['role'] === 'client' ? $user['user_id'] : null;
-        $code = isset($input['promo_code']) ? Validator::sanitizeString((string) $input['promo_code']) : null;
+        $code = isset($input['promo_code']) ? Validator::sanitizeString($input['promo_code']) : null;
 
         Response::success('Devis calculé.', ['quote' => $this->pricing->quote((float) $car['price_per_day'], $days, $userId, $code)]);
     }
@@ -138,7 +138,7 @@ class PricingController
 
     private function validatePromo(array $in): array
     {
-        $code = strtoupper(preg_replace('/\s+/', '', (string) ($in['code'] ?? '')));
+        $code = strtoupper(preg_replace('/\s+/', '', Validator::str($in['code'] ?? '')));
         if (!preg_match('/^[A-Z0-9_-]{3,40}$/', $code)) {
             Response::error('Le code doit faire 3 à 40 caractères (lettres, chiffres, - ou _).', 422);
         }
@@ -171,7 +171,7 @@ class PricingController
         if ($from && $until && $until < $from) {
             Response::error('La date de fin doit être après la date de début.', 422);
         }
-        $desc = Validator::sanitizeString((string) ($in['description'] ?? ''));
+        $desc = Validator::sanitizeString($in['description'] ?? '');
         return [
             'code' => $code,
             'description' => $desc !== '' ? mb_substr($desc, 0, 160) : null,

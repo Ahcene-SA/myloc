@@ -17,6 +17,7 @@ set_exception_handler(function (Throwable $e) {
 
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
 $dotenv->safeLoad();
+\Myloc\Config\Timezone::apply();
 
 try {
     $db = (new Database())->getPdo();

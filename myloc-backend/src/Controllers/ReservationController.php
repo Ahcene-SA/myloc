@@ -19,14 +19,24 @@ class ReservationController
 {
     private const MAX_DAYS = 90;
     private const PAYMENT_METHODS = ['especes', 'carte', 'virement'];
+    /** Demandes en attente simultanées par client (évite de bloquer toute la flotte). */
+    private const MAX_PENDING_PER_CLIENT = 3;
+    /** Réservation en ligne : départ au plus tard dans 12 mois. */
+    private const MAX_MONTHS_AHEAD = 12;
+    /** Remise maximale qu'un employé peut accorder sous le tarif calculé (au-delà : le propriétaire). */
+    public const EMPLOYEE_MAX_DISCOUNT_PERCENT = 20;
+    /** Plus grand montant accepté par une colonne DECIMAL(10, 2). */
+    private const MAX_AMOUNT = 99999999.99;
 
     private Reservation $reservationModel;
     private Car $carModel;
     private User $userModel;
     private Pricing $pricing;
+    private \PDO $pdo;
 
     public function __construct(Database $db)
     {
+        $this->pdo = $db->getPdo();
         $this->pricing = new Pricing($db);
         $this->userModel = new User($db);
         $this->reservationModel = new Reservation($db);
@@ -48,8 +58,8 @@ class ReservationController
             Response::error('Véhicule invalide.', 422);
         }
 
-        $startDate = Validator::sanitizeString((string) $input['start_date']);
-        $endDate = Validator::sanitizeString((string) $input['end_date']);
+        $startDate = Validator::sanitizeString($input['start_date']);
+        $endDate = Validator::sanitizeString($input['end_date']);
         if (!Validator::date($startDate) || !Validator::date($endDate)) {
             Response::error('Les dates doivent être au format AAAA-MM-JJ.', 422);
         }
@@ -63,14 +73,17 @@ class ReservationController
         if ($end <= $start) {
             Response::error('La date de retour doit être après la date de départ.', 422);
         }
+        if ($start > $today->modify('+' . self::MAX_MONTHS_AHEAD . ' months')) {
+            Response::error('Les réservations en ligne sont ouvertes jusqu\'à ' . self::MAX_MONTHS_AHEAD . ' mois à l\'avance. Contactez-nous pour une date plus lointaine.', 422);
+        }
         $days = (int) $start->diff($end)->days;
         if ($days > self::MAX_DAYS) {
             Response::error('La durée maximale d\'une location en ligne est de ' . self::MAX_DAYS . ' jours. Contactez-nous pour une location longue durée.', 422);
         }
 
-        $fullName = Validator::sanitizeString((string) $input['full_name']);
-        $email = strtolower(Validator::sanitizeString((string) $input['email']));
-        $phone = Validator::sanitizeString((string) $input['phone']);
+        $fullName = Validator::sanitizeString($input['full_name']);
+        $email = strtolower(Validator::sanitizeString($input['email']));
+        $phone = Validator::sanitizeString($input['phone']);
         if (!Validator::email($email)) {
             Response::error('Adresse email invalide.', 422);
         }
@@ -88,31 +101,50 @@ class ReservationController
             Response::error('Ce véhicule n\'est pas disponible.', 404);
         }
 
-        if ($this->reservationModel->hasOverlap($carId, $startDate, $endDate)) {
-            Response::error('Ce véhicule est déjà réservé sur ces dates. Choisissez d\'autres dates ou un autre véhicule.', 409);
-        }
+        $promoCode = isset($input['promo_code']) ? Validator::sanitizeString($input['promo_code']) : '';
 
-        $promoCode = isset($input['promo_code']) ? Validator::sanitizeString((string) $input['promo_code']) : '';
-        $quote = $this->pricing->quote((float) $car['price_per_day'], $days, (int) $user['user_id'], $promoCode !== '' ? $promoCode : null);
-        if ($promoCode !== '' && $quote['promo'] && !$quote['promo']['valid']) {
-            Response::error($quote['promo']['message'], 422);
-        }
-        $totalPrice = $quote['total_price'];
+        // Vérification des disponibilités + enregistrement d'un seul bloc : la ligne de la voiture
+        // est verrouillée, deux demandes simultanées sur les mêmes dates ne passent pas toutes les deux.
+        $this->pdo->beginTransaction();
+        try {
+            // Un client à la fois : le plafond de demandes en attente ne peut pas être contourné en parallèle
+            $this->pdo->prepare('SELECT id FROM users WHERE id = ? FOR UPDATE')->execute([$user['user_id']]);
+            if ($this->countActivePending((int) $user['user_id']) >= self::MAX_PENDING_PER_CLIENT) {
+                $this->fail('Vous avez déjà ' . self::MAX_PENDING_PER_CLIENT . ' demandes en attente. Attendez la réponse de l\'agence ou annulez-en une avant d\'en faire une nouvelle.', 422);
+            }
+            $this->lockCar($carId);
+            if ($this->reservationModel->hasOverlap($carId, $startDate, $endDate)) {
+                $this->fail('Ce véhicule est déjà réservé sur ces dates. Choisissez d\'autres dates ou un autre véhicule.', 409);
+            }
 
-        $reservationId = $this->reservationModel->create(
-            (int) $user['user_id'],
-            $carId,
-            $startDate,
-            $endDate,
-            $fullName,
-            $email,
-            $phone,
-            $totalPrice,
-            $details,
-            ['pricing' => $quote]
-        );
-        if ($quote['promo_code']) {
-            $this->pricing->usePromo($quote['promo_code']);
+            $quote = $this->pricing->quote((float) $car['price_per_day'], $days, (int) $user['user_id'], $promoCode !== '' ? $promoCode : null);
+            if ($promoCode !== '' && $quote['promo'] && !$quote['promo']['valid']) {
+                $this->fail($quote['promo']['message'], 422);
+            }
+            if ($quote['base_price'] > self::MAX_AMOUNT) {
+                $this->fail('Montant trop élevé : contactez l\'agence.', 422);
+            }
+            $totalPrice = $quote['total_price'];
+
+            $reservationId = $this->reservationModel->create(
+                (int) $user['user_id'],
+                $carId,
+                $startDate,
+                $endDate,
+                $fullName,
+                $email,
+                $phone,
+                $totalPrice,
+                $details,
+                ['pricing' => $quote]
+            );
+            if ($quote['promo_code'] && !$this->pricing->usePromo($quote['promo_code'])) {
+                $this->fail('Ce code a déjà été utilisé le nombre maximum de fois.', 422);
+            }
+            $this->pdo->commit();
+        } catch (\Throwable $e) {
+            $this->rollBack();
+            throw $e;
         }
 
         $reservation = $this->reservationModel->findById($reservationId);
@@ -156,7 +188,20 @@ class ReservationController
             Response::error('La location a déjà commencé : contactez l\'agence pour toute modification.', 422);
         }
 
-        $this->reservationModel->updateStatus($id, 'cancelled');
+        $this->pdo->beginTransaction();
+        try {
+            // Relecture verrouillée : un double clic n'annule (et ne rend le code promo) qu'une fois
+            $current = $this->lockReservation($id);
+            if (!in_array($current['status'] ?? '', ['pending', 'confirmed'], true)) {
+                $this->fail('Cette réservation ne peut plus être annulée.', 422);
+            }
+            $this->reservationModel->updateStatus($id, 'cancelled');
+            $this->pricing->releasePromo($current['promo_code'] ?? null);
+            $this->pdo->commit();
+        } catch (\Throwable $e) {
+            $this->rollBack();
+            throw $e;
+        }
         $detailed = $this->reservationModel->findDetailedById($id);
         if ($detailed) {
             Emails::clientCancelled($detailed, $reservation['status']);
@@ -189,7 +234,7 @@ class ReservationController
             Response::error('Statut manquant.', 422);
         }
 
-        $status = Validator::sanitizeString((string) $input['status']);
+        $status = Validator::sanitizeString($input['status']);
         if (!Validator::inArray($status, ['pending', 'confirmed', 'rejected', 'cancelled'])) {
             Response::error('Statut invalide.', 422);
         }
@@ -199,16 +244,9 @@ class ReservationController
             Response::error('Réservation introuvable.', 404);
         }
 
-        // Réactiver une réservation refusée/annulée : la voiture doit être encore libre
-        $blocking = ['pending', 'confirmed'];
-        if (in_array($status, $blocking, true) && !in_array($existing['status'], $blocking, true)
-            && $this->reservationModel->hasOverlap((int) $existing['car_id'], $existing['start_date'], $existing['end_date'], $id)) {
-            Response::error('Impossible : ce véhicule est déjà réservé sur ces dates par une autre réservation.', 409);
-        }
-
         $adminNote = null;
         if (array_key_exists('admin_note', $input)) {
-            $adminNote = Validator::sanitizeString((string) ($input['admin_note'] ?? ''));
+            $adminNote = Validator::sanitizeString($input['admin_note'] ?? '');
             if (mb_strlen($adminNote) > 1000) {
                 Response::error('Le message est trop long (1000 caractères maximum).', 422);
             }
@@ -220,7 +258,34 @@ class ReservationController
             Response::error('Indiquez le motif de l\'annulation dans le message pour le client.', 422);
         }
 
-        $this->reservationModel->updateStatus($id, $status, $adminNote);
+        $blocking = ['pending', 'confirmed'];
+        $this->pdo->beginTransaction();
+        try {
+            // Voiture puis réservation verrouillées (même ordre que create) : l'état lu est l'état écrit
+            $this->lockCar((int) $existing['car_id']);
+            $current = $this->lockReservation($id);
+            $wasBlocking = in_array($current['status'], $blocking, true);
+            $isBlocking = in_array($status, $blocking, true);
+
+            // Réactiver une réservation refusée/annulée : la voiture doit être encore libre
+            if ($isBlocking && !$wasBlocking
+                && $this->reservationModel->hasOverlap((int) $current['car_id'], $current['start_date'], $current['end_date'], $id)) {
+                $this->fail('Impossible : ce véhicule est déjà réservé sur ces dates par une autre réservation.', 409);
+            }
+
+            $this->reservationModel->updateStatus($id, $status, $adminNote);
+
+            // Code promo : rendu si la réservation est refusée / annulée, recompté si elle est réactivée
+            if ($wasBlocking && !$isBlocking) {
+                $this->pricing->releasePromo($current['promo_code'] ?? null);
+            } elseif (!$wasBlocking && $isBlocking) {
+                $this->pricing->reclaimPromo($current['promo_code'] ?? null);
+            }
+            $this->pdo->commit();
+        } catch (\Throwable $e) {
+            $this->rollBack();
+            throw $e;
+        }
         $detailed = $this->reservationModel->findDetailedById($id);
         if ($status !== $existing['status'] && $detailed && ($input['notify_client'] ?? true) !== false) {
             Emails::reservationStatus($detailed, $status);
@@ -263,7 +328,7 @@ class ReservationController
      */
     public function adminCreate(): void
     {
-        AuthMiddleware::requireStaff();
+        $actor = AuthMiddleware::requireStaff();
         $input = $this->getJsonInput();
 
         $required = Validator::required($input, ['car_id', 'start_date', 'end_date', 'full_name', 'phone']);
@@ -280,8 +345,8 @@ class ReservationController
             Response::error('Véhicule introuvable.', 404);
         }
 
-        $startDate = Validator::sanitizeString((string) $input['start_date']);
-        $endDate = Validator::sanitizeString((string) $input['end_date']);
+        $startDate = Validator::sanitizeString($input['start_date']);
+        $endDate = Validator::sanitizeString($input['end_date']);
         if (!Validator::date($startDate) || !Validator::date($endDate)) {
             Response::error('Les dates doivent être au format AAAA-MM-JJ.', 422);
         }
@@ -295,9 +360,9 @@ class ReservationController
             Response::error('Durée maximale : 365 jours.', 422);
         }
 
-        $fullName = Validator::sanitizeString((string) $input['full_name']);
-        $phone = Validator::sanitizeString((string) $input['phone']);
-        $email = strtolower(Validator::sanitizeString((string) ($input['email'] ?? '')));
+        $fullName = Validator::sanitizeString($input['full_name']);
+        $phone = Validator::sanitizeString($input['phone']);
+        $email = strtolower(Validator::sanitizeString($input['email'] ?? ''));
         if (!Validator::stringLength($fullName, 2, 100)) {
             Response::error('Le nom doit contenir entre 2 et 100 caractères.', 422);
         }
@@ -308,34 +373,10 @@ class ReservationController
             Response::error('Adresse email invalide.', 422);
         }
 
-        $status = Validator::sanitizeString((string) ($input['status'] ?? 'confirmed'));
+        $status = Validator::sanitizeString($input['status'] ?? 'confirmed');
         if (!in_array($status, ['pending', 'confirmed'], true)) {
             Response::error('Statut invalide.', 422);
         }
-
-        if ($this->reservationModel->hasOverlap($carId, $startDate, $endDate)) {
-            Response::error('Ce véhicule est déjà réservé sur ces dates.', 409);
-        }
-
-        $linkedUser = !empty($input['user_id']) ? (int) $input['user_id'] : null;
-        $promoCode = Validator::sanitizeString((string) ($input['promo_code'] ?? ''));
-        $quote = $this->pricing->quote((float) $car['price_per_day'], $days, $linkedUser, $promoCode !== '' ? $promoCode : null);
-        if ($promoCode !== '' && $quote['promo'] && !$quote['promo']['valid']) {
-            Response::error($quote['promo']['message'], 422);
-        }
-        if (isset($input['total_price']) && $input['total_price'] !== '' && $input['total_price'] !== null) {
-            $custom = filter_var($input['total_price'], FILTER_VALIDATE_FLOAT);
-            if ($custom === false || $custom < 0) {
-                Response::error('Montant invalide.', 422);
-            }
-            // Prix négocié : la différence avec le tarif est notée comme remise agence
-            $custom = round((float) $custom, 2);
-            $quote['discount_amount'] = max(0, round($quote['base_price'] - $custom, 2));
-            $quote['discount_label'] = $custom < $quote['base_price'] ? 'Prix négocié par l\'agence' : null;
-            $quote['promo_code'] = null;
-            $quote['total_price'] = $custom;
-        }
-        $totalPrice = $quote['total_price'];
 
         // Rattacher à un compte client existant (il la verra dans son espace)
         $userId = null;
@@ -347,21 +388,70 @@ class ReservationController
             }
         }
 
-        $adminNote = Validator::sanitizeString((string) ($input['admin_note'] ?? ''));
-        $id = $this->reservationModel->create(
-            $userId,
-            $carId,
-            $startDate,
-            $endDate,
-            $fullName,
-            $email !== '' ? $email : null,
-            $phone,
-            $totalPrice,
-            $this->readDetails($input),
-            ['status' => $status, 'source' => 'agence', 'admin_note' => $adminNote !== '' ? $adminNote : null, 'pricing' => $quote]
-        );
-        if ($quote['promo_code']) {
-            $this->pricing->usePromo($quote['promo_code']);
+        $custom = null;
+        if (isset($input['total_price']) && $input['total_price'] !== '' && $input['total_price'] !== null) {
+            $custom = filter_var($input['total_price'], FILTER_VALIDATE_FLOAT);
+            if ($custom === false || $custom < 0) {
+                Response::error('Montant invalide.', 422);
+            }
+            if ($custom > self::MAX_AMOUNT) {
+                Response::error('Montant trop élevé (99 999 999,99 maximum).', 422);
+            }
+            $custom = round((float) $custom, 2);
+        }
+
+        $promoCode = Validator::sanitizeString($input['promo_code'] ?? '');
+        $adminNote = Validator::sanitizeString($input['admin_note'] ?? '');
+        $details = $this->readDetails($input);
+
+        $this->pdo->beginTransaction();
+        try {
+            $this->lockCar($carId);
+            if ($this->reservationModel->hasOverlap($carId, $startDate, $endDate)) {
+                $this->fail('Ce véhicule est déjà réservé sur ces dates.', 409);
+            }
+
+            $quote = $this->pricing->quote((float) $car['price_per_day'], $days, $userId ?: null, $promoCode !== '' ? $promoCode : null);
+            if ($promoCode !== '' && $quote['promo'] && !$quote['promo']['valid']) {
+                $this->fail($quote['promo']['message'], 422);
+            }
+            if ($custom === null && $quote['base_price'] > self::MAX_AMOUNT) {
+                $this->fail('Montant trop élevé : indiquez un prix négocié.', 422);
+            }
+            if ($custom !== null) {
+                // Un employé ne peut pas descendre à plus de 20 % sous le tarif calculé
+                $floor = round($quote['total_price'] * (100 - self::EMPLOYEE_MAX_DISCOUNT_PERCENT) / 100, 2);
+                if ($actor['role'] !== 'owner' && $custom < $floor) {
+                    $this->fail('Remise trop importante : au-delà de ' . self::EMPLOYEE_MAX_DISCOUNT_PERCENT . ' %, demandez au propriétaire.', 422);
+                }
+                // Prix négocié : la différence avec le tarif est notée comme remise agence
+                $quote['base_price'] = min($quote['base_price'], self::MAX_AMOUNT);
+                $quote['discount_amount'] = max(0, round($quote['base_price'] - $custom, 2));
+                $quote['discount_label'] = $custom < $quote['base_price'] ? 'Prix négocié par l\'agence' : null;
+                $quote['promo_code'] = null;
+                $quote['total_price'] = $custom;
+            }
+            $totalPrice = $quote['total_price'];
+
+            $id = $this->reservationModel->create(
+                $userId ?: null,
+                $carId,
+                $startDate,
+                $endDate,
+                $fullName,
+                $email !== '' ? $email : null,
+                $phone,
+                $totalPrice,
+                $details,
+                ['status' => $status, 'source' => 'agence', 'admin_note' => $adminNote !== '' ? $adminNote : null, 'pricing' => $quote]
+            );
+            if ($quote['promo_code'] && !$this->pricing->usePromo($quote['promo_code'])) {
+                $this->fail('Ce code a déjà été utilisé le nombre maximum de fois.', 422);
+            }
+            $this->pdo->commit();
+        } catch (\Throwable $e) {
+            $this->rollBack();
+            throw $e;
         }
 
         Audit::log('reservation_created', 'reservation', $id, [
@@ -384,7 +474,7 @@ class ReservationController
             if (!isset($input[$key]) || !is_scalar($input[$key])) {
                 return null;
             }
-            $value = Validator::sanitizeString((string) $input[$key]);
+            $value = Validator::sanitizeString($input[$key]);
             if ($value === '') {
                 return null;
             }
@@ -419,6 +509,48 @@ class ReservationController
             'payment_method' => $payment,
             'client_note' => $text('client_note', 1000),
         ];
+    }
+
+    /** Verrou sur la voiture (dans une transaction) : les vérifications de chevauchement passent une par une. */
+    private function lockCar(int $carId): void
+    {
+        $this->pdo->prepare('SELECT id FROM cars WHERE id = ? FOR UPDATE')->execute([$carId]);
+    }
+
+    /** Relit la réservation en la verrouillant (dans une transaction). */
+    private function lockReservation(int $id): array
+    {
+        $stmt = $this->pdo->prepare('SELECT * FROM reservations WHERE id = ? FOR UPDATE');
+        $stmt->execute([$id]);
+        $row = $stmt->fetch();
+        if (!$row) {
+            $this->fail('Réservation introuvable.', 404);
+        }
+        return $row;
+    }
+
+    /** Demandes en attente d'un client dont la location n'est pas encore passée. */
+    private function countActivePending(int $userId): int
+    {
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM reservations
+            WHERE user_id = ? AND status = 'pending' AND end_date >= CURDATE()");
+        $stmt->execute([$userId]);
+        return (int) $stmt->fetchColumn();
+    }
+
+    /** Annule la transaction en cours puis renvoie l'erreur. */
+    private function fail(string $message, int $status): never
+    {
+        $this->rollBack();
+        Response::error($message, $status);
+        exit;
+    }
+
+    private function rollBack(): void
+    {
+        if ($this->pdo->inTransaction()) {
+            $this->pdo->rollBack();
+        }
     }
 
     private function getJsonInput(): array

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { Printer } from "lucide-react";
+import { ArrowLeft, FileWarning, Printer } from "lucide-react";
 import { useAuth } from "../AuthContext";
 import { Logo } from "../Brand";
 import {
@@ -68,6 +68,27 @@ function InspectionBlock({ title, i, compare }: { title: string; i?: Inspection;
   );
 }
 
+/** Contrat impossible à afficher : message clair et retour vers l'espace agence. */
+function ContractError({ message }: { message: string }) {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4">
+      <div role="alert" className="flex w-full max-w-md flex-col items-center gap-4 rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-xl">
+        <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-800">
+          <FileWarning className="h-6 w-6" />
+        </span>
+        <p className="text-lg font-extrabold text-navy">{message}</p>
+        <p className="text-sm text-slate-600">Ouvrez le contrat depuis la fiche d&apos;une réservation, dans l&apos;espace agence.</p>
+        <a
+          href={pageUrl("admin")}
+          className="inline-flex h-11 items-center gap-2 rounded-full bg-navy px-5 text-sm font-bold text-white hover:bg-navy-soft"
+        >
+          <ArrowLeft className="h-4 w-4" /> Retour à l&apos;espace agence
+        </a>
+      </div>
+    </div>
+  );
+}
+
 export function ContractView() {
   const { token, user, isLoading } = useAuth();
   const id = useSyncExternalStore(
@@ -75,10 +96,16 @@ export function ContractView() {
     () => Number(new URLSearchParams(window.location.search).get("id")) || 0,
     () => 0
   );
+  // Vrai seulement côté navigateur : avant, l'identifiant n'est pas encore lu
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
   // L'administration et le contrat sont en français
   const { lang } = useLang();
   useEffect(() => {
-    if (lang !== "fr") setLang("fr");
+    if (lang !== "fr") setLang("fr", { persist: false }); // sans effacer le choix du client
   }, [lang]);
 
   const [data, setData] = useState<{ r: ReservationFromApi | null; insp: InspectionSet; error: string } | null>(null);
@@ -98,9 +125,11 @@ export function ContractView() {
     };
   }, [id, token, user, isLoading]);
 
+  // Lien sans ?id= (ou invalide) : sinon le chargement tournerait indéfiniment
+  if (mounted && !id) return <ContractError message="Aucune réservation indiquée." />;
   if (!data) return <LoadingBlock label="Préparation du contrat…" />;
   const { r, insp } = data;
-  if (!r) return <p className="p-10 text-center font-semibold text-navy">{data.error || "Réservation introuvable."}</p>;
+  if (!r) return <ContractError message={data.error || "Réservation introuvable."} />;
 
   const days = daysBetween(r.start_date || "", r.end_date || "");
   const discount = parseFloat(String(r.discount_amount ?? 0)) || 0;

@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS users (
     agency VARCHAR(100) NULL,
     totp_secret VARCHAR(64) NULL,
     totp_enabled TINYINT(1) NOT NULL DEFAULT 0,
+    totp_last_slice INT NULL,
     recovery_codes TEXT NULL,
     token_version INT NOT NULL DEFAULT 0,
     last_login_at DATETIME NULL,

@@ -8,7 +8,7 @@ import { agencyPing, changePassword } from "@/lib/api";
 
 /** Première connexion d'un employé : il remplace le mot de passe provisoire par le sien. */
 export function ForcePasswordChange() {
-  const { user, updateUser, logout } = useAuth();
+  const { user, updateUser, logout, renewToken } = useAuth();
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -22,7 +22,8 @@ export function ForcePasswordChange() {
     if (next !== confirm) return setError("Les deux mots de passe ne correspondent pas.");
     setBusy(true);
     try {
-      await changePassword(current, next);
+      // Nouveau jeton : les autres sessions sont révoquées, celle-ci continue
+      renewToken(await changePassword(current, next));
       const fresh = await agencyPing();
       if (fresh) updateUser(fresh);
     } catch (err) {
@@ -46,9 +47,18 @@ export function ForcePasswordChange() {
           Pour votre sécurité, remplacez le mot de passe provisoire donné par le propriétaire par un mot de passe personnel.
         </p>
         <form onSubmit={submit} className="mt-6 flex flex-col gap-4">
-          <input type="password" autoComplete="current-password" required value={current} onChange={(e) => setCurrent(e.target.value)} placeholder="Mot de passe provisoire" className={input} />
-          <input type="password" autoComplete="new-password" required value={next} onChange={(e) => setNext(e.target.value)} placeholder="Nouveau mot de passe (8 caractères min.)" className={input} />
-          <input type="password" autoComplete="new-password" required value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="Confirmer le nouveau mot de passe" className={input} />
+          <label className="flex flex-col gap-1.5">
+            <span className="text-xs font-bold uppercase tracking-wide text-navy">Mot de passe provisoire</span>
+            <input type="password" autoComplete="current-password" required value={current} onChange={(e) => setCurrent(e.target.value)} className={input} />
+          </label>
+          <label className="flex flex-col gap-1.5">
+            <span className="text-xs font-bold uppercase tracking-wide text-navy">Nouveau mot de passe (8 caractères min.)</span>
+            <input type="password" autoComplete="new-password" required minLength={8} value={next} onChange={(e) => setNext(e.target.value)} className={input} />
+          </label>
+          <label className="flex flex-col gap-1.5">
+            <span className="text-xs font-bold uppercase tracking-wide text-navy">Confirmer le nouveau mot de passe</span>
+            <input type="password" autoComplete="new-password" required value={confirm} onChange={(e) => setConfirm(e.target.value)} className={input} />
+          </label>
           {error && <p role="alert" className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{error}</p>}
           <button type="submit" disabled={busy} className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-sky text-sm font-bold text-navy hover:bg-sky-mid hover:text-white disabled:opacity-60">
             {busy && <Loader2 className="h-4 w-4 animate-spin" />}

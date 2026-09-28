@@ -22,6 +22,7 @@ class AgencyController
 {
     private User $users;
     private RateLimiter $rateLimiter;
+    private RateLimiter $ipLimiter;
     private Database $db;
 
     public function __construct(Database $db)
@@ -29,6 +30,7 @@ class AgencyController
         $this->db = $db;
         $this->users = new User($db);
         $this->rateLimiter = new RateLimiter($db);
+        $this->ipLimiter = new RateLimiter($db, AuthController::IP_MAX_FAILURES, AuthController::IP_WINDOW_SECONDS);
     }
 
     /* ───────────── Connexion ───────────── */
@@ -36,10 +38,17 @@ class AgencyController
     public function login(): void
     {
         $in = $this->json();
-        $email = strtolower(Validator::sanitizeString((string) ($in['email'] ?? '')));
-        $password = (string) ($in['password'] ?? '');
+        $email = strtolower(Validator::sanitizeString($in['email'] ?? ''));
+        $password = is_string($in['password'] ?? null) ? $in['password'] : '';
         if ($email === '' || $password === '') {
             Response::error('Email et mot de passe obligatoires.', 422);
+        }
+
+        // Limite par adresse IP, commune avec la connexion client
+        $ipKey = AuthController::ipKey();
+        if (!$this->ipLimiter->isAllowed($ipKey)) {
+            $min = max(1, (int) ceil($this->ipLimiter->remainingLockoutSeconds($ipKey) / 60));
+            Response::error("Trop de tentatives depuis cette connexion. Réessayez dans {$min} minute(s).", 429);
         }
 
         $key = 'agency:' . $email;
@@ -52,6 +61,7 @@ class AgencyController
         $valid = $user && AuthMiddleware::isStaffRole($user['role']) && password_verify($password, $user['password_hash']);
         if (!$valid) {
             $this->rateLimiter->recordFailure($key);
+            $this->ipLimiter->recordFailure($ipKey);
             Audit::log('login_failed', 'user', $user ? (int) $user['id'] : null, ['email' => $email], $user ? ['user_id' => (int) $user['id'], 'name' => $user['full_name']] : null);
             Response::error('Email ou mot de passe incorrect.', 401);
         }
@@ -89,7 +99,7 @@ class AgencyController
     {
         $in = $this->json();
         try {
-            $claims = JwtHelper::decode((string) ($in['challenge'] ?? ''));
+            $claims = JwtHelper::decode(Validator::str($in['challenge'] ?? ''));
         } catch (\RuntimeException $e) {
             Response::error('Délai dépassé : reconnectez-vous.', 401);
         }
@@ -106,8 +116,8 @@ class AgencyController
             Response::error('Trop de codes incorrects. Réessayez dans quelques minutes.', 429);
         }
 
-        $code = (string) ($in['code'] ?? '');
-        $recovery = strtoupper(trim((string) ($in['recovery_code'] ?? '')));
+        $code = Validator::str($in['code'] ?? '');
+        $recovery = strtoupper(trim(Validator::str($in['recovery_code'] ?? '')));
         $setup = !empty($claims->setup);
         $actor = ['user_id' => (int) $user['id'], 'name' => $user['full_name']];
 
@@ -131,7 +141,7 @@ class AgencyController
             $this->issueSession($user, ['recovery_codes_left' => count($hashes)]);
         }
 
-        if (!Totp::verify($user['totp_secret'], $code)) {
+        if (!$this->checkTotp($user, $code)) {
             $this->rateLimiter->recordFailure($key);
             Response::error('Code incorrect. Vérifiez l\'heure de votre téléphone et réessayez.', 422);
         }
@@ -186,7 +196,7 @@ class AgencyController
         if (!$user['totp_secret'] || (int) $user['totp_enabled']) {
             Response::error('Recommencez l\'activation.', 409);
         }
-        if (!Totp::verify($user['totp_secret'], (string) ($this->json()['code'] ?? ''))) {
+        if (!$this->checkTotp($user, Validator::str($this->json()['code'] ?? ''))) {
             Response::error('Code incorrect. Vérifiez l\'heure de votre téléphone et réessayez.', 422);
         }
         [$plain, $hashed] = Totp::recoveryCodes();
@@ -200,7 +210,7 @@ class AgencyController
     {
         $auth = AuthMiddleware::requireStaff();
         $user = $this->users->findRawById($auth['user_id']);
-        if (!(int) $user['totp_enabled'] || !Totp::verify((string) $user['totp_secret'], (string) ($this->json()['code'] ?? ''))) {
+        if (!(int) $user['totp_enabled'] || !$this->checkTotp($user, Validator::str($this->json()['code'] ?? ''))) {
             Response::error('Code incorrect.', 422);
         }
         [$plain, $hashed] = Totp::recoveryCodes();
@@ -217,7 +227,8 @@ class AgencyController
             Response::error('La double authentification est obligatoire pour le propriétaire.', 403);
         }
         $hash = $this->users->getPasswordHash($auth['user_id']);
-        if (!$hash || !password_verify((string) ($this->json()['password'] ?? ''), $hash)) {
+        $password = $this->json()['password'] ?? '';
+        if (!$hash || !is_string($password) || !password_verify($password, $hash)) {
             Response::error('Mot de passe incorrect.', 422);
         }
         $this->users->setTotpSecret($auth['user_id'], null);
@@ -237,10 +248,10 @@ class AgencyController
     {
         AuthMiddleware::requireOwner();
         $in = $this->json();
-        $fullName = Validator::sanitizeString((string) ($in['full_name'] ?? ''));
-        $email = strtolower(Validator::sanitizeString((string) ($in['email'] ?? '')));
-        $phone = Validator::sanitizeString((string) ($in['phone'] ?? ''));
-        $agency = Validator::sanitizeString((string) ($in['agency'] ?? ''));
+        $fullName = Validator::sanitizeString($in['full_name'] ?? '');
+        $email = strtolower(Validator::sanitizeString($in['email'] ?? ''));
+        $phone = Validator::sanitizeString($in['phone'] ?? '');
+        $agency = Validator::sanitizeString($in['agency'] ?? '');
         $role = ($in['role'] ?? 'employee') === 'owner' ? 'owner' : 'employee';
 
         if (!Validator::stringLength($fullName, 2, 100)) {
@@ -272,21 +283,21 @@ class AgencyController
         $changes = [];
 
         if (array_key_exists('full_name', $in)) {
-            $v = Validator::sanitizeString((string) $in['full_name']);
+            $v = Validator::sanitizeString($in['full_name']);
             if (!Validator::stringLength($v, 2, 100)) {
                 Response::error('Le nom doit contenir entre 2 et 100 caractères.', 422);
             }
             $fields['full_name'] = $v;
         }
         if (array_key_exists('phone', $in)) {
-            $v = Validator::sanitizeString((string) $in['phone']);
+            $v = Validator::sanitizeString($in['phone']);
             if (!Validator::stringLength($v, 5, 20)) {
                 Response::error('Le téléphone doit contenir entre 5 et 20 caractères.', 422);
             }
             $fields['phone'] = $v;
         }
         if (array_key_exists('agency', $in)) {
-            $v = Validator::sanitizeString((string) $in['agency']);
+            $v = Validator::sanitizeString($in['agency']);
             $fields['agency'] = $v !== '' ? $v : null;
         }
         if (array_key_exists('role', $in)) {
@@ -366,7 +377,7 @@ class AgencyController
     public function auditLog(): void
     {
         $auth = AuthMiddleware::requireStaff();
-        $entityType = (string) ($_GET['entity_type'] ?? '');
+        $entityType = Validator::str($_GET['entity_type'] ?? '');
         $entityId = (int) ($_GET['entity_id'] ?? 0);
         // Un employé peut voir l'historique d'une réservation, pas le journal complet
         if ($auth['role'] !== 'owner' && !($entityType === 'reservation' && $entityId > 0)) {
@@ -389,13 +400,13 @@ class AgencyController
         }
         if (!empty($_GET['action'])) {
             $where[] = 'action LIKE :action';
-            $p[':action'] = preg_replace('/[^a-z0-9_]/', '', (string) $_GET['action']) . '%';
+            $p[':action'] = preg_replace('/[^a-z0-9_]/', '', Validator::str($_GET['action'])) . '%';
         }
-        if (!empty($_GET['from']) && Validator::date((string) $_GET['from'])) {
+        if (!empty($_GET['from']) && Validator::date(Validator::str($_GET['from']))) {
             $where[] = 'created_at >= :from';
             $p[':from'] = $_GET['from'] . ' 00:00:00';
         }
-        if (!empty($_GET['to']) && Validator::date((string) $_GET['to'])) {
+        if (!empty($_GET['to']) && Validator::date(Validator::str($_GET['to']))) {
             $where[] = 'created_at <= :to';
             $p[':to'] = $_GET['to'] . ' 23:59:59';
         }
@@ -431,6 +442,22 @@ class AgencyController
             'role' => $role,
             'user' => $this->users->findById($id),
         ], $extra));
+    }
+
+    /**
+     * Code à 6 chiffres correct ET jamais utilisé : la tranche de 30 s du code est mémorisée
+     * (users.totp_last_slice), un code déjà accepté (ou plus ancien) est refusé.
+     */
+    private function checkTotp(array $user, string $code): bool
+    {
+        $secret = (string) ($user['totp_secret'] ?? '');
+        if ($secret === '') {
+            return false;
+        }
+        $last = isset($user['totp_last_slice']) ? (int) $user['totp_last_slice'] : null;
+        $slice = Totp::verifySlice($secret, $code, $last);
+        // Mise à jour conditionnelle : deux requêtes simultanées avec le même code → une seule passe
+        return $slice !== null && $this->users->claimTotpSlice((int) $user['id'], $slice);
     }
 
     /** Jeton court (5 min) qui prouve que le mot de passe est bon, en attendant le code. */

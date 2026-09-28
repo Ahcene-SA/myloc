@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { CalendarCheck2, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { CalendarCheck2, CarFront, RotateCw, X } from "lucide-react";
 import { CarCard, type Car } from "./CarCard";
 import { cn } from "@/lib/utils";
 import { fetchAvailableCars, fetchCars, fetchPricingRules, mapApiCarToCar, type AvailableCar, type PricingRules } from "@/lib/api";
@@ -10,87 +10,6 @@ import { pageUrl } from "@/lib/routes";
 import { FILTER_EVENT, categoryInfo } from "@/lib/site";
 import { BlueBar, PalmShadow } from "./Brand";
 import { dateLocale, translate, useLang } from "@/lib/i18n";
-
-const fallbackCars: Car[] = [
-  {
-    id: "clio5-alpino",
-    name: "Clio 5 Alpino",
-    category: "citadine",
-    image: "images/cars/clio5-alpino.png",
-    price: 55,
-    priceUnit: "jour",
-    transmission: "Automatique",
-    seats: 5,
-    year: 2024,
-  },
-  {
-    id: "clio5-techno",
-    name: "Clio 5 Techno",
-    category: "citadine",
-    image: "images/cars/clio5-techno.png",
-    price: 52,
-    priceUnit: "jour",
-    transmission: "Automatique",
-    seats: 5,
-    year: 2024,
-  },
-  {
-    id: "citroen-c3",
-    name: "Citroën C3",
-    category: "citadine",
-    image: "images/cars/citroen-c3.png",
-    price: 48,
-    priceUnit: "jour",
-    transmission: "Manuelle",
-    seats: 5,
-    year: 2024,
-  },
-  {
-    id: "opel-astra",
-    name: "Opel Astra",
-    category: "compacte",
-    image: "images/cars/opel-astra.png",
-    price: 75,
-    priceUnit: "jour",
-    transmission: "Automatique",
-    seats: 5,
-    year: 2024,
-  },
-  {
-    id: "opel-mocca",
-    name: "Opel Mokka",
-    category: "suv",
-    image: "images/cars/opel-mokka.png",
-    price: 80,
-    priceUnit: "jour",
-    transmission: "Automatique",
-    seats: 5,
-    year: 2024,
-  },
-  {
-    id: "renault-captur",
-    name: "Renault Captur",
-    category: "suv",
-    image: "images/cars/renault-captur.png",
-    price: 72,
-    priceUnit: "jour",
-    transmission: "Automatique",
-    seats: 5,
-    year: 2024,
-  },
-  {
-    id: "jetour-x70+",
-    name: "Jetour X70+",
-    category: "suv",
-    image: "images/cars/jetour-x70-plus.png",
-    price: 95,
-    priceUnit: "jour",
-    transmission: "Automatique",
-    seats: 7,
-    year: 2025,
-    featured: true,
-  },
-];
 
 export function Fleet() {
   const { t } = useLang();
@@ -114,30 +33,43 @@ export function Fleet() {
     };
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
+  // Erreur de chargement de la flotte : état honnête + bouton « Réessayer » (pas de flotte fictive)
+  const [loadError, setLoadError] = useState(false);
+  const loadSeq = useRef(0);
 
+  // Requête de la flotte (états mis à jour uniquement à la réponse)
+  const fetchFleet = useCallback(() => {
+    const seq = ++loadSeq.current;
     fetchCars()
       .then((apiCars) => {
-        if (cancelled) return;
-        const available = apiCars.filter((c) => c.status === "available");
-        const mapped = available.map(mapApiCarToCar);
-        setCars(mapped.length > 0 ? mapped : fallbackCars);
+        if (seq !== loadSeq.current) return;
+        setCars(apiCars.filter((c) => c.status === "available").map(mapApiCarToCar));
       })
-      .catch((e) => {
-        if (cancelled) return;
-        // API indisponible : on affiche la flotte par défaut sans message d'erreur pour le visiteur.
-        console.warn("[MYLOC] Flotte par défaut affichée :", e instanceof Error ? e.message : e);
-        setCars(fallbackCars);
+      .catch(() => {
+        if (seq !== loadSeq.current) return;
+        setCars([]);
+        setLoadError(true);
       })
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (seq === loadSeq.current) setLoading(false);
       });
-
-    return () => {
-      cancelled = true;
-    };
   }, []);
+
+  // Bouton « Réessayer »
+  const retry = () => {
+    setLoading(true);
+    setLoadError(false);
+    fetchFleet();
+  };
+
+  useEffect(() => {
+    fetchFleet();
+    // Démontage : on invalide toute réponse encore en vol
+    const seqRef = loadSeq;
+    return () => {
+      seqRef.current++;
+    };
+  }, [fetchFleet]);
 
   // Filtre envoyé par le formulaire de recherche du Hero.
   useEffect(() => {
@@ -149,27 +81,38 @@ export function Fleet() {
     return () => window.removeEventListener(FILTER_EVENT, onFilter);
   }, []);
 
-  // Recherche de disponibilités envoyée par le Hero
+  // Recherche de disponibilités envoyée par le Hero.
+  // Numéro de séquence : seule la réponse de la dernière recherche est prise en compte.
+  const searchSeq = useRef(0);
   useEffect(() => {
     const onSearch = (e: Event) => {
       const q = (e as CustomEvent<AvailabilitySearch>).detail;
+      const seq = ++searchSeq.current;
       setSearch(q);
+      setFree(null);
       setSearching(true);
       setSearchError("");
       setActiveCategory(q.category in categoryInfo ? q.category : "all");
       fetchAvailableCars(q.start, q.end)
-        .then((list) => setFree(list))
+        .then((list) => {
+          if (seq === searchSeq.current) setFree(list);
+        })
         .catch((err) => {
+          if (seq !== searchSeq.current) return;
           setFree(null);
           setSearchError(err instanceof Error ? err.message : translate("Impossible de vérifier les disponibilités."));
         })
-        .finally(() => setSearching(false));
+        .finally(() => {
+          if (seq === searchSeq.current) setSearching(false);
+        });
     };
     window.addEventListener(AVAILABILITY_EVENT, onSearch);
     return () => window.removeEventListener(AVAILABILITY_EVENT, onSearch);
   }, []);
 
   const clearSearch = () => {
+    searchSeq.current++; // ignore une recherche encore en cours
+    setSearching(false);
     setSearch(null);
     setFree(null);
     setSearchError("");
@@ -181,8 +124,19 @@ export function Fleet() {
     return m;
   }, [free]);
 
-  const shortDate = (d: string) => new Date(`${d}T00:00:00`).toLocaleDateString(dateLocale(), { day: "numeric", month: "short" });
-  const quoteLabel = search ? t("Du {start} au {end}", { start: shortDate(search.start), end: shortDate(search.end) }) : "";
+  const shortDate = (d: string) =>
+    new Date(`${d}T00:00:00`).toLocaleDateString(dateLocale(), {
+      day: "numeric",
+      month: "short",
+    });
+  const quoteLabel = search
+    ? t("Du {start} au {end}", {
+        start: shortDate(search.start),
+        end: shortDate(search.end),
+      })
+    : "";
+  // Version courte pour les cartes (évite « Du 18 oct. au 22 / oct. »)
+  const quoteRange = search ? `${shortDate(search.start)} – ${shortDate(search.end)}` : "";
 
   const book = (carId: string) => {
     if (!search) return;
@@ -199,10 +153,7 @@ export function Fleet() {
   };
 
   // Pendant une recherche par dates : uniquement les véhicules libres
-  const pool = useMemo(
-    () => (search && free ? free.map((c) => ({ ...mapApiCarToCar(c) })) : cars),
-    [search, free, cars]
-  );
+  const pool = useMemo(() => (search && free ? free.map((c) => ({ ...mapApiCarToCar(c) })) : cars), [search, free, cars]);
 
   const counts = useMemo(() => {
     const out: Record<string, number> = { all: pool.length };
@@ -221,14 +172,14 @@ export function Fleet() {
         .filter(([id]) => (counts[id] ?? 0) > 0 || id === activeCategory)
         .map(([id, c]) => ({ id, label: c.plural })),
     ],
-    [counts, activeCategory]
+    [counts, activeCategory],
   );
 
   const active = categoryInfo[activeCategory];
 
   const filteredCars = useMemo(
     () => (activeCategory === "all" ? pool : pool.filter((car) => car.category?.toLowerCase() === activeCategory)),
-    [activeCategory, pool]
+    [activeCategory, pool],
   );
 
   return (
@@ -250,10 +201,25 @@ export function Fleet() {
         </div>
 
         {rules && rules.duration.length > 0 && (
-          <p className="mx-auto mt-6 flex w-fit flex-wrap items-center justify-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-center text-xs font-bold uppercase tracking-wide text-emerald-800">
-            <span aria-hidden="true">%</span>
-            {t("Remise automatique :")}{" "}
-            {rules.duration.map((r) => t("-{percent} % dès {days} jours", { percent: r.percent, days: r.min_days })).join(" · ")}
+          <p className="mx-auto mt-6 flex w-fit max-w-full items-center gap-2.5 rounded-2xl bg-emerald-50 py-2 pe-4 ps-2 text-start text-xs font-bold uppercase tracking-wide text-emerald-800 sm:rounded-full">
+            {/* Pastille « % » : ne passe jamais seule à la ligne */}
+            <span
+              aria-hidden="true"
+              className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-emerald-600 text-[11px] text-white"
+            >
+              %
+            </span>
+            <span className="min-w-0">
+              {t("Remise automatique :")}{" "}
+              {rules.duration
+                .map((r) =>
+                  t("-{percent} % dès {days} jours", {
+                    percent: r.percent,
+                    days: r.min_days,
+                  }),
+                )
+                .join(" · ")}
+            </span>
           </p>
         )}
 
@@ -269,7 +235,11 @@ export function Fleet() {
                     ? ` · ${searchError}`
                     : free
                       ? ` · ${t(free.length > 1 ? "{count} véhicules libres" : "{count} véhicule libre", { count: free.length })}${
-                          cars.length > free.length ? t(", {count} déjà pris", { count: cars.length - free.length }) : ""
+                          cars.length > free.length
+                            ? t(", {count} déjà pris", {
+                                count: cars.length - free.length,
+                              })
+                            : ""
                         }`
                       : ""}
               </span>
@@ -284,35 +254,56 @@ export function Fleet() {
           </div>
         )}
 
-        <div
-          className="no-scrollbar -mx-4 mt-10 flex gap-2.5 overflow-x-auto px-4 sm:mx-0 sm:justify-center sm:px-0"
-          role="group"
-          aria-label={t("Filtrer par catégorie")}
-        >
-          {categories.map((cat) => {
-            const isActive = activeCategory === cat.id;
-            return (
-              <button
-                key={cat.id}
-                type="button"
-                onClick={() => setActiveCategory(cat.id)}
-                aria-pressed={isActive}
-                className={cn(
-                  "flex h-11 flex-shrink-0 items-center gap-2 rounded-full border-2 px-5 text-[13px] font-bold uppercase tracking-[0.1em] transition-colors",
-                  isActive ? "border-navy bg-navy text-white" : "border-line text-navy hover:border-navy"
-                )}
-              >
-                {t(cat.label)}
-                <span className={cn("text-[11px]", isActive ? "text-sky" : "text-muted")}>{counts[cat.id] ?? 0}</span>
-              </button>
-            );
-          })}
-        </div>
+        {/* Onglets masqués quand il n'y a rien à filtrer (flotte vide ou erreur) */}
+        {(pool.length > 0 || search) && (
+          <div
+            className="no-scrollbar -mx-4 mt-10 flex gap-2.5 overflow-x-auto px-4 sm:mx-0 sm:justify-center sm:px-0"
+            role="group"
+            aria-label={t("Filtrer par catégorie")}
+            data-wa-hide
+          >
+            {categories.map((cat) => {
+              const isActive = activeCategory === cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => setActiveCategory(cat.id)}
+                  aria-pressed={isActive}
+                  className={cn(
+                    "flex h-11 flex-shrink-0 items-center gap-2 rounded-full border-2 px-5 text-[13px] font-bold uppercase tracking-[0.1em] transition-colors",
+                    isActive ? "border-navy bg-navy text-white" : "border-line text-navy hover:border-navy",
+                  )}
+                >
+                  {t(cat.label)}
+                  <span className={cn("text-[11px]", isActive ? "text-sky" : "text-muted")}>{counts[cat.id] ?? 0}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         <div className="mt-12">
           {loading || searching ? (
             <div className="flex h-72 items-center justify-center" role="status" aria-label={t("Chargement des véhicules")}>
               <div className="h-9 w-9 animate-spin rounded-full border-4 border-line border-t-sky" />
+            </div>
+          ) : loadError && !search ? (
+            <div
+              role="alert"
+              className="mx-auto flex max-w-md flex-col items-center gap-4 rounded-3xl border border-line bg-mist px-6 py-12 text-center"
+            >
+              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-navy">
+                <CarFront className="h-6 w-6" strokeWidth={1.8} />
+              </span>
+              <p className="font-semibold text-navy">{t("Impossible de charger les véhicules pour le moment.")}</p>
+              <button
+                type="button"
+                onClick={retry}
+                className="inline-flex h-11 items-center gap-2 rounded-full bg-navy px-5 text-sm font-bold text-white transition-colors hover:bg-navy-soft"
+              >
+                <RotateCw className="h-4 w-4" /> {t("Réessayer")}
+              </button>
             </div>
           ) : filteredCars.length > 0 ? (
             <div className="no-scrollbar -mx-4 flex snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-6 sm:overflow-visible sm:px-0 lg:grid-cols-3 xl:grid-cols-4">
@@ -329,6 +320,7 @@ export function Fleet() {
                             base: Number(quotes.get(car.id)!.base_price),
                             discountLabel: quotes.get(car.id)!.discount_label,
                             label: quoteLabel,
+                            range: quoteRange,
                           }
                         : undefined
                     }
@@ -338,11 +330,18 @@ export function Fleet() {
               ))}
             </div>
           ) : (
-            <p className="py-16 text-center font-semibold text-muted">
-              {search && free
-                ? t("Aucun véhicule libre dans cette catégorie sur ces dates. Essayez d'autres dates ou une autre catégorie.")
-                : t("Aucun véhicule dans cette catégorie pour le moment.")}
-            </p>
+            <div className="mx-auto flex max-w-md flex-col items-center gap-4 rounded-3xl border border-line bg-mist px-6 py-12 text-center">
+              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-navy">
+                <CarFront className="h-6 w-6" strokeWidth={1.8} />
+              </span>
+              <p className="font-semibold text-muted">
+                {search && free
+                  ? t("Aucun véhicule libre dans cette catégorie sur ces dates. Essayez d'autres dates ou une autre catégorie.")
+                  : cars.length === 0 && !search
+                    ? t("Aucun véhicule disponible pour le moment.")
+                    : t("Aucun véhicule dans cette catégorie pour le moment.")}
+              </p>
+            </div>
           )}
         </div>
       </div>

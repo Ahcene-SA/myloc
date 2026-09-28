@@ -165,4 +165,9 @@ export const arSite: Record<string, string> = {
   "Service 24/7": "خدمة 24/7",
   "© {year} MYLOC.DZ Car Rental. Tous droits réservés.": "© {year} MYLOC.DZ Car Rental. جميع الحقوق محفوظة.",
   "Infos et réservation sur WhatsApp": "معلومات وحجز عبر واتساب",
+  // ── Flotte : états honnêtes, recherche, à propos ──
+  "Impossible de charger les véhicules pour le moment.": "تعذّر تحميل السيارات حاليًا.",
+  "Aucun véhicule disponible pour le moment.": "لا توجد سيارات متاحة حاليًا.",
+  "Prenez la route": "انطلقوا في الطريق",
+  "l'esprit léger": "براحة بال",
 };

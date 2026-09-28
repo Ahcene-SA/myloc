@@ -34,7 +34,7 @@ class Audit
                 ':etype' => $entityType,
                 ':eid' => $entityId,
                 ':details' => $details ? json_encode($details, JSON_UNESCAPED_UNICODE) : null,
-                ':ip' => substr((string) ($_SERVER['REMOTE_ADDR'] ?? ''), 0, 45) ?: null,
+                ':ip' => substr(ClientIp::get(), 0, 45) ?: null,
             ]);
         } catch (\Throwable $e) {
             // Le journal ne doit jamais bloquer l'action elle-même

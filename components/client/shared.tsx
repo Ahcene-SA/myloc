@@ -62,6 +62,21 @@ export function splitCarName(name?: string | null) {
 }
 
 /** Libellés en français : les traduire avec t() à l'affichage. */
+/** Préfixe (en français, envoyé au serveur) d'un retour « récupération à domicile ». */
+export const HOME_PICKUP_PREFIX = "Récupération à domicile : ";
+
+/**
+ * Lieu de retrait / retour à afficher : un nom d'agence est traduit, mais l'adresse
+ * saisie par le client reste telle quelle (seul le préfixe est traduit).
+ */
+export function placeLabel(place?: string | null): string {
+  if (!place) return "";
+  if (place.startsWith(HOME_PICKUP_PREFIX)) {
+    return `${t("Récupération à domicile")} : ${place.slice(HOME_PICKUP_PREFIX.length)}`;
+  }
+  return t(place);
+}
+
 export const paymentLabels: Record<PaymentMethod, string> = {
   especes: "Espèces à la remise des clés",
   carte: "Carte bancaire à la remise des clés",
@@ -79,7 +94,12 @@ export const statusMeta: Record<ReservationStatus, { label: string; className: s
   cancelled: { label: "Annulée", className: "bg-slate-200 text-slate-700" },
 };
 
-export function StatusBadge({ status }: { status?: ReservationFromApi["status"] }) {
+export function StatusBadge({ status, expired = false }: { status?: ReservationFromApi["status"]; expired?: boolean }) {
+  if (expired) {
+    return (
+      <span className="inline-flex items-center rounded-full bg-slate-200 px-3 py-1 text-xs font-bold text-slate-700">{t("Expirée")}</span>
+    );
+  }
   const meta = statusMeta[status || "pending"];
   return (
     <span className={cn("inline-flex items-center rounded-full px-3 py-1 text-xs font-bold", meta.className)}>{t(meta.label)}</span>
@@ -91,8 +111,16 @@ export function isPast(r: ReservationFromApi): boolean {
   return !!r.end_date && r.end_date < todayIso();
 }
 
+/**
+ * Demande jamais confirmée par l'agence alors que la date de départ est passée :
+ * elle n'est plus « à venir », on la range avec les demandes sans suite.
+ */
+export function isExpiredPending(r: ReservationFromApi): boolean {
+  return r.status === "pending" && !!r.start_date && r.start_date < todayIso();
+}
+
 export function isActiveOrUpcoming(r: ReservationFromApi): boolean {
-  return (r.status === "pending" || r.status === "confirmed") && !isPast(r);
+  return (r.status === "pending" || r.status === "confirmed") && !isPast(r) && !isExpiredPending(r);
 }
 
 export function canCancel(r: ReservationFromApi): boolean {

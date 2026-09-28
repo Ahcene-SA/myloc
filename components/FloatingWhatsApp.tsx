@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { site } from "@/lib/site";
 import { useLang } from "@/lib/i18n";
 
@@ -11,14 +12,49 @@ export function WhatsAppIcon({ className }: { className?: string }) {
   );
 }
 
+/**
+ * Bouton WhatsApp flottant. Sur mobile, il s'efface quand un élément marqué
+ * `data-wa-hide` (formulaire de recherche, boutons de contact) passe dans le bas
+ * de l'écran, pour ne jamais masquer un bouton.
+ */
 export function FloatingWhatsApp() {
   const { t } = useLang();
+  const [hidden, setHidden] = useState(false);
+
+  useEffect(() => {
+    // Vérifié au défilement (les éléments peuvent apparaître après le chargement des données) :
+    // le bouton s'efface si un élément marqué occupe les 22 % du bas de l'écran.
+    let frame = 0;
+    const check = () => {
+      frame = 0;
+      const zoneTop = window.innerHeight * 0.78;
+      const covered = Array.from(document.querySelectorAll("[data-wa-hide]")).some((el) => {
+        const r = el.getBoundingClientRect();
+        return r.bottom > zoneTop && r.top < window.innerHeight;
+      });
+      setHidden(covered);
+    };
+    const schedule = () => {
+      if (!frame) frame = window.requestAnimationFrame(check);
+    };
+    check();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+    };
+  }, []);
+
   return (
     <a
       href={site.whatsappHref}
       target="_blank"
       rel="noopener noreferrer"
-      className="fixed bottom-5 end-5 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-whatsapp text-white shadow-[0_12px_30px_-8px_rgba(21,128,61,0.55)] ring-4 ring-white transition-transform hover:scale-110"
+      className={`fixed bottom-5 end-5 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-whatsapp text-white shadow-[0_12px_30px_-8px_rgba(21,128,61,0.55)] ring-4 ring-white transition-[translate,scale,opacity] duration-300 hover:scale-110 ${
+        hidden ? "max-lg:pointer-events-none max-lg:translate-y-24 max-lg:opacity-0" : ""
+      }`}
       aria-label={t("Infos et réservation sur WhatsApp")}
     >
       <WhatsAppIcon className="h-7 w-7" />

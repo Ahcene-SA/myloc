@@ -21,10 +21,19 @@ export function IdleGuard() {
   const [warning, setWarning] = useState(false);
   const [left, setLeft] = useState(60);
 
+  // Dernière version de logout (sa référence change à chaque rendu du contexte) :
+  // l'effet ci-dessous ne doit pas se relancer pour autant.
+  const logoutRef = useRef(logout);
+  useEffect(() => {
+    logoutRef.current = logout;
+  });
+  // L'avertissement est lu par les écouteurs sans relancer l'effet
+  const warningRef = useRef(false);
+
   const signOut = useCallback(() => {
-    logout();
+    logoutRef.current();
     window.location.replace(`${pageUrl("agence")}?expired=idle`);
-  }, [logout]);
+  }, []);
 
   const keepAlive = useCallback(() => {
     lastActivity.current = Date.now();
@@ -34,18 +43,24 @@ export function IdleGuard() {
     }
   }, []);
 
+  // Monté une seule fois : lastActivity n'est remis à zéro qu'au montage
+  // et lors d'une vraie action de l'utilisateur (sinon le compte à rebours se fige).
   useEffect(() => {
     lastActivity.current = Date.now();
     lastPing.current = Date.now();
     const onActivity = () => {
-      if (!warning) keepAlive();
+      // Pendant l'avertissement, il faut cliquer sur « Rester connecté »
+      if (!warningRef.current) keepAlive();
     };
     const events = ["pointerdown", "keydown", "scroll", "touchstart"] as const;
     events.forEach((e) => window.addEventListener(e, onActivity, { passive: true }));
     const timer = window.setInterval(() => {
       const idle = Date.now() - lastActivity.current;
-      if (idle >= IDLE_MS) signOut();
-      else if (idle >= IDLE_MS - WARN_MS) {
+      if (idle >= IDLE_MS) {
+        window.clearInterval(timer);
+        signOut();
+      } else if (idle >= IDLE_MS - WARN_MS) {
+        warningRef.current = true;
         setWarning(true);
         setLeft(Math.max(0, Math.ceil((IDLE_MS - idle) / 1000)));
       }
@@ -54,13 +69,14 @@ export function IdleGuard() {
       events.forEach((e) => window.removeEventListener(e, onActivity));
       window.clearInterval(timer);
     };
-  }, [keepAlive, signOut, warning]);
+  }, [keepAlive, signOut]);
 
   if (!warning) return null;
 
   const stay = () => {
     lastPing.current = 0;
     keepAlive();
+    warningRef.current = false;
     setWarning(false);
   };
 

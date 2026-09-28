@@ -42,7 +42,7 @@ export function AgencyLogin() {
 
   // L'espace agence est en français
   useEffect(() => {
-    if (lang !== "fr") setLang("fr");
+    if (lang !== "fr") setLang("fr", { persist: false }); // sans effacer le choix du client
   }, [lang]);
 
   // Déjà connecté comme membre de l'équipe : directement au tableau de bord

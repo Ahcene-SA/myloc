@@ -147,34 +147,42 @@ function RulesCard({ initial, onSaved }: { initial: PricingRules; onSaved: (r: P
           <p className="mb-4 text-sm text-muted">Appliquée automatiquement, affichée sur l&apos;accueil.</p>
           <div className="flex flex-col gap-3">
             {r.duration.map((t, i) => (
-              <div key={i} className="flex items-center gap-2 text-sm font-semibold text-navy">
-                <span>Dès</span>
-                <input
-                  type="number"
-                  min={1}
-                  value={t.min_days}
-                  onChange={(e) => setTier(i, "min_days", e.target.value)}
-                  aria-label="Nombre de jours minimum"
-                  className={cn(inputClass, "h-11 w-20 px-3")}
-                />
-                <span>jours :</span>
-                <span className="text-muted">-</span>
-                <input
-                  type="number"
-                  min={1}
-                  max={90}
-                  step="0.5"
-                  value={t.percent}
-                  onChange={(e) => setTier(i, "percent", e.target.value)}
-                  aria-label="Pourcentage de remise"
-                  className={cn(inputClass, "h-11 w-20 px-3")}
-                />
-                <span>%</span>
+              // Deux groupes insécables : sur mobile, la remise passe à la ligne d'un seul bloc
+              <div
+                key={i}
+                className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border border-line p-3 text-sm font-semibold text-navy sm:flex-nowrap sm:border-0 sm:p-0"
+              >
+                <span className="flex items-center gap-2 whitespace-nowrap">
+                  <span className="w-8 sm:w-auto">Dès</span>
+                  <input
+                    type="number"
+                    min={1}
+                    value={t.min_days}
+                    onChange={(e) => setTier(i, "min_days", e.target.value)}
+                    aria-label="Nombre de jours minimum"
+                    className={cn(inputClass, "h-11 w-20 flex-shrink-0 px-3")}
+                  />
+                  <span>jours :</span>
+                </span>
+                <span className="flex items-center gap-2 whitespace-nowrap">
+                  <span className="w-8 text-muted sm:w-auto">-</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={90}
+                    step="0.5"
+                    value={t.percent}
+                    onChange={(e) => setTier(i, "percent", e.target.value)}
+                    aria-label="Pourcentage de remise"
+                    className={cn(inputClass, "h-11 w-20 flex-shrink-0 px-3")}
+                  />
+                  <span>%</span>
+                </span>
                 <button
                   type="button"
                   onClick={() => setR((x) => ({ ...x, duration: x.duration.filter((_, k) => k !== i) }))}
                   aria-label="Supprimer cette tranche"
-                  className="ml-auto flex h-9 w-9 items-center justify-center rounded-full text-muted hover:bg-mist hover:text-red-600"
+                  className="ms-auto flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-muted hover:bg-mist hover:text-red-600"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -204,30 +212,35 @@ function RulesCard({ initial, onSaved }: { initial: PricingRules; onSaved: (r: P
             />
             Activer la remise fidélité
           </label>
-          <div className={cn("flex flex-wrap items-center gap-2 text-sm font-semibold text-navy", !r.loyalty.enabled && "opacity-50")}>
-            <span>À partir de</span>
-            <input
-              type="number"
-              min={1}
-              value={r.loyalty.min_rentals}
-              disabled={!r.loyalty.enabled}
-              onChange={(e) => setR((x) => ({ ...x, loyalty: { ...x.loyalty, min_rentals: Number(e.target.value) } }))}
-              aria-label="Nombre de locations"
-              className={cn(inputClass, "h-11 w-20 px-3")}
-            />
-            <span>locations : -</span>
-            <input
-              type="number"
-              min={0}
-              max={90}
-              step="0.5"
-              value={r.loyalty.percent}
-              disabled={!r.loyalty.enabled}
-              onChange={(e) => setR((x) => ({ ...x, loyalty: { ...x.loyalty, percent: Number(e.target.value) } }))}
-              aria-label="Pourcentage fidélité"
-              className={cn(inputClass, "h-11 w-20 px-3")}
-            />
-            <span>%</span>
+          <div className={cn("flex flex-wrap items-center gap-x-3 gap-y-2 text-sm font-semibold text-navy", !r.loyalty.enabled && "opacity-50")}>
+            <span className="flex items-center gap-2 whitespace-nowrap">
+              <span>À partir de</span>
+              <input
+                type="number"
+                min={1}
+                value={r.loyalty.min_rentals}
+                disabled={!r.loyalty.enabled}
+                onChange={(e) => setR((x) => ({ ...x, loyalty: { ...x.loyalty, min_rentals: Number(e.target.value) } }))}
+                aria-label="Nombre de locations"
+                className={cn(inputClass, "h-11 w-20 flex-shrink-0 px-3")}
+              />
+              <span>locations :</span>
+            </span>
+            <span className="flex items-center gap-2 whitespace-nowrap">
+              <span>-</span>
+              <input
+                type="number"
+                min={0}
+                max={90}
+                step="0.5"
+                value={r.loyalty.percent}
+                disabled={!r.loyalty.enabled}
+                onChange={(e) => setR((x) => ({ ...x, loyalty: { ...x.loyalty, percent: Number(e.target.value) } }))}
+                aria-label="Pourcentage fidélité"
+                className={cn(inputClass, "h-11 w-20 flex-shrink-0 px-3")}
+              />
+              <span>%</span>
+            </span>
           </div>
           <p className="mt-4 rounded-2xl bg-sky-soft/60 p-3 text-xs font-semibold text-navy">
             Les remises ne se cumulent pas : le client obtient automatiquement la plus avantageuse (durée, fidélité ou code promo).

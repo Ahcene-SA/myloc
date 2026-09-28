@@ -142,11 +142,15 @@ class Emails
             Mailer::send($to, 'Nouvelle réservation ' . self::reference((int) $r['id']) . ' · ' . ($r['car_name'] ?? ''), $html, $r['email'] ?: null);
         }
 
-        if (!empty($r['email'])) {
+        // Accusé de réception envoyé à l'adresse du compte client,
+        // pas à l'adresse saisie librement dans le formulaire : on ne peut pas s'en servir pour
+        // envoyer des e-mails MYLOC à un tiers.
+        $clientEmail = !empty($r['user_id']) ? ($r['user_email'] ?? null) : ($r['email'] ?? null);
+        if (!empty($clientEmail)) {
             $body = '<p>Bonjour ' . self::e(self::firstName($r['full_name'])) . ',</p>'
                 . '<p>Nous avons bien reçu votre demande. L\'agence la vérifie et vous répond au plus vite : vous recevrez un e-mail dès qu\'elle sera confirmée.</p>'
                 . self::summary($r);
-            Mailer::send($r['email'], 'Demande reçue · ' . self::reference((int) $r['id']),
+            Mailer::send($clientEmail, 'Demande reçue · ' . self::reference((int) $r['id']),
                 self::layout('Demande bien reçue', $body, ['Suivre ma réservation', self::pageLink('client')]));
         }
     }

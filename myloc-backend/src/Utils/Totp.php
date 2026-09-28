@@ -43,20 +43,36 @@ class Totp
         return str_pad((string) ($value % 1000000), 6, '0', STR_PAD_LEFT);
     }
 
-    /** Vérifie un code en tolérant ±30 s de décalage d'horloge du téléphone. */
-    public static function verify(string $secret, string $code): bool
+    /**
+     * Vérifie un code en tolérant ±30 s de décalage d'horloge du téléphone.
+     * Renvoie la tranche de 30 s correspondant au code (à mémoriser pour refuser qu'il
+     * soit rejoué), ou null si le code est faux.
+     *
+     * @param int|null $lastSlice dernière tranche déjà utilisée : ce code et les plus anciens sont refusés
+     */
+    public static function verifySlice(string $secret, string $code, ?int $lastSlice = null): ?int
     {
         $code = preg_replace('/\D/', '', $code) ?? '';
         if (strlen($code) !== 6) {
-            return false;
+            return null;
         }
         $slice = intdiv(time(), 30);
         for ($i = -1; $i <= 1; $i++) {
-            if (hash_equals(self::code($secret, $slice + $i), $code)) {
-                return true;
+            $candidate = $slice + $i;
+            if ($lastSlice !== null && $candidate <= $lastSlice) {
+                continue;
+            }
+            if (hash_equals(self::code($secret, $candidate), $code)) {
+                return $candidate;
             }
         }
-        return false;
+        return null;
+    }
+
+    /** Variante oui / non (sans protection contre la réutilisation : préférer verifySlice). */
+    public static function verify(string $secret, string $code): bool
+    {
+        return self::verifySlice($secret, $code) !== null;
     }
 
     /** 8 codes de secours à usage unique : [en clair pour l'affichage, hachés pour la base]. */

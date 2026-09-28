@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
+import { useRef, useState, useSyncExternalStore, type FormEvent } from "react";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { ArrowDown, Search, Check } from "lucide-react";
 import { AlgiersSkyline, BlueBar, PalmShadow } from "./Brand";
@@ -47,6 +47,13 @@ const trust = ["Assistance 24/7", "Prix clairs, sans surprise", "Annulation grat
 const fieldLabel = "text-[11px] font-bold uppercase tracking-[0.2em] text-muted";
 const fieldInput = "w-full appearance-none bg-transparent p-0 text-[15px] font-bold text-navy outline-none placeholder:text-muted/70";
 
+/** Date du jour au format AAAA-MM-JJ, dans le fuseau du visiteur (et non en UTC). */
+function localToday() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+const noSubscribe = () => () => {};
+
 function formatDate(d: string) {
   if (!d) return "";
   return new Date(d + "T00:00:00").toLocaleDateString(dateLocale(), { day: "numeric", month: "long" });
@@ -54,7 +61,8 @@ function formatDate(d: string) {
 
 export function Hero() {
   const { t, lang } = useLang();
-  const today = new Date().toISOString().split("T")[0];
+  // Calculée côté navigateur après l'hydratation (vide au pré-rendu, jamais figée au build)
+  const today = useSyncExternalStore(noSubscribe, localToday, () => "");
 
   const [pickup, setPickup] = useState<string>(site.agencies[0]);
   const [pickupAddress, setPickupAddress] = useState("");
@@ -80,6 +88,7 @@ export function Hero() {
     setFormError("");
     if (departDate || retourDate) {
       if (!departDate || !retourDate) return setFormError(t("Choisissez une date de départ et une date de retour."));
+      if (departDate < localToday()) return setFormError(t("La date de départ ne peut pas être dans le passé."));
       if (retourDate <= departDate) return setFormError(t("La date de retour doit être après la date de départ."));
       const toLabel = (p: string) => (p === HOME ? HOME_LABEL : p);
       const detail: AvailabilitySearch = {
@@ -88,7 +97,9 @@ export function Hero() {
         category,
         pickupPlace: toLabel(pickup),
         pickupAddress: pickup === HOME ? pickupAddress : "",
-        returnPlace: toLabel(differentReturn ? returnPlace : pickup === HOME ? site.agencies[0] : pickup),
+        // Sans « retour ailleurs » : pas de lieu de retour, le formulaire de réservation
+        // reprend alors le lieu de retrait (aucun faux « retour différent » pré-coché).
+        returnPlace: differentReturn ? toLabel(returnPlace) : "",
         returnAddress: differentReturn && returnPlace === HOME ? returnAddress : "",
       };
       window.dispatchEvent(new CustomEvent(AVAILABILITY_EVENT, { detail }));
@@ -211,6 +222,9 @@ export function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, delay: 0.9, ease }}
           onSubmit={handleSubmit}
+          // Validation faite par handleSubmit (message stylé plutôt que la bulle du navigateur)
+          noValidate
+          data-wa-hide
           aria-label={t("Rechercher un véhicule")}
           className="rounded-3xl border border-line bg-white p-2 shadow-[0_30px_60px_-30px_rgba(15,27,45,0.3)] lg:p-3"
         >
@@ -242,13 +256,13 @@ export function Hero() {
             <div className="grid grid-cols-2 lg:flex lg:flex-[2]">
               <label className="flex flex-col gap-1.5 rounded-2xl px-5 py-4 focus-within:bg-mist lg:flex-1 lg:px-6">
                 <span className={fieldLabel}>{t("Départ")}</span>
-                <input type="date" min={today} value={departDate} onChange={(e) => setDepartDate(e.target.value)} className={fieldInput} />
+                <input type="date" min={today || undefined} value={departDate} onChange={(e) => setDepartDate(e.target.value)} className={fieldInput} />
               </label>
               <label className="flex flex-col gap-1.5 rounded-2xl border-s border-line px-5 py-4 focus-within:bg-mist lg:flex-1 lg:px-6">
                 <span className={fieldLabel}>{t("Retour||date")}</span>
                 <input
                   type="date"
-                  min={departDate || today}
+                  min={departDate || today || undefined}
                   value={retourDate}
                   onChange={(e) => setRetourDate(e.target.value)}
                   className={fieldInput}

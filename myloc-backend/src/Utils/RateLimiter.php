@@ -12,11 +12,33 @@ class RateLimiter
     private int $maxAttempts;
     private int $windowSeconds;
 
-    public function __construct(Database $db)
+    /**
+     * @param int|null $maxAttempts   par défaut RATE_LIMIT_MAX_ATTEMPTS (.env)
+     * @param int|null $windowSeconds par défaut RATE_LIMIT_WINDOW_SECONDS (.env)
+     *        Ex. limite par adresse IP : new RateLimiter($db, 20, 900)
+     */
+    public function __construct(Database $db, ?int $maxAttempts = null, ?int $windowSeconds = null)
     {
         $this->db = $db;
-        $this->maxAttempts = (int) ($_ENV['RATE_LIMIT_MAX_ATTEMPTS'] ?? 5);
-        $this->windowSeconds = (int) ($_ENV['RATE_LIMIT_WINDOW_SECONDS'] ?? 900);
+        $this->maxAttempts = $maxAttempts ?? (int) ($_ENV['RATE_LIMIT_MAX_ATTEMPTS'] ?? 5);
+        $this->windowSeconds = $windowSeconds ?? (int) ($_ENV['RATE_LIMIT_WINDOW_SECONDS'] ?? 900);
+    }
+
+    public function maxAttempts(): int
+    {
+        return $this->maxAttempts;
+    }
+
+    /** Essais restants avant blocage (fenêtre en cours). */
+    public function remainingAttempts(string $identifier): int
+    {
+        $stmt = $this->db->getPdo()->prepare('SELECT attempts, UNIX_TIMESTAMP(last_attempt) AS t FROM login_attempts WHERE identifier = :identifier');
+        $stmt->execute([':identifier' => $identifier]);
+        $row = $stmt->fetch();
+        if (!$row || time() - (int) $row['t'] >= $this->windowSeconds) {
+            return $this->maxAttempts;
+        }
+        return max(0, $this->maxAttempts - (int) $row['attempts']);
     }
 
     public function isAllowed(string $identifier): bool

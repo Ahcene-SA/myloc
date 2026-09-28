@@ -147,6 +147,64 @@ class AuthMiddleware
         ];
     }
 
+    /**
+     * Utilisateur connecté si le jeton est valable, sinon null — jamais d'erreur 401
+     * (routes publiques qui personnalisent la réponse, ex. devis avec remise fidélité).
+     * Ne compte pas comme activité pour la session agence.
+     *
+     * @return array{user_id:int, role:string, name:?string}|null
+     */
+    public static function optionalUser(): ?array
+    {
+        $header = (string) ($_SERVER['HTTP_AUTHORIZATION'] ?? '');
+        if (!str_starts_with($header, 'Bearer ')) {
+            return null;
+        }
+        $token = trim(substr($header, 7));
+        if ($token === '') {
+            return null;
+        }
+        try {
+            $decoded = JwtHelper::decode($token);
+        } catch (\Throwable $e) {
+            return null;
+        }
+        if (!isset($decoded->sub, $decoded->role) || (($decoded->scope ?? '') === 'mfa')) {
+            return null;
+        }
+
+        $userId = (int) $decoded->sub;
+        try {
+            $stmt = Database::shared()->getPdo()->prepare('SELECT full_name, role, active, token_version, must_change_password,
+                    UNIX_TIMESTAMP(last_activity_at) AS last_activity FROM users WHERE id = :id LIMIT 1');
+            $stmt->execute([':id' => $userId]);
+            $row = $stmt->fetch();
+        } catch (\Throwable $e) {
+            return null;
+        }
+        if (!$row || (int) $row['token_version'] !== (int) ($decoded->tv ?? 0)) {
+            return null;
+        }
+
+        if (self::isStaffRole((string) $decoded->role)) {
+            // Mêmes règles que checkStaffSession, sans erreur ni mise à jour de l'activité
+            if (($decoded->scope ?? '') !== 'agency' || !self::isStaffRole($row['role']) || !(int) $row['active']
+                || (int) $row['must_change_password']) {
+                return null;
+            }
+            $last = $row['last_activity'] !== null ? (int) $row['last_activity'] : null;
+            if ($last !== null && time() - $last > self::IDLE_SECONDS) {
+                return null;
+            }
+            return ['user_id' => $userId, 'role' => self::normalizeRole($row['role']), 'name' => $row['full_name']];
+        }
+
+        if ($row['role'] !== 'client') {
+            return null;
+        }
+        return ['user_id' => $userId, 'role' => 'client', 'name' => $row['full_name']];
+    }
+
     /** Membre de l'équipe (propriétaire ou employé). */
     public static function requireStaff(): array
     {

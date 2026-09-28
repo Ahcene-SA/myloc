@@ -85,8 +85,14 @@ function Block({ title, i }: { title: string; i?: Inspection }) {
           {i.notes && <p className="text-ink-soft">{i.notes}</p>}
           {i.photos.length > 0 && (
             <div className="flex flex-wrap gap-2">
-              {i.photos.map((p) => (
-                <a key={p} href={apiImageUrl(p)} target="_blank" rel="noopener noreferrer">
+              {i.photos.map((p, n) => (
+                <a
+                  key={p}
+                  href={apiImageUrl(p)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={t("{title} : photo {n} sur {total} (nouvel onglet)", { title, n: n + 1, total: i.photos.length })}
+                >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={apiImageUrl(p)} alt="" className="h-16 w-20 rounded-xl object-cover" />
                 </a>

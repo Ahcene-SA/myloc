@@ -13,6 +13,7 @@ use Myloc\Config\Database;
 
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
 $dotenv->safeLoad();
+\Myloc\Config\Timezone::apply();
 
 $email = strtolower(trim($argv[1] ?? ''));
 if ($email === '') {

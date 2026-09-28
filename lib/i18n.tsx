@@ -49,6 +49,10 @@ const patterns: [RegExp, string][] = [
   [/^Ce code sera valable à partir du ([\d/]+)\.$/, "سيكون هذا الرمز صالحًا ابتداءً من $1."],
   [/^Ce code est valable à partir de (\d+) jours de location\.$/, "هذا الرمز صالح ابتداءً من $1 أيام كراء."],
   [/^La durée maximale d'une location en ligne est de (\d+) jours\. Contactez-nous pour une location longue durée\.$/, "أقصى مدة للحجز عبر الإنترنت هي $1 يومًا. اتصلوا بنا للكراء طويل المدة."],
+  [/^Trop de tentatives depuis cette connexion\. Réessayez dans (\d+) minute\(s\)\.$/, "محاولات كثيرة من هذا الاتصال. أعد المحاولة بعد $1 دقيقة."],
+  [/^Les réservations en ligne sont (?:ouvertes|possibles) jusqu'à (\d+) mois à l'avance\.(?: Contactez-nous pour une date plus lointaine\.)?$/, "الحجز عبر الإنترنت ممكن حتى $1 شهرًا مسبقًا. اتصلوا بنا لموعد أبعد."],
+  [/^Vous avez déjà (\d+) demandes en attente[.:].*$/, "لديك بالفعل $1 طلبات قيد الانتظار. انتظر رد الوكالة أو ألغِ أحدها قبل تقديم طلب جديد."],
+  [/^Le champ (\S+) est trop long\.$/, "الحقل $1 طويل جدًا."],
 ];
 
 export function translate(text: string, vars?: Record<string, string | number>, lang: Lang = currentLang): string {
@@ -70,7 +74,15 @@ export function translate(text: string, vars?: Record<string, string | number>, 
 /** Raccourci utilisable partout (hors hooks). */
 export const t = translate;
 
+/**
+ * Langue imposée sans être enregistrée (espace agence, contrat : français uniquement).
+ * Elle ne vaut que pour la page où elle a été demandée : la préférence du client
+ * (par exemple l'arabe sur un PC partagé de l'agence) n'est jamais effacée.
+ */
+let override: { lang: Lang; path: string } | null = null;
+
 function readLang(): Lang {
+  if (override && override.path === window.location.pathname) return override.lang;
   try {
     return localStorage.getItem(KEY) === "ar" ? "ar" : "fr";
   } catch {
@@ -87,11 +99,20 @@ function subscribe(cb: () => void) {
   };
 }
 
-export function setLang(lang: Lang) {
-  try {
-    localStorage.setItem(KEY, lang);
-  } catch {
-    /* navigation privée */
+/**
+ * Change la langue. Par défaut le choix est enregistré (bouton FR / ع) ;
+ * avec { persist: false }, la langue est seulement imposée pour la page courante.
+ */
+export function setLang(lang: Lang, options: { persist?: boolean } = {}) {
+  if (options.persist === false) {
+    override = { lang, path: window.location.pathname };
+  } else {
+    override = null;
+    try {
+      localStorage.setItem(KEY, lang);
+    } catch {
+      /* navigation privée */
+    }
   }
   window.dispatchEvent(new Event(EVENT));
 }
@@ -100,7 +121,7 @@ interface LangValue {
   lang: Lang;
   dir: "ltr" | "rtl";
   t: typeof translate;
-  setLang: (l: Lang) => void;
+  setLang: (l: Lang, options?: { persist?: boolean }) => void;
 }
 
 const LangContext = createContext<LangValue>({ lang: "fr", dir: "ltr", t: translate, setLang });

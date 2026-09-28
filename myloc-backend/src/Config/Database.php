@@ -37,6 +37,8 @@ class Database
 
         try {
             $this->pdo = new PDO($dsn, $user, $pass, $options);
+            // Même fuseau que PHP (APP_TIMEZONE) pour NOW(), CURDATE(), TIMESTAMP
+            $this->pdo->exec("SET time_zone = '" . Timezone::mysqlOffset() . "'");
         } catch (PDOException $e) {
             throw new \RuntimeException('Database connection failed.');
         }

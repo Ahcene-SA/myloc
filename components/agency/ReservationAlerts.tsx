@@ -38,8 +38,13 @@ export function ReservationAlerts() {
   useEffect(() => {
     let cancelled = false;
     let timer: number | undefined;
+    // Une seule vérification à la fois : si l'onglet redevient visible pendant une
+    // requête, on ne lance pas une seconde boucle en parallèle.
+    let inFlight = false;
 
     const tick = async () => {
+      if (inFlight) return;
+      inFlight = true;
       window.clearTimeout(timer);
       try {
         const res = await fetchAgencyUpdates(lastId.current);
@@ -51,8 +56,13 @@ export function ReservationAlerts() {
         const incoming = fresh.filter((r) => r.source !== "agence");
         if (incoming.length) {
           if (soundRef.current) playChime();
-          setToasts((t) => [...incoming.reverse(), ...t].slice(0, 3));
-          const r = incoming[0];
+          // Dédoublonnage par id (une même demande ne s'affiche qu'une fois)
+          setToasts((t) => {
+            const newest = [...incoming].reverse();
+            const ids = new Set(newest.map((x) => x.id));
+            return [...newest, ...t.filter((x) => !ids.has(x.id))].slice(0, 3);
+          });
+          const r = incoming[incoming.length - 1]; // la plus récente
           systemNotify(
             incoming.length > 1 ? `${incoming.length} nouvelles demandes` : "Nouvelle demande de réservation",
             `${r.full_name} · ${r.car_name ?? ""} · ${shortDate(r.start_date)} → ${shortDate(r.end_date)}`,
@@ -61,8 +71,13 @@ export function ReservationAlerts() {
         }
       } catch {
         /* réseau coupé : on réessaie au prochain tour (une session expirée est gérée par l'API) */
+      } finally {
+        inFlight = false;
       }
-      if (!cancelled) timer = window.setTimeout(tick, POLL_MS);
+      if (!cancelled) {
+        window.clearTimeout(timer);
+        timer = window.setTimeout(tick, POLL_MS);
+      }
     };
 
     const onVisible = () => document.visibilityState === "visible" && tick();

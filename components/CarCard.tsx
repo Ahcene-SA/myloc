@@ -25,7 +25,7 @@ interface CarCardProps {
   car: Car;
   index?: number;
   /** Prix total pour les dates recherchées sur l'accueil */
-  quote?: { days: number; total: number; label: string; base?: number; discountLabel?: string | null };
+  quote?: { days: number; total: number; label: string; range?: string; base?: number; discountLabel?: string | null };
   onBook?: () => void;
 }
 
@@ -77,8 +77,11 @@ export function CarCard({ car, index = 0, quote, onBook }: CarCardProps) {
 
       {/* Nom façon post Instagram */}
       <div className="flex flex-1 flex-col px-5 pb-5 pt-4">
+        {/* Nom isolé en LTR : « JETOUR X70+ » ne doit pas devenir « +JETOUR X70 » en arabe */}
         <h3 className="text-[22px] font-extrabold uppercase leading-[1.05] text-navy">
-          {brand} {model && <span className="text-sky-gradient">{model}</span>}
+          <bdi dir="ltr">
+            {brand} {model && <span className="text-sky-gradient">{model}</span>}
+          </bdi>
         </h3>
 
         <ul className="mt-4 grid grid-cols-4 divide-x divide-line rounded-2xl bg-mist py-3">
@@ -92,30 +95,32 @@ export function CarCard({ car, index = 0, quote, onBook }: CarCardProps) {
 
         {quote ? (
           <div className="mt-5 flex flex-col gap-3">
-            <div className="flex items-end justify-between gap-3 rounded-2xl bg-sky-soft/70 px-4 py-3">
-              <p className="leading-none">
-                <span className="block text-[11px] font-bold uppercase tracking-[0.14em] text-sky-text">
+            <div className="rounded-2xl bg-sky-soft/70 px-4 py-3">
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="whitespace-nowrap text-[11px] font-bold uppercase tracking-[0.1em] text-sky-text">
                   {t(quote.days > 1 ? "Total · {days} jours" : "Total · {days} jour", { days: quote.days })}
                 </span>
-                <span className="mt-1.5 block text-[26px] font-extrabold text-navy">
-                  {quote.total.toLocaleString(dateLocale())} {site.currency}
-                  {!!quote.base && quote.base > quote.total && (
-                    <span className="ms-2 text-sm font-semibold text-muted line-through">
-                      {quote.base.toLocaleString(dateLocale())} {site.currency}
-                    </span>
-                  )}
+                <span className="whitespace-nowrap text-[11px] font-semibold text-muted">
+                  {car.price} {site.currency}/{t("jour")}
                 </span>
-                {quote.discountLabel && (
-                  <span className="mt-1.5 inline-block rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
-                    {t(quote.discountLabel)}
+              </div>
+              <p className="mt-1.5 flex flex-wrap items-baseline gap-x-2 leading-none">
+                <span className="whitespace-nowrap text-[26px] font-extrabold text-navy">
+                  {quote.total.toLocaleString(dateLocale())} {site.currency}
+                </span>
+                {!!quote.base && quote.base > quote.total && (
+                  <span className="whitespace-nowrap text-sm font-semibold text-muted line-through">
+                    {quote.base.toLocaleString(dateLocale())} {site.currency}
                   </span>
                 )}
               </p>
-              <span className="text-end text-[11px] font-semibold leading-tight text-muted">
-                {quote.label}
-                <br />
-                {car.price} {site.currency}/{t("jour")}
-              </span>
+              {/* Période sous le total, sur une seule ligne */}
+              <p className="mt-1.5 whitespace-nowrap text-[12px] font-semibold text-muted">{quote.range ?? quote.label}</p>
+              {quote.discountLabel && (
+                <span className="mt-1.5 inline-block rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                  {t(quote.discountLabel)}
+                </span>
+              )}
             </div>
             <div className="flex gap-2">
               <button
@@ -146,9 +151,9 @@ export function CarCard({ car, index = 0, quote, onBook }: CarCardProps) {
           <div className="mt-5 flex items-end justify-between gap-3">
             <p className="leading-none">
               <span className="block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">{t("À partir de")}</span>
-              <span className="mt-1.5 block text-[28px] font-extrabold text-navy">
+              <span className="mt-1.5 block whitespace-nowrap text-[28px] font-extrabold text-navy">
                 {car.price} {site.currency}
-                <span className="ms-1 text-xs font-semibold text-muted">/ {t(car.priceUnit)}</span>
+                <span className="ms-1 whitespace-nowrap text-xs font-semibold text-muted">/ {t(car.priceUnit)}</span>
               </span>
             </p>
             <a

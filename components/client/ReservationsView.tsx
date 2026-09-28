@@ -23,12 +23,14 @@ import {
   formatPrice,
   formatTime,
   isActiveOrUpcoming,
+  isExpiredPending,
   paymentLabels,
   primaryBtn,
   reservationRef,
   reservationWhatsApp,
   splitCarName,
   todayIso,
+  placeLabel,
 } from "./shared";
 import { InspectionButton } from "./InspectionReadOnly";
 
@@ -43,7 +45,8 @@ const filters: { id: Filter; label: string }[] = [
 
 function matches(r: ReservationFromApi, f: Filter) {
   if (f === "all") return true;
-  if (f === "cancelled") return r.status === "cancelled" || r.status === "rejected";
+  // Demandes sans suite : annulées, refusées, ou jamais confirmées avant la date de départ
+  if (f === "cancelled") return r.status === "cancelled" || r.status === "rejected" || isExpiredPending(r);
   if (f === "upcoming") return isActiveOrUpcoming(r);
   return r.status === "confirmed" && !isActiveOrUpcoming(r);
 }
@@ -129,6 +132,7 @@ function ReservationCard({ r }: { r: ReservationFromApi }) {
   const [err, setErr] = useState("");
   const { brand, model } = splitCarName(r.car_name);
   const days = daysBetween(r.start_date || "", r.end_date || "");
+  const expired = isExpiredPending(r);
 
   const doCancel = async () => {
     setBusy(true);
@@ -159,10 +163,12 @@ function ReservationCard({ r }: { r: ReservationFromApi }) {
                 {reservationRef(r.id)} · {categoryLabel(r.car_category)}
               </p>
               <p className="mt-1 text-xl font-extrabold uppercase text-navy">
-                {brand} <span className="text-sky-gradient">{model}</span>
+                <bdi dir="ltr">
+                  {brand} <span className="text-sky-gradient">{model}</span>
+                </bdi>
               </p>
             </div>
-            <StatusBadge status={r.status} />
+            <StatusBadge status={r.status} expired={expired} />
           </div>
 
           <div className="grid gap-4 text-sm sm:grid-cols-2">
@@ -184,19 +190,25 @@ function ReservationCard({ r }: { r: ReservationFromApi }) {
                 <div className="text-ink-soft">
                   {r.pickup_place && (
                     <p>
-                      <span className="text-muted">{t("Retrait :")}</span> {t(r.pickup_place)}
+                      <span className="text-muted">{t("Retrait :")}</span> {placeLabel(r.pickup_place)}
                       {r.delivery_address ? ` (${r.delivery_address})` : ""}
                     </p>
                   )}
                   {r.return_place && (
                     <p>
-                      <span className="text-muted">{t("Retour :")}</span> {t(r.return_place)}
+                      <span className="text-muted">{t("Retour :")}</span> {placeLabel(r.return_place)}
                     </p>
                   )}
                 </div>
               </div>
             )}
           </div>
+
+          {expired && (
+            <p className="rounded-2xl bg-mist p-4 text-sm text-ink-soft">
+              {t("L'agence n'a pas confirmé cette demande avant la date de départ. Contactez-la ou faites une nouvelle demande.")}
+            </p>
+          )}
 
           {r.admin_note && (
             <div className="flex gap-2.5 rounded-2xl bg-sky-soft/60 p-4 text-sm text-navy">
