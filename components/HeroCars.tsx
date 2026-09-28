@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { motion, useMotionValue, useSpring, useTransform, type MotionValue } from "framer-motion";
-import { SkyCircle } from "./Brand";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
@@ -81,8 +80,6 @@ export function HeroCars({ scrollYProgress, reduce }: { scrollYProgress: MotionV
   // Parallaxe au scroll
   const stageY = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : -70]);
   const stageScale = useTransform(scrollYProgress, [0, 1], [1, reduce ? 1 : 1.12]);
-  const circleScale = useTransform(scrollYProgress, [0, 1], [1, reduce ? 1 : 1.35]);
-  const circleRotate = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : 60]);
 
   // Parallaxe à la souris (ordinateur uniquement)
   const mx = useMotionValue(0);
@@ -111,18 +108,6 @@ export function HeroCars({ scrollYProgress, reduce }: { scrollYProgress: MotionV
 
   return (
     <div className="relative h-[280px] [perspective:1200px] sm:h-[380px] lg:h-[500px]">
-      <motion.div
-        className="absolute left-1/2 top-1/2 h-[300px] w-[300px] -translate-x-1/2 -translate-y-1/2 sm:h-[440px] sm:w-[440px] lg:h-[540px] lg:w-[540px]"
-        style={{ scale: circleScale, rotate: circleRotate }}
-        initial={reduce ? false : { opacity: 0, scale: 0.6 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1.4, ease }}
-      >
-        <SkyCircle className="inset-0" />
-        {/* arc lumineux qui tourne sur le cercle */}
-        <span aria-hidden="true" className="orbit absolute inset-0 rounded-full border-[42px] border-transparent border-t-sky/25" />
-      </motion.div>
-
       <motion.div className="absolute inset-x-0 bottom-10 sm:bottom-14" style={{ y: stageY, scale: stageScale, rotateY: tilt }}>
         {/* ombre au sol */}
         <motion.span
