@@ -190,11 +190,11 @@ export function ContractView() {
           <div className="grid grid-cols-2 gap-x-6">
             <div>
               <Line label="Départ" value={`${formatDate(r.start_date, true)}${r.pickup_time ? ` à ${formatTime(r.pickup_time)}` : ""}`} />
-              <Line label="Lieu de retrait" value={r.pickup_place + (r.delivery_address ? ` (${r.delivery_address})` : "")} />
+              <Line label="Lieu de retrait" value={[r.pickup_place, r.delivery_address && `(${r.delivery_address})`].filter(Boolean).join(" ") || undefined} />
             </div>
             <div>
               <Line label="Retour" value={`${formatDate(r.end_date, true)}${r.return_time ? ` à ${formatTime(r.return_time)}` : ""}`} />
-              <Line label="Lieu de retour" value={r.return_place} />
+              <Line label="Lieu de retour" value={r.return_place || r.pickup_place || undefined} />
             </div>
           </div>
           <Line label="Durée" value={`${days} jour${days > 1 ? "s" : ""}`} />
