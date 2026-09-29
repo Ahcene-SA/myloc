@@ -7,7 +7,7 @@ export const site = {
   phoneDisplay: "+213 560 55 05 90",
   phoneHref: "tel:+213560550590",
   whatsappHref: "https://wa.me/213560550590",
-  email: "contact@myloc.dz",
+  email: "myloc.dz@gmail.com",
   address: "Résidence AM, 08 lotissement du Stade, Zonka, Birkhadem, Alger",
   instagram: "https://instagram.com/myloc.dz",
   instagramHandle: "@myloc.dz",

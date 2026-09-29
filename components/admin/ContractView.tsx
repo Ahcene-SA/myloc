@@ -268,7 +268,7 @@ export function ContractView() {
             <p className="mt-2 text-[11px] leading-relaxed text-slate-600">
               {site.address}
               <br />
-              Tél. / WhatsApp : {site.phoneDisplay}
+              Tél. / WhatsApp : {site.phoneDisplay} · {site.email}
               <br />
               RC n° {site.rc}
             </p>
