@@ -39,12 +39,18 @@ class Mailer
 
     private static function fromAddress(): string
     {
-        return $_ENV['MAIL_FROM'] ?? ($_ENV['SMTP_USER'] ?? 'no-reply@myloc.dz');
+        foreach (['MAIL_FROM', 'SMTP_USER'] as $key) {
+            $value = trim((string) ($_ENV[$key] ?? ''));
+            if (filter_var($value, FILTER_VALIDATE_EMAIL)) {
+                return $value;
+            }
+        }
+        return 'myloc.dz@gmail.com';
     }
 
     private static function fromName(): string
     {
-        return $_ENV['MAIL_FROM_NAME'] ?? 'MYLOC.DZ';
+        return trim((string) ($_ENV['MAIL_FROM_NAME'] ?? '')) ?: 'MYLOC.DZ';
     }
 
     private static function log(string $to, string $subject, string $html): void
