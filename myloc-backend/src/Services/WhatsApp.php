@@ -34,7 +34,7 @@ namespace Myloc\Services;
 class WhatsApp
 {
     /** Version de l'API Graph en vigueur (Meta publie une nouvelle version chaque trimestre). */
-    private const GRAPH_VERSION = 'v21.0';
+    private const GRAPH_VERSION = 'v23.0';
 
     public static function newReservation(array $r): void
     {
