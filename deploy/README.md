@@ -18,21 +18,27 @@ Stack complète : site statique (Nginx) + API PHP (Apache) + MariaDB, avec donn�
 
 2. **Onglet Environment** — définir au minimum :
    ```
-   NEXT_PUBLIC_API_URL=https://api.TON-DOMAINE
-   ALLOWED_ORIGINS=https://TON-DOMAINE
+   NEXT_PUBLIC_API_URL=https://TON-DOMAINE
    JWT_SECRET=<chaîne aléatoire de 32+ caractères>
    DB_PASS=<mot de passe MariaDB>
    ADMIN_EMAIL=contact@myloc.dz
    ADMIN_PASSWORD=<mot de passe pour /agence>
    ```
+   (Par défaut l'API et le site partagent le même domaine via le proxy — aucun CORS à
+   configurer. Une URL d'API séparée est possible, voir l'étape 3.)
    ⚠️ `NEXT_PUBLIC_API_URL` est **inliné au build** : si tu le changes, il faut refaire un build.
    Les deux domaines doivent coïncider exactement avec ceux attachés à l'étape 3.
 
-3. **Attacher les domaines** — chaque service peut avoir son domaine :
-   - `frontend` → ton domaine principal (`myloc.dz`) : port **80** ;
-   - `backend` → un sous-domaine (`api.myloc.dz`) : port **80**.
-   (Le port demandé par Dokploy est celui écouté à l'intérieur du conteneur : les deux
-   containers écoutent sur **80**.)
+3. **Attacher le domaine** — dans l'onglet **Domains** du déploiement :
+   - service `frontend`, ton domaine principal (`myloc.dz`), port **80**.
+   - L'API est atteignable à `https://TON-DOMAINE/api/...` (le Nginx du front la proxifie) :
+     un seul domaine suffit, et `NEXT_PUBLIC_API_URL=https://TON-DOMAINE`.
+   - Si tu préfères un domaine séparé pour l'API (`api.myloc.dz`) : ajouter le service
+     `backend` au réseau `dokploy-network` + label `traefik.docker.network=dokploy-network`
+     dans `compose.yaml`, l'attacher sur le port **80**, puis mettre
+     `NEXT_PUBLIC_API_URL=https://api.myloc.dz` et `ALLOWED_ORIGINS=https://TON-DOMAINE`.
+   - DNS : pointer le A record du domaine vers l'IP du serveur VPS.
+   - Le port est celui écouté à l'intérieur du conteneur : **80** pour les deux services.
 
 4. **Déployer.** Au premier démarrage, le backend :
    - applique les migrations du schéma ;

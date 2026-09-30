@@ -1,13 +1,13 @@
 # MYLOC.DZ — stack complète pour Dokploy (type « Docker Compose »).
 #
 # Dans l'onglet Environment de Dokploy, définir :
-#   NEXT_PUBLIC_API_URL=https://api.TON-DOMAINE   (URL finale de l'API, utilisée au BUILD)
-#   ALLOWED_ORIGINS=https://TON-DOMAINE           (origine du front, pour CORS côté backend)
+#   NEXT_PUBLIC_API_URL=https://TON-DOMAINE       (URL du site lui-même ; l'API est servie
+#                                                  sur le même domaine via le proxy /api)
 #   JWT_SECRET=<longe chaîne aléatoire 32+ caractères>
 #   DB_PASS=<mot de passe MariaDB>
 #   ADMIN_EMAIL=contact@myloc.dz
 #   ADMIN_PASSWORD=<mot de passe admin /agence>
-#   MAIL_DRIVER=log  (ou smtp + SMTP_*)
+#   (ALLOWED_ORIGINS/MAIL_* optionnels — voir deploy/README.md)
 #
 # ATTENTION : NEXT_PUBLIC_* est inliné au moment du build — le changer demande un re-déploiement.
 
@@ -75,8 +75,24 @@ services:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.example.com}
     depends_on:
       - backend
+    # Dokploy : le service doit être sur dokploy-network pour que le domaine y soit attaché.
+    # traefik.docker.network évite le Bad Gateway (Traefik choisit une IP du mauvais réseau
+    # quand le conteneur est sur plusieurs réseaux).
+    ports:
+      - 80
+    networks:
+      - default
+      - dokploy-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=dokploy-network"
     restart: unless-stopped
 
 volumes:
   mariadb_data:
   uploads:
+
+networks:
+  default:
+  dokploy-network:
+    external: true
