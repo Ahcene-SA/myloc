@@ -1,0 +1,82 @@
+# MYLOC.DZ — stack complète pour Dokploy (type « Docker Compose »).
+#
+# Dans l'onglet Environment de Dokploy, définir :
+#   NEXT_PUBLIC_API_URL=https://api.TON-DOMAINE   (URL finale de l'API, utilisée au BUILD)
+#   ALLOWED_ORIGINS=https://TON-DOMAINE           (origine du front, pour CORS côté backend)
+#   JWT_SECRET=<longe chaîne aléatoire 32+ caractères>
+#   DB_PASS=<mot de passe MariaDB>
+#   ADMIN_EMAIL=contact@myloc.dz
+#   ADMIN_PASSWORD=<mot de passe admin /agence>
+#   MAIL_DRIVER=log  (ou smtp + SMTP_*)
+#
+# ATTENTION : NEXT_PUBLIC_* est inliné au moment du build — le changer demande un re-déploiement.
+
+services:
+  mariadb:
+    image: mariadb:11
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_PASS:-myloc_root}
+      MARIADB_DATABASE: ${DB_NAME:-myloc_db}
+      MARIADB_USER: ${DB_USER:-myloc}
+      MARIADB_PASSWORD: ${DB_PASS:-myloc_root}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.backend
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    environment:
+      APP_ENV: production
+      APP_TIMEZONE: Africa/Algiers
+      DB_HOST: mariadb
+      DB_PORT: "3306"
+      DB_NAME: ${DB_NAME:-myloc_db}
+      DB_USER: ${DB_USER:-myloc}
+      DB_PASS: ${DB_PASS:-myloc_root}
+      JWT_SECRET: ${JWT_SECRET:-change_me_in_production_please_use_a_long_random_string}
+      JWT_EXPIRY: "86400"
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-https://localhost}
+      RATE_LIMIT_MAX_ATTEMPTS: "5"
+      RATE_LIMIT_WINDOW_SECONDS: "900"
+      MAIL_DRIVER: ${MAIL_DRIVER:-log}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-tls}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      MAIL_FROM: ${MAIL_FROM:-contact@myloc.dz}
+      MAIL_FROM_NAME: MYLOC.DZ
+      AGENCY_NOTIFY_EMAIL: ${AGENCY_NOTIFY_EMAIL:-}
+      AGENCY_PHONE: ${AGENCY_PHONE:-}
+      CURRENCY: DA
+      FRONTEND_URL: ${FRONTEND_URL:-}
+      PAGE_SUFFIX: .html
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@myloc.dz}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+    volumes:
+      - uploads:/var/www/html/public/images
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.frontend
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.example.com}
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  mariadb_data:
+  uploads:

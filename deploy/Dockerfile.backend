@@ -1,0 +1,32 @@
+# Image backend MYLOC.DZ : PHP 8.3 + Apache avec mod_rewrite (public/.htaccess est utilisé),
+# extension pdo_mysql, dépendances Composer, et documents racine pointée sur public/.
+FROM php:8.3-apache
+
+# PDO MySQL (pas inclus par défaut), zip (exigé par composer pour les dist)
+# et le client mysql pour importer database/migrations.sql à l'entrée du conteneur
+RUN apt-get update && apt-get install -y --no-install-recommends libzip-dev default-mysql-client \
+    && docker-php-ext-install pdo_mysql zip \
+    && a2enmod rewrite headers \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Composer pour les dépendances (phpdotenv, php-jwt)
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+COPY myloc-backend /var/www/html/
+WORKDIR /var/www/html
+RUN composer install --no-dev --optimize-autoloader --no-interaction \
+    && mkdir -p public/images/cars logs \
+    && chown -R www-data:www-data public/images logs
+
+# Apache doit servir public/ (le routeur unique index.php s'occupe de tout)
+ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
+      /etc/apache2/sites-available/*.conf \
+      /etc/apache2/apache2.conf \
+      /etc/apache2/conf-available/*.conf
+
+COPY deploy/backend-entrypoint.sh /usr/local/bin/backend-entrypoint.sh
+RUN chmod +x /usr/local/bin/backend-entrypoint.sh
+
+EXPOSE 80
+ENTRYPOINT ["backend-entrypoint.sh"]

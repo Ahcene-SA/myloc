@@ -1,0 +1,9 @@
+# Contexte de build Dokploy : ne pas envoyer node_modules/dist/vendor/env locaux.
+node_modules
+dist
+.next
+myloc-backend/vendor
+myloc-backend/logs
+myloc-backend/.env
+.env.local
+.git
