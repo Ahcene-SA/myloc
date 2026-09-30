@@ -3,7 +3,7 @@
 import { useState, type ElementType } from "react";
 import { Menu, X, LogOut, ArrowLeft } from "lucide-react";
 import { useAuth } from "./AuthContext";
-import { Logo, PalmShadow } from "./Brand";
+import { Logo } from "./Brand";
 import { cn } from "@/lib/utils";
 import { pageUrl } from "@/lib/routes";
 import { LangSwitch, useLang } from "@/lib/i18n";
@@ -30,7 +30,7 @@ interface DashboardSidebarProps<T extends string> {
   logoutTo?: "login" | "agence";
 }
 
-/** Barre latérale commune aux espaces client et admin (thème Méditerranée). */
+/** Barre latérale commune aux espaces client et admin. */
 export function DashboardSidebar<T extends string>({
   title,
   items,
@@ -49,48 +49,50 @@ export function DashboardSidebar<T extends string>({
     window.location.href = pageUrl(logoutTo);
   };
 
+  const footerLink =
+    "flex h-9 w-full items-center gap-2.5 rounded-md px-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900";
+
   return (
     <>
       {/* Barre du haut (mobile) */}
-      <div className="fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between bg-white/95 px-4 shadow-[0_1px_0_var(--line)] backdrop-blur md:hidden">
+      <div className="fixed inset-x-0 top-0 z-50 flex h-14 items-center justify-between border-b border-slate-200 bg-white px-4 md:hidden">
         <a href="./" aria-label={t("Retour au site")}>
           <Logo compact />
         </a>
         <div className="flex items-center gap-2">
-          {showLangSwitch && <LangSwitch />}
+          {showLangSwitch && <LangSwitch className="h-8! min-w-8! rounded-md! border! px-2.5! text-xs! font-medium!" />}
           <button
             type="button"
             onClick={() => setIsOpen(!isOpen)}
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-navy text-white"
+            className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
             aria-label={isOpen ? t("Fermer le menu") : t("Ouvrir le menu")}
             aria-expanded={isOpen}
           >
-            {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {isOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </button>
         </div>
       </div>
 
-      {isOpen && (
-        <div className="fixed inset-0 z-30 bg-navy/40 backdrop-blur-sm md:hidden" onClick={() => setIsOpen(false)} />
-      )}
+      {isOpen && <div className="fixed inset-0 z-30 bg-slate-900/30 md:hidden" onClick={() => setIsOpen(false)} />}
 
       <aside
         className={cn(
-          "fixed inset-y-0 start-0 z-40 w-72 overflow-hidden bg-navy text-white transition-transform duration-300 md:translate-x-0 md:rtl:translate-x-0",
-          isOpen ? "translate-x-0" : "-translate-x-full rtl:translate-x-full"
+          "fixed inset-y-0 start-0 z-40 w-64 border-e border-slate-200 bg-white transition-transform duration-200 md:translate-x-0 md:rtl:translate-x-0",
+          isOpen ? "translate-x-0 shadow-xl md:shadow-none" : "-translate-x-full rtl:translate-x-full"
         )}
       >
-        <PalmShadow className="-start-24 -top-6 w-[420px] opacity-[0.07] invert" />
-        <div className="relative flex h-full flex-col">
-          <div className="flex flex-col gap-1.5 px-7 pb-7 pt-20 md:pt-8">
+        <div className="flex h-full flex-col">
+          <div className="px-4 pb-4 pt-18 md:pt-5">
             <a href="./" aria-label={t("Retour au site")} className="hidden md:block">
-              <Logo light />
+              <Logo />
             </a>
-            <span className="mt-3 text-[11px] font-bold uppercase tracking-[0.24em] text-sky">{title}</span>
-            {subtitle && <span className="text-sm font-semibold text-white/60">{subtitle}</span>}
+            <div className="mt-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 md:mt-4">
+              <p className="text-sm font-semibold text-slate-900">{title}</p>
+              {subtitle && <p className="truncate text-xs text-slate-500">{subtitle}</p>}
+            </div>
           </div>
 
-          <nav className="flex-1 space-y-1 px-4" aria-label={title}>
+          <nav className="flex-1 space-y-0.5 overflow-y-auto px-3" aria-label={title}>
             {items.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.tab;
@@ -104,18 +106,16 @@ export function DashboardSidebar<T extends string>({
                   }}
                   aria-current={isActive ? "page" : undefined}
                   className={cn(
-                    "group flex w-full items-center gap-3 rounded-2xl px-4 py-3.5 text-start text-[15px] font-semibold transition-colors",
-                    isActive ? "bg-sky text-navy" : "text-white/70 hover:bg-white/5 hover:text-white"
+                    "relative flex h-9 w-full items-center gap-2.5 rounded-md px-2.5 text-start text-sm font-medium transition-colors",
+                    isActive ? "bg-sky-soft/70 text-navy" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                   )}
                 >
-                  <Icon className="h-5 w-5 transition-transform group-hover:scale-110" />
-                  <span className="flex-1">{item.label}</span>
+                  {isActive && <span className="absolute inset-y-2 start-0 w-0.5 rounded-full bg-sky" aria-hidden="true" />}
+                  <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? "text-sky-text" : "text-slate-400")} />
+                  <span className="flex-1 truncate">{item.label}</span>
                   {!!item.badge && (
                     <span
-                      className={cn(
-                        "flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-extrabold",
-                        isActive ? "bg-navy text-white" : "bg-amber-400 text-navy"
-                      )}
+                      className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-100 px-1.5 text-xs font-medium tabular-nums text-amber-800"
                       aria-label={t("{n} à traiter", { n: item.badge })}
                     >
                       {item.badge}
@@ -126,25 +126,18 @@ export function DashboardSidebar<T extends string>({
             })}
           </nav>
 
-          <div className="space-y-1 border-t border-white/10 p-4">
+          <div className="space-y-0.5 border-t border-slate-200 p-3">
             {showLangSwitch && (
-              <div className="hidden px-4 pb-2 md:block">
-                <LangSwitch dark />
+              <div className="hidden px-1 pb-2 md:block">
+                <LangSwitch className="h-8! min-w-8! rounded-md! border! px-2.5! text-xs! font-medium!" />
               </div>
             )}
-            <a
-              href="./"
-              className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-white/70 transition-colors hover:bg-white/5 hover:text-white"
-            >
-              <ArrowLeft className="flip-rtl h-4 w-4" />
+            <a href="./" className={footerLink}>
+              <ArrowLeft className="flip-rtl h-4 w-4 text-slate-400" />
               {t("Retour au site")}
             </a>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-sky transition-colors hover:bg-white/5"
-            >
-              <LogOut className="flip-rtl h-4 w-4" />
+            <button type="button" onClick={handleLogout} className={footerLink}>
+              <LogOut className="flip-rtl h-4 w-4 text-slate-400" />
               {t("Se déconnecter")}
             </button>
           </div>

@@ -44,7 +44,8 @@ import {
   formatDate,
   formatPrice,
   formatTime,
-  labelClass,
+  inputClass,
+  secondaryBtn,
   paymentLabels,
   reservationRef,
   splitCarName,
@@ -112,13 +113,13 @@ function DrawerBody({ r, onClose }: { r: ReservationFromApi; onClose: () => void
       onClose={onClose}
       title={
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted">
+          <p className="text-xs font-medium text-slate-500">
             {reservationRef(r.id)} · reçue {formatDateTime(r.created_at)}
           </p>
           <div className="mt-1 flex flex-wrap items-center gap-2">
             <StatusBadge status={r.status} />
             {r.status === "confirmed" && (
-              <span className="text-[11px] font-bold uppercase tracking-wide text-muted">{phaseLabel[phase]}</span>
+              <span className="text-xs text-slate-500">{phaseLabel[phase]}</span>
             )}
             <SourceBadge source={r.source} />
           </div>
@@ -126,22 +127,24 @@ function DrawerBody({ r, onClose }: { r: ReservationFromApi; onClose: () => void
       }
     >
       {/* Véhicule */}
-      <div className="bg-brand-mist flex items-center gap-5 px-6 py-5">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={apiImageUrl(r.car_image_url)} alt="" className="car-reflect h-20 w-32 object-contain" />
+      <div className="flex items-center gap-4 border-b border-slate-200 px-5 py-4">
+        <div className="flex h-16 w-24 flex-shrink-0 items-center justify-center rounded-md border border-slate-200 bg-slate-50">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={apiImageUrl(r.car_image_url)} alt="" className="max-h-12 w-auto object-contain" />
+        </div>
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted">{categoryLabel(r.car_category)}</p>
-          <p className="text-xl font-extrabold uppercase text-navy">
-            {brand} <span className="text-sky-gradient">{model}</span>
+          <p className="text-xs text-slate-500">{categoryLabel(r.car_category)}</p>
+          <p className="text-base font-semibold text-slate-900">
+            {brand} {model}
           </p>
-          {r.car_price_per_day && <p className="text-sm text-muted">{formatPrice(r.car_price_per_day)} / jour</p>}
+          {r.car_price_per_day && <p className="text-sm text-slate-500">{formatPrice(r.car_price_per_day)} / jour</p>}
         </div>
       </div>
 
-      <div className="flex flex-col gap-6 p-6">
+      <div className="flex flex-col gap-6 p-5">
         {done && (
-          <div className="flex flex-col gap-3 rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-900">
-            <p className="flex items-center gap-2 font-bold">
+          <div className="flex flex-col gap-3 rounded-md border border-emerald-600/20 bg-emerald-50 px-3 py-3 text-sm text-emerald-900">
+            <p className="flex items-center gap-2 font-medium">
               <Check className="h-4 w-4" />
               {done === "confirmed" ? "Réservation confirmée." : done === "rejected" ? "Réservation refusée." : done === "cancelled" ? "Réservation annulée." : "Réservation remise en attente."}{" "}
               Le client le voit dans son espace{done !== "pending" && r.email ? " et reçoit un e-mail" : ""}.
@@ -150,7 +153,7 @@ function DrawerBody({ r, onClose }: { r: ReservationFromApi; onClose: () => void
               href={clientWhatsApp(r.phone, whatsappText(r, done, note))}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex h-10 w-fit items-center gap-2 rounded-full bg-whatsapp px-4 text-xs font-bold text-white hover:opacity-90"
+              className="inline-flex h-9 w-fit items-center gap-2 rounded-md bg-whatsapp px-3.5 text-sm font-medium text-white hover:opacity-90"
             >
               <WhatsAppIcon className="h-4 w-4" />
               Prévenir le client sur WhatsApp
@@ -160,27 +163,27 @@ function DrawerBody({ r, onClose }: { r: ReservationFromApi; onClose: () => void
 
         {/* Client */}
         <section>
-          <p className={labelClass}>Client</p>
-          <div className="rounded-2xl border border-line p-4">
-            <p className="flex items-center gap-2 text-lg font-extrabold text-navy">
-              <UserRound className="h-4 w-4 text-sky-text" />
+          <p className={sectionLabel}>Client</p>
+          <div className="rounded-lg border border-slate-200 p-4">
+            <p className="flex items-center gap-2 text-base font-semibold text-slate-900">
+              <UserRound className="h-4 w-4 text-slate-400" />
               {r.full_name}
             </p>
-            <p className="mt-0.5 text-xs text-muted">
+            <p className="mt-0.5 text-xs text-slate-500">
               {r.user_id ? "Compte client sur le site" : "Sans compte (réservation saisie par l'agence)"}
             </p>
             <div className="mt-3 flex flex-col gap-1.5 text-sm">
-              <a href={telLink(r.phone)} className="flex items-center gap-2 font-semibold text-navy hover:text-sky-text">
-                <Phone className="h-4 w-4 text-muted" /> {r.phone}
+              <a href={telLink(r.phone)} className="flex items-center gap-2 text-slate-900 hover:text-sky-text">
+                <Phone className="h-4 w-4 text-slate-400" /> {r.phone}
               </a>
               {email && (
-                <a href={`mailto:${email}`} className="flex items-center gap-2 break-all font-semibold text-navy hover:text-sky-text">
-                  <Mail className="h-4 w-4 flex-shrink-0 text-muted" /> {email}
+                <a href={`mailto:${email}`} className="flex items-center gap-2 break-all text-slate-900 hover:text-sky-text">
+                  <Mail className="h-4 w-4 flex-shrink-0 text-slate-400" /> {email}
                 </a>
               )}
               {r.license_number && (
-                <p className="flex items-center gap-2 text-ink-soft">
-                  <IdCard className="h-4 w-4 text-muted" /> Permis n° {r.license_number}
+                <p className="flex items-center gap-2 text-slate-600">
+                  <IdCard className="h-4 w-4 text-slate-400" /> Permis n° {r.license_number}
                 </p>
               )}
             </div>
@@ -189,13 +192,13 @@ function DrawerBody({ r, onClose }: { r: ReservationFromApi; onClose: () => void
                 href={clientWhatsApp(r.phone, whatsappText(r, "pending", ""))}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex h-10 items-center gap-2 rounded-full bg-whatsapp px-4 text-xs font-bold text-white hover:opacity-90"
+                className="inline-flex h-9 items-center gap-2 rounded-md bg-whatsapp px-3.5 text-sm font-medium text-white hover:opacity-90"
               >
                 <WhatsAppIcon className="h-4 w-4" /> WhatsApp
               </a>
               <a
                 href={telLink(r.phone)}
-                className="inline-flex h-10 items-center gap-2 rounded-full border-2 border-line px-4 text-xs font-bold text-navy hover:border-navy"
+                className={secondaryBtn}
               >
                 <Phone className="h-4 w-4" /> Appeler
               </a>
@@ -205,46 +208,46 @@ function DrawerBody({ r, onClose }: { r: ReservationFromApi; onClose: () => void
 
         {/* Période & lieux */}
         <section>
-          <p className={labelClass}>Location</p>
-          <div className="flex flex-col gap-3 rounded-2xl border border-line p-4 text-sm">
+          <p className={sectionLabel}>Location</p>
+          <div className="flex flex-col gap-3 rounded-lg border border-slate-200 p-4 text-sm">
             <div className="flex gap-2.5">
-              <CalendarDays className="mt-0.5 h-4 w-4 flex-shrink-0 text-sky-text" />
+              <CalendarDays className="mt-0.5 h-4 w-4 flex-shrink-0 text-slate-400" />
               <div>
-                <p className="font-bold text-navy">
+                <p className="font-medium text-slate-900">
                   Départ : {formatDate(r.start_date, true)}
                   {r.pickup_time && ` · ${formatTime(r.pickup_time)}`}
                 </p>
-                <p className="font-bold text-navy">
+                <p className="font-medium text-slate-900">
                   Retour : {formatDate(r.end_date, true)}
                   {r.return_time && ` · ${formatTime(r.return_time)}`}
                 </p>
-                <p className="text-muted">
+                <p className="text-slate-500">
                   {days} jour{days > 1 ? "s" : ""}
                 </p>
               </div>
             </div>
             <div className="flex gap-2.5">
-              <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-sky-text" />
-              <div className="text-ink-soft">
+              <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-slate-400" />
+              <div className="text-slate-600">
                 <p>
-                  <span className="text-muted">Retrait :</span> {r.pickup_place || "non précisé"}
+                  <span className="text-slate-500">Retrait :</span> {r.pickup_place || "non précisé"}
                 </p>
                 {r.delivery_address && (
                   <p>
-                    <span className="text-muted">Adresse de livraison :</span> {r.delivery_address}
+                    <span className="text-slate-500">Adresse de livraison :</span> {r.delivery_address}
                   </p>
                 )}
                 <p>
-                  <span className="text-muted">Retour :</span> {r.return_place || "non précisé"}
+                  <span className="text-slate-500">Retour :</span> {r.return_place || "non précisé"}
                 </p>
               </div>
             </div>
             <div className="flex gap-2.5">
-              <CreditCard className="mt-0.5 h-4 w-4 flex-shrink-0 text-sky-text" />
+              <CreditCard className="mt-0.5 h-4 w-4 flex-shrink-0 text-slate-400" />
               <div>
-                <p className="text-lg font-extrabold text-navy">{formatPrice(r.total_price)}</p>
+                <p className="text-base font-semibold tabular-nums text-slate-900">{formatPrice(r.total_price)}</p>
                 <DiscountLine r={r} />
-                <p className="text-ink-soft">{r.payment_method ? paymentLabels[r.payment_method] : "Moyen de paiement non précisé"}</p>
+                <p className="text-slate-600">{r.payment_method ? paymentLabels[r.payment_method] : "Moyen de paiement non précisé"}</p>
               </div>
             </div>
           </div>
@@ -254,14 +257,14 @@ function DrawerBody({ r, onClose }: { r: ReservationFromApi; onClose: () => void
 
         {r.client_note && (
           <section>
-            <p className={labelClass}>Message du client</p>
-            <p className="whitespace-pre-line rounded-2xl bg-mist p-4 text-sm text-ink-soft">{r.client_note}</p>
+            <p className={sectionLabel}>Message du client</p>
+            <p className="whitespace-pre-line rounded-md border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700">{r.client_note}</p>
           </section>
         )}
 
         {/* Message pour le client */}
         <section>
-          <label htmlFor="admin-note" className={labelClass}>
+          <label htmlFor="admin-note" className={cn(sectionLabel, "block")}>
             Message pour le client
           </label>
           <textarea
@@ -271,9 +274,9 @@ function DrawerBody({ r, onClose }: { r: ReservationFromApi; onClose: () => void
             rows={3}
             maxLength={1000}
             placeholder="Ex. : véhicule prêt à 10h à l'agence de Birkhadem, pensez à votre permis."
-            className="w-full resize-y rounded-2xl border-2 border-line bg-mist px-4 py-3 text-sm font-semibold text-navy outline-none placeholder:font-medium placeholder:text-muted/60 focus:border-sky focus:bg-white"
+            className={cn(inputClass, "h-auto resize-y py-2")}
           />
-          <p className="mt-1.5 flex items-center gap-1.5 text-xs text-muted">
+          <p className="mt-1.5 flex items-center gap-1.5 text-xs text-slate-500">
             <MessageSquareText className="h-3.5 w-3.5" /> Visible par le client dans son espace.
           </p>
           {noteChanged && (
@@ -281,7 +284,7 @@ function DrawerBody({ r, onClose }: { r: ReservationFromApi; onClose: () => void
               type="button"
               onClick={() => act(r.status || "pending", true)}
               disabled={!!busy}
-              className="mt-2 inline-flex h-10 items-center gap-2 rounded-full border-2 border-navy px-4 text-xs font-bold text-navy hover:bg-navy hover:text-white disabled:opacity-50"
+              className={cn(secondaryBtn, "mt-2")}
             >
               {busy === "note" && <Loader2 className="h-4 w-4 animate-spin" />}
               Enregistrer le message
@@ -295,10 +298,10 @@ function DrawerBody({ r, onClose }: { r: ReservationFromApi; onClose: () => void
       </div>
 
       {/* Actions */}
-      <div className="sticky bottom-0 border-t border-line bg-white p-6">
+      <div className="sticky bottom-0 border-t border-slate-200 bg-slate-50 px-5 py-3.5">
         {asking ? (
           <div className="flex flex-col gap-3">
-            <p className="text-sm font-semibold text-navy">
+            <p className="text-sm text-slate-900">
               {asking === "rejected" ? "Refuser cette demande ?" : "Annuler cette réservation ?"}{" "}
               {asking === "cancelled" && r.status === "confirmed" && !owner
                 ? "Indiquez obligatoirement le motif dans le message ci-dessus."
@@ -331,7 +334,7 @@ function DrawerBody({ r, onClose }: { r: ReservationFromApi; onClose: () => void
               </ActionButton>
             )}
             {r.status === "confirmed" && phase === "past" && (
-              <p className="text-sm text-muted">Location terminée.</p>
+              <p className="text-sm text-slate-500">Location terminée.</p>
             )}
             {(r.status === "rejected" || r.status === "cancelled") && (
               <ActionButton tone="ghost" busy={busy === "confirmed"} onClick={() => act("confirmed")} icon={RotateCcw}>
@@ -344,6 +347,8 @@ function DrawerBody({ r, onClose }: { r: ReservationFromApi; onClose: () => void
     </Drawer>
   );
 }
+
+const sectionLabel = "mb-2 text-sm font-semibold text-slate-900";
 
 function ActionButton({
   tone,
@@ -364,11 +369,11 @@ function ActionButton({
       onClick={onClick}
       disabled={busy}
       className={cn(
-        "inline-flex h-12 items-center justify-center gap-2 rounded-full px-6 text-sm font-bold transition-colors disabled:opacity-60",
-        tone === "success" && "bg-emerald-600 text-white hover:bg-emerald-700",
+        "inline-flex h-9 items-center justify-center gap-2 rounded-md px-3.5 text-sm font-medium shadow-sm transition-colors disabled:opacity-60",
+        tone === "success" && "bg-navy text-white hover:bg-navy-soft",
         tone === "danger" && "bg-red-600 text-white hover:bg-red-700",
-        tone === "danger-outline" && "border-2 border-red-200 text-red-700 hover:border-red-600",
-        tone === "ghost" && "border-2 border-line text-navy hover:border-navy"
+        tone === "danger-outline" && "border border-slate-300 bg-white text-red-700 hover:bg-red-50",
+        tone === "ghost" && "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
       )}
     >
       {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : Icon && <Icon className="h-4 w-4" />}
@@ -406,21 +411,21 @@ function InspectionSection({ r }: { r: ReservationFromApi }) {
         onClick={() => setEditing(type)}
         disabled={!state.loaded}
         className={cn(
-          "flex flex-1 flex-col items-start gap-1 rounded-2xl border-2 p-4 text-left transition-colors hover:border-navy disabled:opacity-50",
-          i ? "border-emerald-200 bg-emerald-50/60" : "border-dashed border-line"
+          "flex flex-1 flex-col items-start gap-1 rounded-md border p-3 text-start transition-colors hover:bg-slate-50 disabled:opacity-50",
+          i ? "border-slate-200" : "border-dashed border-slate-300"
         )}
       >
-        <span className="flex items-center gap-2 text-sm font-extrabold uppercase text-navy">
-          <ClipboardCheck className={cn("h-4 w-4", i ? "text-emerald-700" : "text-muted")} />
+        <span className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+          <ClipboardCheck className={cn("h-4 w-4", i ? "text-emerald-600" : "text-slate-400")} />
           {type === "depart" ? "Départ" : "Retour"}
         </span>
         {i ? (
-          <span className="text-xs text-ink-soft">
+          <span className="text-xs text-slate-600">
             {i.mileage != null ? `${i.mileage.toLocaleString("fr-FR")} km` : "km —"} · carburant {i.fuel_level ?? "—"}/8 ·{" "}
             {i.damages.length} dommage{i.damages.length > 1 ? "s" : ""} · {i.photos.length} photo{i.photos.length > 1 ? "s" : ""}
           </span>
         ) : (
-          <span className="text-xs font-semibold text-sky-text">À faire à la {type === "depart" ? "remise" : "restitution"} des clés</span>
+          <span className="text-xs text-sky-text">À faire à la {type === "depart" ? "remise" : "restitution"} des clés</span>
         )}
       </button>
     );
@@ -428,14 +433,14 @@ function InspectionSection({ r }: { r: ReservationFromApi }) {
 
   return (
     <section>
-      <p className={labelClass}>État des lieux & contrat</p>
+      <p className={sectionLabel}>État des lieux & contrat</p>
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-3 sm:flex-row">
           {card("depart")}
           {card("retour")}
         </div>
         {driven !== null && (
-          <p className="text-sm font-semibold text-navy">
+          <p className="text-sm text-slate-900">
             {driven.toLocaleString("fr-FR")} km parcourus
             {dep?.fuel_level != null && ret?.fuel_level != null && ret.fuel_level < dep.fuel_level && (
               <span className="text-amber-700"> · carburant rendu {ret.fuel_level}/8 (départ {dep.fuel_level}/8)</span>
@@ -443,16 +448,16 @@ function InspectionSection({ r }: { r: ReservationFromApi }) {
           </p>
         )}
         {newDamages.length > 0 && (
-          <p className="rounded-2xl bg-amber-50 p-3 text-sm font-semibold text-amber-900">
+          <p className="rounded-md border border-amber-600/20 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
             Nouveaux dommages au retour : {newDamages.map((d) => zoneLabels[d.zone] + (d.note ? ` (${d.note})` : "")).join(", ")}
           </p>
         )}
-        {state.error && <p className="text-sm font-semibold text-red-700">{state.error}</p>}
+        {state.error && <p className="text-sm text-red-700">{state.error}</p>}
         <a
           href={`${pageUrl("contrat")}?id=${r.id}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex h-11 w-fit items-center gap-2 rounded-full bg-navy px-5 text-xs font-bold text-white hover:bg-navy-soft"
+          className={cn(secondaryBtn, "w-fit")}
         >
           <FileText className="h-4 w-4" /> Contrat de location (PDF)
         </a>
@@ -490,17 +495,17 @@ function History({ reservationId }: { reservationId: number }) {
   if (!entries || entries.length === 0) return null;
   return (
     <section>
-      <p className={labelClass}>Historique</p>
-      <ol className="flex flex-col gap-2 border-s-2 border-line ps-4">
+      <p className={sectionLabel}>Historique</p>
+      <ol className="flex flex-col gap-2.5 border-s border-slate-200 ps-4">
         {entries.map((e) => {
           const meta = auditLabel(e.action);
           const detail = auditDetail(e);
           return (
             <li key={e.id} className="text-sm">
-              <span className={cn("me-2 rounded-full px-2 py-0.5 text-[11px] font-bold", toneClass[meta.tone])}>{meta.label}</span>
-              <span className="font-semibold text-navy">{e.user_name || "Système"}</span>
-              <span className="text-muted"> · {formatDateTime(e.created_at)}</span>
-              {detail && e.action !== "reservation_created" && <p className="mt-0.5 text-xs text-muted">{detail}</p>}
+              <span className={cn("me-2 rounded-full px-2 py-0.5 text-xs font-medium", toneClass[meta.tone])}>{meta.label}</span>
+              <span className="font-medium text-slate-900">{e.user_name || "Système"}</span>
+              <span className="text-slate-500"> · {formatDateTime(e.created_at)}</span>
+              {detail && e.action !== "reservation_created" && <p className="mt-0.5 text-xs text-slate-500">{detail}</p>}
             </li>
           );
         })}

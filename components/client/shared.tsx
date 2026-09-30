@@ -88,22 +88,21 @@ export const paymentLabels: Record<PaymentMethod, string> = {
 export type ReservationStatus = NonNullable<ReservationFromApi["status"]>;
 
 export const statusMeta: Record<ReservationStatus, { label: string; className: string }> = {
-  pending: { label: "En attente", className: "bg-amber-100 text-amber-800" },
-  confirmed: { label: "Confirmée", className: "bg-emerald-100 text-emerald-800" },
-  rejected: { label: "Refusée", className: "bg-red-100 text-red-700" },
-  cancelled: { label: "Annulée", className: "bg-slate-200 text-slate-700" },
+  pending: { label: "En attente", className: "bg-amber-50 text-amber-800 ring-amber-600/20" },
+  confirmed: { label: "Confirmée", className: "bg-emerald-50 text-emerald-700 ring-emerald-600/20" },
+  rejected: { label: "Refusée", className: "bg-red-50 text-red-700 ring-red-600/20" },
+  cancelled: { label: "Annulée", className: "bg-slate-50 text-slate-600 ring-slate-500/20" },
 };
+
+/** Petite pastille de statut (fond léger + liseré). */
+export const badgeBase = "inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset";
 
 export function StatusBadge({ status, expired = false }: { status?: ReservationFromApi["status"]; expired?: boolean }) {
   if (expired) {
-    return (
-      <span className="inline-flex items-center rounded-full bg-slate-200 px-3 py-1 text-xs font-bold text-slate-700">{t("Expirée")}</span>
-    );
+    return <span className={cn(badgeBase, "bg-slate-50 text-slate-600 ring-slate-500/20")}>{t("Expirée")}</span>;
   }
   const meta = statusMeta[status || "pending"];
-  return (
-    <span className={cn("inline-flex items-center rounded-full px-3 py-1 text-xs font-bold", meta.className)}>{t(meta.label)}</span>
-  );
+  return <span className={cn(badgeBase, meta.className)}>{t(meta.label)}</span>;
 }
 
 /** Location terminée (date de retour passée). */
@@ -142,41 +141,39 @@ export function reservationWhatsApp(r: ReservationFromApi): string {
 
 export function PageTitle({ kicker, title, children }: { kicker: string; title: ReactNode; children?: ReactNode }) {
   return (
-    <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <span className="kicker text-sky-text">{kicker}</span>
-        <h1 className="mt-2 text-3xl font-extrabold uppercase leading-tight text-navy sm:text-4xl">{title}</h1>
-        <span className="mt-3 block h-[3px] w-12 rounded-full bg-sky" />
+    <div className="mb-6 flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-slate-500">{kicker}</p>
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">{title}</h1>
       </div>
-      {children}
+      {children && <div className="flex flex-wrap items-center gap-2">{children}</div>}
     </div>
   );
 }
 
 export function Card({ className, children }: { className?: string; children: ReactNode }) {
-  return <div className={cn("rounded-3xl border border-line bg-white", className)}>{children}</div>;
+  return <div className={cn("rounded-lg border border-slate-200 bg-white shadow-sm", className)}>{children}</div>;
 }
+
+/** Titre de section dans une carte. */
+export const sectionTitle = "text-sm font-semibold text-slate-900";
 
 export function LoadingBlock({ label }: { label?: string }) {
   return (
-    <div className="flex h-64 items-center justify-center gap-3 text-muted" role="status">
-      <Loader2 className="h-5 w-5 animate-spin text-sky" />
-      <span className="text-sm font-semibold">{label ?? t("Chargement…")}</span>
+    <div className="flex h-64 items-center justify-center gap-2.5 text-slate-500" role="status">
+      <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+      <span className="text-sm">{label ?? t("Chargement…")}</span>
     </div>
   );
 }
 
 export function ErrorBlock({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return (
-    <Card className="flex flex-col items-center gap-4 p-10 text-center">
-      <p className="font-bold text-navy">{t("Impossible de charger vos données")}</p>
-      <p className="max-w-md text-sm text-muted">{message}</p>
+    <Card className="flex flex-col items-center gap-3 p-10 text-center">
+      <p className="text-sm font-semibold text-slate-900">{t("Impossible de charger vos données")}</p>
+      <p className="max-w-md text-sm text-slate-500">{message}</p>
       {onRetry && (
-        <button
-          type="button"
-          onClick={onRetry}
-          className="inline-flex h-11 items-center gap-2 rounded-full bg-navy px-5 text-sm font-bold text-white hover:bg-navy-soft"
-        >
+        <button type="button" onClick={onRetry} className={cn(secondaryBtn, "mt-1")}>
           <RefreshCw className="h-4 w-4" />
           {t("Réessayer")}
         </button>
@@ -187,29 +184,44 @@ export function ErrorBlock({ message, onRetry }: { message: string; onRetry?: ()
 
 export function EmptyState({ title, text, action }: { title: string; text: string; action?: ReactNode }) {
   return (
-    <Card className="flex flex-col items-center gap-3 px-6 py-14 text-center">
-      <p className="text-lg font-extrabold uppercase text-navy">{title}</p>
-      <p className="max-w-md text-sm leading-relaxed text-muted">{text}</p>
-      {action && <div className="mt-2">{action}</div>}
+    <Card className="flex flex-col items-center gap-1.5 px-6 py-12 text-center">
+      <p className="text-sm font-semibold text-slate-900">{title}</p>
+      <p className="max-w-md text-sm leading-relaxed text-slate-500">{text}</p>
+      {action && <div className="mt-3">{action}</div>}
     </Card>
   );
 }
 
-export const primaryBtn =
-  "inline-flex h-12 items-center justify-center gap-2 rounded-full bg-sky px-6 text-sm font-bold text-navy transition-colors hover:bg-sky-mid hover:text-white disabled:cursor-not-allowed disabled:opacity-50";
-export const secondaryBtn =
-  "inline-flex h-12 items-center justify-center gap-2 rounded-full border-2 border-line px-6 text-sm font-bold text-navy transition-colors hover:border-navy disabled:opacity-50";
+const focusRing = "outline-none focus-visible:ring-2 focus-visible:ring-sky/50 focus-visible:ring-offset-1";
+
+export const primaryBtn = cn(
+  "inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-navy px-3.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-navy-soft disabled:cursor-not-allowed disabled:opacity-50",
+  focusRing
+);
+export const secondaryBtn = cn(
+  "inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-slate-300 bg-white px-3.5 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50",
+  focusRing
+);
+/** Bouton discret (actions secondaires dans une liste). */
+export const ghostBtn = cn(
+  "inline-flex h-8 items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50",
+  focusRing
+);
+export const dangerBtn = cn(
+  "inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-red-200 bg-white px-3.5 text-sm font-medium text-red-700 shadow-sm transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50",
+  focusRing
+);
 export const inputClass =
-  "h-12 w-full rounded-2xl border-2 border-line bg-mist px-4 text-[15px] font-semibold text-navy outline-none transition-colors placeholder:font-medium placeholder:text-muted/60 focus:border-sky focus:bg-white disabled:opacity-60";
-export const labelClass = "mb-2 block text-[11px] font-bold uppercase tracking-[0.16em] text-muted";
+  "h-9 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition-colors placeholder:text-slate-400 focus:border-sky focus:ring-2 focus:ring-sky/25 disabled:bg-slate-50 disabled:text-slate-500";
+export const labelClass = "mb-1.5 block text-sm font-medium text-slate-700";
 
 /** « Prix de base barré + remise » quand une réservation a bénéficié d'une remise. */
 export function DiscountLine({ r }: { r: ReservationFromApi }) {
   const discount = parseFloat(String(r.discount_amount ?? 0)) || 0;
   if (discount <= 0) return null;
   return (
-    <span className="block text-xs font-semibold text-emerald-700">
-      <span className="text-muted line-through">{formatPrice(r.base_price)}</span> · {r.discount_label ? t(r.discount_label) : t("Remise")} (-{formatPrice(discount)})
+    <span className="block text-xs text-emerald-700">
+      <span className="text-slate-500 line-through">{formatPrice(r.base_price)}</span> · {r.discount_label ? t(r.discount_label) : t("Remise")} (-{formatPrice(discount)})
     </span>
   );
 }

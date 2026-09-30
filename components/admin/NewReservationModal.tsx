@@ -137,14 +137,14 @@ function Form({ prefill, onClose }: { prefill: NewReservationPrefill; onClose: (
 
   return (
     <Modal title="Nouvelle réservation" onClose={onClose} wide>
-      <form onSubmit={submit} className="flex flex-col gap-6 p-6">
-        <p className="-mt-2 text-sm text-muted">
+      <form onSubmit={submit} className="flex flex-col gap-6 p-5">
+        <p className="-mt-2 text-sm text-slate-500">
           Pour une réservation prise par WhatsApp, par téléphone ou au comptoir. Le client n&apos;a pas besoin de compte.
         </p>
 
         {/* Véhicule & dates */}
         <fieldset className="grid gap-4 sm:grid-cols-2">
-          <legend className="mb-3 text-sm font-extrabold uppercase tracking-wide text-navy">Véhicule et dates</legend>
+          <legend className="mb-3 w-full border-b border-slate-200 pb-2 text-sm font-semibold text-slate-900">Véhicule et dates</legend>
           <div className="sm:col-span-2">
             <label htmlFor="nr-car" className={labelClass}>
               Véhicule
@@ -230,7 +230,7 @@ function Form({ prefill, onClose }: { prefill: NewReservationPrefill; onClose: (
             </div>
           )}
           {conflict && (
-            <p className="flex gap-2 rounded-2xl bg-amber-50 p-4 text-sm font-semibold text-amber-900 sm:col-span-2">
+            <p className="flex gap-2 rounded-md border border-amber-600/20 bg-amber-50 px-3 py-2.5 text-sm text-amber-900 sm:col-span-2">
               <AlertTriangle className="h-4 w-4 flex-shrink-0" />
               Déjà réservé du {formatDate(conflict.start_date)} au {formatDate(conflict.end_date)} ({conflict.full_name}). Changez les dates ou
               le véhicule.
@@ -240,7 +240,7 @@ function Form({ prefill, onClose }: { prefill: NewReservationPrefill; onClose: (
 
         {/* Client */}
         <fieldset className="grid gap-4 sm:grid-cols-2">
-          <legend className="mb-3 text-sm font-extrabold uppercase tracking-wide text-navy">Client</legend>
+          <legend className="mb-3 w-full border-b border-slate-200 pb-2 text-sm font-semibold text-slate-900">Client</legend>
           {clients.length > 0 && (
             <div className="sm:col-span-2">
               <label htmlFor="nr-client" className={labelClass}>
@@ -284,7 +284,7 @@ function Form({ prefill, onClose }: { prefill: NewReservationPrefill; onClose: (
 
         {/* Paiement & statut */}
         <fieldset className="grid gap-4 sm:grid-cols-2">
-          <legend className="mb-3 text-sm font-extrabold uppercase tracking-wide text-navy">Paiement</legend>
+          <legend className="mb-3 w-full border-b border-slate-200 pb-2 text-sm font-semibold text-slate-900">Paiement</legend>
           <div>
             <label htmlFor="nr-pay" className={labelClass}>
               Moyen de paiement
@@ -304,15 +304,15 @@ function Form({ prefill, onClose }: { prefill: NewReservationPrefill; onClose: (
               <option value="pending">En attente</option>
             </select>
           </div>
-          <div className="rounded-2xl bg-mist p-4 sm:col-span-2">
+          <div className="rounded-md border border-slate-200 bg-slate-50 p-4 sm:col-span-2">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-sm text-ink-soft">
+              <p className="text-sm text-slate-600">
                 {days > 0 && car ? (
                   <>
                     {days} jour{days > 1 ? "s" : ""} × {formatPrice(car.price_per_day)} ={" "}
-                    <span className={cn("font-extrabold text-navy", f.customPrice && "line-through opacity-50")}>{formatPrice(computed)}</span>
+                    <span className={cn("font-semibold text-slate-900", f.customPrice && "line-through opacity-50")}>{formatPrice(computed)}</span>
                     {quote && quote.discount_amount > 0 && !f.customPrice && (
-                      <span className="ml-2 text-xs font-semibold text-emerald-700">
+                      <span className="ms-2 text-xs text-emerald-700">
                         ({quote.discount_label}, au lieu de {formatPrice(quote.base_price)})
                       </span>
                     )}
@@ -321,7 +321,7 @@ function Form({ prefill, onClose }: { prefill: NewReservationPrefill; onClose: (
                   "Choisissez un véhicule et des dates."
                 )}
               </p>
-              <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-navy">
+              <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-700">
                 <input type="checkbox" checked={f.customPrice} onChange={(e) => set("customPrice", e.target.checked)} className="h-4 w-4 accent-sky" />
                 Prix négocié
               </label>
@@ -350,14 +350,14 @@ function Form({ prefill, onClose }: { prefill: NewReservationPrefill; onClose: (
               value={f.note}
               onChange={(e) => set("note", e.target.value)}
               maxLength={1000}
-              className="w-full rounded-2xl border-2 border-line bg-mist px-4 py-3 text-sm font-semibold text-navy outline-none focus:border-sky focus:bg-white"
+              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none placeholder:text-slate-400 focus:border-sky focus:ring-2 focus:ring-sky/25"
             />
           </div>
         </fieldset>
 
         <FormError message={err} />
 
-        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+        <div className="-mx-5 -mb-5 flex flex-col-reverse gap-2 border-t border-slate-200 bg-slate-50 px-5 py-3.5 sm:flex-row sm:justify-end">
           <button type="button" onClick={onClose} className={secondaryBtn}>
             Annuler
           </button>

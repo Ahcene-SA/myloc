@@ -118,11 +118,11 @@ export function ReservationAlerts() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, x: 40 }}
             transition={{ type: "spring", stiffness: 380, damping: 30 }}
-            className="pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-3xl border border-sky/30 bg-navy p-4 text-white shadow-2xl"
+            className="pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-lg border border-slate-200 bg-white p-4 text-slate-900 shadow-lg"
           >
-            <span className="relative flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-sky text-navy">
-              <BellRing className="h-5 w-5" />
-              <span className="absolute -end-1 -top-1 h-3 w-3 animate-ping rounded-full bg-amber-400" />
+            <span className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md bg-sky-soft text-sky-text">
+              <BellRing className="h-4 w-4" />
+              <span className="absolute -end-0.5 -top-0.5 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-white" />
             </span>
             <button
               type="button"
@@ -132,18 +132,18 @@ export function ReservationAlerts() {
               }}
               className="min-w-0 flex-1 text-start"
             >
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-sky">Nouvelle demande</p>
-              <p className="mt-0.5 truncate text-[15px] font-extrabold">{r.full_name}</p>
-              <p className="truncate text-sm text-white/70">
+              <p className="text-xs font-medium text-slate-500">Nouvelle demande</p>
+              <p className="mt-0.5 truncate text-sm font-semibold text-slate-900">{r.full_name}</p>
+              <p className="truncate text-sm text-slate-600">
                 {r.car_name} · {shortDate(r.start_date)} → {shortDate(r.end_date)}
               </p>
-              <p className="mt-1.5 text-xs font-bold text-sky underline-offset-2 hover:underline">Voir et répondre →</p>
+              <p className="mt-1.5 text-xs font-medium text-sky-text underline-offset-2 hover:underline">Voir et répondre →</p>
             </button>
             <button
               type="button"
               onClick={() => close(r.id)}
               aria-label="Fermer"
-              className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-white/50 hover:bg-white/10 hover:text-white"
+              className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700"
             >
               <X className="h-4 w-4" />
             </button>

@@ -23,7 +23,7 @@ import {
   reservationRef,
   reservationWhatsApp,
   secondaryBtn,
-  splitCarName,
+  sectionTitle,
   placeLabel,
 } from "./shared";
 
@@ -62,14 +62,12 @@ export function AccueilView() {
 
       <div className="grid gap-4 sm:grid-cols-3">
         {stats.map(({ icon: Icon, label, value }) => (
-          <Card key={label} className="flex items-center gap-4 p-5">
-            <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-sky-soft text-sky-text">
-              <Icon className="h-5 w-5" />
-            </span>
-            <span className="min-w-0">
-              <span className="block truncate text-2xl font-extrabold text-navy">{value}</span>
-              <span className="block text-xs font-semibold text-muted">{label}</span>
-            </span>
+          <Card key={label} className="p-4">
+            <div className="flex items-center justify-between gap-3">
+              <span className="truncate text-sm font-medium text-slate-500">{label}</span>
+              <Icon className="h-4 w-4 flex-shrink-0 text-slate-400" />
+            </div>
+            <p className="mt-2 truncate text-2xl font-semibold tabular-nums text-slate-900">{value}</p>
           </Card>
         ))}
       </div>
@@ -78,64 +76,59 @@ export function AccueilView() {
         {/* Prochaine location */}
         {next ? (
           <Card className="overflow-hidden">
-            <div className="bg-brand-mist flex flex-col gap-6 p-6 sm:flex-row sm:items-center">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={apiImageUrl(next.car_image_url)}
-                alt={next.car_name || t("Véhicule")}
-                className="car-reflect mx-auto w-56 max-w-full object-contain sm:mx-0"
-              />
-              <div className="flex-1">
-                <span className="kicker text-[11px] text-sky-text">{t("Prochaine location")}</span>
-                <p className="mt-2 text-2xl font-extrabold uppercase text-navy">
-                  <bdi dir="ltr">
-                    {splitCarName(next.car_name).brand}{" "}
-                    <span className="text-sky-gradient">{splitCarName(next.car_name).model}</span>
-                  </bdi>
+            <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-3.5">
+              <p className={sectionTitle}>{t("Prochaine location")}</p>
+              <span className="text-xs tabular-nums text-slate-500">{reservationRef(next.id)}</span>
+            </div>
+            <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center">
+              <div className="flex h-28 w-full flex-shrink-0 items-center justify-center rounded-md border border-slate-200 bg-slate-50 sm:w-48">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={apiImageUrl(next.car_image_url)} alt={next.car_name || t("Véhicule")} className="max-h-24 w-auto max-w-[85%] object-contain" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-lg font-semibold text-slate-900">
+                  <bdi dir="ltr">{next.car_name}</bdi>
                 </p>
-                <div className="mt-3 flex flex-wrap items-center gap-2">
+                <div className="mt-1.5">
                   <StatusBadge status={next.status} />
-                  <span className="text-xs font-bold text-muted">{reservationRef(next.id)}</span>
                 </div>
               </div>
             </div>
-            <div className="grid gap-4 p-6 sm:grid-cols-2">
+            <dl className="grid gap-4 border-t border-slate-200 p-5 sm:grid-cols-2">
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted">{t("Départ")}</p>
-                <p className="mt-1 font-bold text-navy">
+                <dt className="text-xs font-medium text-slate-500">{t("Départ")}</dt>
+                <dd className="mt-1 text-sm font-medium text-slate-900">
                   {formatDate(next.start_date, true)} {formatTime(next.pickup_time) && `· ${formatTime(next.pickup_time)}`}
-                </p>
+                </dd>
                 {next.pickup_place && (
-                  <p className="mt-1 flex items-center gap-1.5 text-sm text-muted">
-                    <MapPin className="h-3.5 w-3.5" />
+                  <dd className="mt-0.5 flex items-center gap-1.5 text-sm text-slate-500">
+                    <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
                     {placeLabel(next.pickup_place)}
-                  </p>
+                  </dd>
                 )}
               </div>
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted">{t("Retour")}</p>
-                <p className="mt-1 font-bold text-navy">
+                <dt className="text-xs font-medium text-slate-500">{t("Retour")}</dt>
+                <dd className="mt-1 text-sm font-medium text-slate-900">
                   {formatDate(next.end_date, true)} {formatTime(next.return_time) && `· ${formatTime(next.return_time)}`}
-                </p>
+                </dd>
                 {next.return_place && (
-                  <p className="mt-1 flex items-center gap-1.5 text-sm text-muted">
-                    <MapPin className="h-3.5 w-3.5" />
+                  <dd className="mt-0.5 flex items-center gap-1.5 text-sm text-slate-500">
+                    <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
                     {placeLabel(next.return_place)}
-                  </p>
+                  </dd>
                 )}
               </div>
-              <div className="flex items-end justify-between gap-4 border-t border-line pt-4 sm:col-span-2">
-                <p>
-                  <span className="block text-xs font-semibold text-muted">
-                    {daysLabel(daysBetween(next.start_date || "", next.end_date || ""))}
-                  </span>
-                  <span className="whitespace-nowrap text-2xl font-extrabold text-navy">{formatPrice(next.total_price)}</span>
-                </p>
-                <a href={reservationWhatsApp(next)} target="_blank" rel="noopener noreferrer" className={secondaryBtn}>
-                  <WhatsAppIcon className="h-4 w-4 text-whatsapp" />
-                  {t("Contacter l'agence")}
-                </a>
-              </div>
+            </dl>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-slate-50/60 px-5 py-3.5">
+              <p className="text-sm text-slate-500">
+                {daysLabel(daysBetween(next.start_date || "", next.end_date || ""))} ·{" "}
+                <span className="whitespace-nowrap text-base font-semibold tabular-nums text-slate-900">{formatPrice(next.total_price)}</span>
+              </p>
+              <a href={reservationWhatsApp(next)} target="_blank" rel="noopener noreferrer" className={secondaryBtn}>
+                <WhatsAppIcon className="h-4 w-4 text-whatsapp" />
+                {t("Contacter l'agence")}
+              </a>
             </div>
           </Card>
         ) : (
@@ -152,28 +145,28 @@ export function AccueilView() {
         )}
 
         {/* Dernières réservations */}
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-extrabold uppercase tracking-wide text-navy">{t("Dernières réservations")}</p>
+        <Card className="self-start">
+          <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3.5">
+            <p className={sectionTitle}>{t("Dernières réservations")}</p>
             {reservations.length > 0 && (
-              <button type="button" onClick={() => setActiveTab("reservations")} className="text-sm font-bold text-sky-text hover:underline">
+              <button type="button" onClick={() => setActiveTab("reservations")} className="text-sm font-medium text-sky-text hover:underline">
                 {t("Tout voir")}
               </button>
             )}
           </div>
           {reservations.length === 0 ? (
-            <p className="mt-6 text-sm text-muted">{t("Vous n'avez pas encore de réservation.")}</p>
+            <p className="px-5 py-6 text-sm text-slate-500">{t("Vous n'avez pas encore de réservation.")}</p>
           ) : (
-            <ul className="mt-4 divide-y divide-line">
+            <ul className="divide-y divide-slate-200">
               {reservations.slice(0, 4).map((r) => (
-                <li key={r.id} className="flex items-center gap-3 py-3">
+                <li key={r.id} className="flex items-center gap-3 px-5 py-3">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={apiImageUrl(r.car_image_url)} alt="" className="h-10 w-16 flex-shrink-0 object-contain" />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-bold text-navy">
+                    <p className="truncate text-sm font-medium text-slate-900">
                       <bdi dir="ltr">{r.car_name}</bdi>
                     </p>
-                    <p className="text-xs text-muted">
+                    <p className="text-xs text-slate-500">
                       {formatDate(r.start_date)} {t("→")} {formatDate(r.end_date)}
                     </p>
                   </div>

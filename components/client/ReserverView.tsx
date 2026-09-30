@@ -313,13 +313,13 @@ export function ReserverView() {
   if (done) {
     return (
       <div className="mx-auto max-w-2xl">
-        <Card className="flex flex-col items-center gap-5 px-6 py-12 text-center sm:px-12">
-          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
-            <CheckCircle2 className="h-8 w-8" />
+        <Card className="flex flex-col items-center gap-3 px-6 py-10 text-center sm:px-12">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 ring-1 ring-emerald-600/20">
+            <CheckCircle2 className="h-5 w-5" />
           </span>
-          <p className="kicker text-sky-text">{t("Demande envoyée")}</p>
-          <h1 className="text-3xl font-extrabold uppercase text-navy">{t("Merci {name} !", { name: form.fullName.split(" ")[0] })}</h1>
-          <p className="max-w-md text-[15px] leading-relaxed text-ink-soft">
+          <p className="text-sm font-medium text-slate-500">{t("Demande envoyée")}</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{t("Merci {name} !", { name: form.fullName.split(" ")[0] })}</h1>
+          <p className="max-w-md text-sm leading-relaxed text-slate-600">
             {t(
               "Votre demande {ref} pour la {car} du {start} au {end} est en attente de confirmation par l'agence. Vous suivrez son statut dans « Mes réservations ».",
               {
@@ -330,8 +330,8 @@ export function ReserverView() {
               }
             )}
           </p>
-          <p className="text-2xl font-extrabold text-navy">{formatPrice(done.total_price)}</p>
-          <div className="flex flex-col gap-3 sm:flex-row">
+          <p className="text-xl font-semibold tabular-nums text-slate-900">{formatPrice(done.total_price)}</p>
+          <div className="mt-2 flex flex-col gap-2 sm:flex-row">
             <button type="button" onClick={() => setActiveTab("reservations")} className={primaryBtn}>
               {t("Voir mes réservations")}
             </button>
@@ -350,10 +350,10 @@ export function ReserverView() {
       <PageTitle kicker={t("Nouvelle réservation")} title={t("Réserver un véhicule")} />
 
       {/* Étapes */}
-      <p className="mb-2 text-xs font-bold text-navy sm:hidden" aria-live="polite">
+      <p className="mb-2 text-sm font-medium text-slate-900 sm:hidden" aria-live="polite">
         {t("Étape {n}/{total} · {label}", { n: step, total: STEPS.length, label: t(STEPS[step - 1]) })}
       </p>
-      <ol className="mb-6 grid grid-cols-4 gap-2" aria-label={t("Étapes de la réservation")}>
+      <ol className="mb-6 grid grid-cols-4 gap-3" aria-label={t("Étapes de la réservation")}>
         {STEPS.map((label, i) => {
           const n = i + 1;
           const state = n < step ? "done" : n === step ? "current" : "todo";
@@ -367,19 +367,19 @@ export function ReserverView() {
                 aria-label={t("Étape {n}/{total} · {label}", { n, total: STEPS.length, label: t(label) })}
                 className="flex w-full flex-col gap-2 text-start disabled:cursor-default"
               >
-                <span className={cn("h-1.5 rounded-full", state === "todo" ? "bg-line" : "bg-sky")} />
-                <span className="flex items-center gap-2 text-xs font-bold">
+                <span className={cn("h-1 rounded-full", state === "todo" ? "bg-slate-200" : "bg-sky")} />
+                <span className="flex items-center gap-2 text-sm font-medium">
                   <span
                     className={cn(
-                      "flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-[11px]",
-                      state === "done" && "bg-sky text-navy",
+                      "flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full text-xs tabular-nums",
+                      state === "done" && "bg-sky text-white",
                       state === "current" && "bg-navy text-white",
-                      state === "todo" && "bg-line text-muted"
+                      state === "todo" && "bg-white text-slate-500 ring-1 ring-inset ring-slate-300"
                     )}
                   >
                     {state === "done" ? <Check className="h-3.5 w-3.5" /> : n}
                   </span>
-                  <span className={cn("hidden sm:inline", state === "todo" ? "text-muted" : "text-navy")}>{t(label)}</span>
+                  <span className={cn("hidden sm:inline", state === "todo" ? "text-slate-500" : "text-slate-900")}>{t(label)}</span>
                 </span>
               </button>
             </li>
@@ -398,7 +398,8 @@ export function ReserverView() {
               />
             ) : (
               <>
-                <div className="no-scrollbar -mx-1 mb-5 flex gap-2 overflow-x-auto px-1">
+                <div className="no-scrollbar -mx-1 mb-4 overflow-x-auto px-1">
+                <div className="inline-flex gap-0.5 rounded-lg bg-slate-100 p-0.5">
                   {categories.map((c) => (
                     <button
                       key={c.id}
@@ -406,13 +407,14 @@ export function ReserverView() {
                       onClick={() => setCategory(c.id)}
                       aria-pressed={category === c.id}
                       className={cn(
-                        "h-10 flex-shrink-0 rounded-full border-2 px-4 text-xs font-bold uppercase tracking-wide",
-                        category === c.id ? "border-navy bg-navy text-white" : "border-line bg-white text-navy hover:border-navy"
+                        "h-8 flex-shrink-0 whitespace-nowrap rounded-md px-3 text-sm font-medium transition-colors",
+                        category === c.id ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200" : "text-slate-600 hover:text-slate-900"
                       )}
                     >
                       {t(c.label)}
                     </button>
                   ))}
+                </div>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-3">
                   {visibleCars.map((c) => {
@@ -428,27 +430,27 @@ export function ReserverView() {
                         }}
                         aria-pressed={selected}
                         className={cn(
-                          "group flex flex-col overflow-hidden rounded-3xl border-2 bg-white text-start transition-colors",
-                          selected ? "border-sky" : "border-line hover:border-sky/50"
+                          "group flex flex-col overflow-hidden rounded-lg border bg-white text-start shadow-sm transition-colors",
+                          selected ? "border-sky ring-1 ring-sky" : "border-slate-200 hover:border-slate-300"
                         )}
                       >
-                        <span className="bg-brand-mist relative flex h-36 items-center justify-center px-6">
+                        <span className="relative flex h-32 items-center justify-center border-b border-slate-200 bg-slate-50 px-6">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={apiImageUrl(c.image_url)} alt={c.name} className="car-reflect max-h-28 w-auto object-contain" />
+                          <img src={apiImageUrl(c.image_url)} alt={c.name} className="max-h-24 w-auto object-contain" />
                           {selected && (
-                            <span className="absolute end-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-sky text-navy">
-                              <Check className="h-4 w-4" />
+                            <span className="absolute end-2.5 top-2.5 flex h-5 w-5 items-center justify-center rounded-full bg-sky text-white">
+                              <Check className="h-3.5 w-3.5" />
                             </span>
                           )}
                         </span>
-                        <span className="flex flex-1 flex-col gap-2 p-4">
-                          <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted">{categoryLabel(c.category)}</span>
-                          <span className="text-lg font-extrabold uppercase leading-tight text-navy">
+                        <span className="flex flex-1 flex-col gap-1.5 p-4">
+                          <span className="text-xs text-slate-500">{categoryLabel(c.category)}</span>
+                          <span className="text-sm font-semibold leading-tight text-slate-900">
                             <bdi dir="ltr">
-                              {brand} <span className="text-sky-gradient">{model}</span>
+                              {brand} {model}
                             </bdi>
                           </span>
-                          <span className="flex gap-3 text-xs font-semibold text-muted">
+                          <span className="flex gap-3 text-xs text-slate-500">
                             <span className="flex items-center gap-1">
                               <Cog className="h-3.5 w-3.5" />
                               {t(transmissionLabel(c.transmission))}
@@ -458,8 +460,8 @@ export function ReserverView() {
                               {c.seats} {t("places")}
                             </span>
                           </span>
-                          <span className="mt-auto pt-1 text-xl font-extrabold text-navy">
-                            {formatPrice(c.price_per_day)} <span className="text-xs font-semibold text-muted">/ {t("jour")}</span>
+                          <span className="mt-auto pt-2 text-base font-semibold tabular-nums text-slate-900">
+                            {formatPrice(c.price_per_day)} <span className="text-xs font-normal text-slate-500">/ {t("jour")}</span>
                           </span>
                         </span>
                       </button>
@@ -471,9 +473,9 @@ export function ReserverView() {
 
           {/* ── Étape 2 : dates & lieux ── */}
           {step === 2 && (
-            <Card className="flex flex-col gap-6 p-6 sm:p-8">
+            <Card className="flex flex-col gap-6 p-5 sm:p-6">
               <fieldset className="grid gap-4 sm:grid-cols-[1.4fr_1fr_0.8fr]">
-                <legend className="mb-3 text-sm font-extrabold uppercase tracking-wide text-navy">{t("Départ")}</legend>
+                <legend className="mb-3 text-sm font-semibold text-slate-900">{t("Départ")}</legend>
                 <label>
                   <span className={labelClass}>{t("Lieu de retrait")}</span>
                   <select className={inputClass} value={form.pickupPlace} onChange={(e) => set("pickupPlace", e.target.value)}>
@@ -505,10 +507,10 @@ export function ReserverView() {
                 )}
               </fieldset>
 
-              <fieldset className="grid gap-4 border-t border-line pt-6 sm:grid-cols-[1.4fr_1fr_0.8fr]">
-                <legend className="mb-3 text-sm font-extrabold uppercase tracking-wide text-navy">{t("Retour||date")}</legend>
-                <label className="flex items-center gap-2.5 text-sm font-semibold text-ink-soft sm:col-span-3">
-                  <input type="checkbox" className="h-[18px] w-[18px] accent-sky" checked={form.differentReturn} onChange={(e) => set("differentReturn", e.target.checked)} />
+              <fieldset className="grid gap-4 border-t border-slate-200 pt-6 sm:grid-cols-[1.4fr_1fr_0.8fr]">
+                <legend className="mb-3 text-sm font-semibold text-slate-900">{t("Retour||date")}</legend>
+                <label className="flex items-center gap-2.5 text-sm text-slate-700 sm:col-span-3">
+                  <input type="checkbox" className="h-4 w-4 accent-sky" checked={form.differentReturn} onChange={(e) => set("differentReturn", e.target.checked)} />
                   {t("Rendre le véhicule dans un autre lieu")}
                 </label>
                 {form.differentReturn ? (
@@ -526,8 +528,8 @@ export function ReserverView() {
                 ) : (
                   <div>
                     <span className={labelClass}>{t("Lieu de retour")}</span>
-                    <p className="flex h-12 items-center gap-2 text-sm font-bold text-navy">
-                      <MapPin className="h-4 w-4 text-sky-text" />
+                    <p className="flex h-9 items-center gap-2 text-sm text-slate-900">
+                      <MapPin className="h-4 w-4 text-slate-400" />
                       {form.pickupPlace === HOME ? t("Récupération à domicile") : t(form.pickupPlace)}
                     </p>
                   </div>
@@ -559,10 +561,10 @@ export function ReserverView() {
               </fieldset>
 
               {booked.length > 0 && (
-                <div className={cn("flex gap-3 rounded-2xl p-4 text-sm", conflict ? "bg-red-50 text-red-800" : "bg-mist text-ink-soft")}>
-                  <CalendarX2 className="mt-0.5 h-5 w-5 flex-shrink-0" />
+                <div className={cn("flex gap-3 rounded-md border px-3 py-2.5 text-sm", conflict ? "border-red-200 bg-red-50 text-red-800" : "border-slate-200 bg-slate-50 text-slate-600")}>
+                  <CalendarX2 className="mt-0.5 h-4 w-4 flex-shrink-0" />
                   <div>
-                    <p className="font-bold">{conflict ? t("Ces dates ne sont pas disponibles") : t("Périodes déjà réservées pour ce véhicule")}</p>
+                    <p className="font-medium">{conflict ? t("Ces dates ne sont pas disponibles") : t("Périodes déjà réservées pour ce véhicule")}</p>
                     <ul className="mt-1 space-y-0.5">
                       {booked.map((b) => (
                         <li key={`${b.start_date}-${b.end_date}`}>
@@ -578,7 +580,7 @@ export function ReserverView() {
 
           {/* ── Étape 3 : conducteur ── */}
           {step === 3 && (
-            <Card className="grid gap-5 p-6 sm:grid-cols-2 sm:p-8">
+            <Card className="grid gap-4 p-5 sm:grid-cols-2 sm:p-6">
               <label className="sm:col-span-2">
                 <span className={labelClass}>{t("Nom et prénom du conducteur")}</span>
                 <input className={inputClass} value={form.fullName} onChange={(e) => set("fullName", e.target.value)} autoComplete="name" />
@@ -598,15 +600,15 @@ export function ReserverView() {
               <label className="sm:col-span-2">
                 <span className={labelClass}>{t("Message pour l'agence (facultatif)")}</span>
                 <textarea
-                  className={cn(inputClass, "h-28 resize-none py-3")}
+                  className={cn(inputClass, "h-24 resize-none py-2")}
                   value={form.note}
                   maxLength={1000}
                   onChange={(e) => set("note", e.target.value)}
                   placeholder={t("Siège bébé, numéro de vol, heure d'arrivée…")}
                 />
               </label>
-              <label className="flex items-start gap-3 rounded-2xl bg-mist p-4 text-sm text-ink-soft sm:col-span-2">
-                <input type="checkbox" className="mt-0.5 h-[18px] w-[18px] flex-shrink-0 accent-sky" checked={form.licenseConfirmed} onChange={(e) => set("licenseConfirmed", e.target.checked)} />
+              <label className="flex items-start gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 sm:col-span-2">
+                <input type="checkbox" className="mt-0.5 h-4 w-4 flex-shrink-0 accent-sky" checked={form.licenseConfirmed} onChange={(e) => set("licenseConfirmed", e.target.checked)} />
                 {t(
                   "Je confirme que le conducteur est titulaire d'un permis de conduire valide et le présentera, avec une pièce d'identité, à la remise des clés."
                 )}
@@ -616,25 +618,25 @@ export function ReserverView() {
 
           {/* ── Étape 4 : paiement & envoi ── */}
           {step === 4 && car && (
-            <Card className="flex flex-col gap-6 p-6 sm:p-8">
+            <Card className="flex flex-col gap-6 p-5 sm:p-6">
               <div>
-                <p className="mb-3 text-sm font-extrabold uppercase tracking-wide text-navy">{t("Moyen de paiement")}</p>
-                <p className="mb-2 text-sm text-muted">{t("Aucun paiement en ligne : vous réglez directement auprès de l'agence.")}</p>
-                <p className="mb-4 rounded-2xl bg-sky-soft px-4 py-3 text-sm font-semibold text-navy">
+                <p className="mb-1 text-sm font-semibold text-slate-900">{t("Moyen de paiement")}</p>
+                <p className="mb-2 text-sm text-slate-500">{t("Aucun paiement en ligne : vous réglez directement auprès de l'agence.")}</p>
+                <p className="mb-4 rounded-md border border-sky/30 bg-sky-soft/50 px-3 py-2.5 text-sm text-slate-700">
                   {t("À prévoir le jour du départ : passeport, permis de conduire et caution de {amount} (espèces ou virement), restituée au retour du véhicule.", {
                     amount: `${site.deposit.toLocaleString(dateLocale())} ${t(site.currency)}`,
                   })}
                 </p>
-                <div className="grid gap-3">
+                <div className="grid gap-2">
                   {(Object.keys(paymentLabels) as PaymentMethod[]).map((m) => (
                     <label
                       key={m}
                       className={cn(
-                        "flex cursor-pointer items-center gap-3 rounded-2xl border-2 p-4 text-sm font-bold text-navy",
-                        form.payment === m ? "border-sky bg-sky-soft/50" : "border-line"
+                        "flex cursor-pointer items-center gap-3 rounded-md border px-3 py-2.5 text-sm font-medium text-slate-900 transition-colors",
+                        form.payment === m ? "border-sky bg-sky-soft/40 ring-1 ring-sky" : "border-slate-200 hover:bg-slate-50"
                       )}
                     >
-                      <input type="radio" name="payment" className="h-[18px] w-[18px] accent-sky" checked={form.payment === m} onChange={() => set("payment", m)} />
+                      <input type="radio" name="payment" className="h-4 w-4 accent-sky" checked={form.payment === m} onChange={() => set("payment", m)} />
                       {t(paymentLabels[m])}
                     </label>
                   ))}
@@ -642,8 +644,8 @@ export function ReserverView() {
               </div>
 
               <div>
-                <label htmlFor="promo" className="mb-3 flex items-center gap-2 text-sm font-extrabold uppercase tracking-wide text-navy">
-                  <Tag className="h-4 w-4 text-sky-text" /> {t("Code promo")}
+                <label htmlFor="promo" className="mb-1.5 flex items-center gap-2 text-sm font-medium text-slate-700">
+                  <Tag className="h-4 w-4 text-slate-400" /> {t("Code promo")}
                 </label>
                 <div className="flex gap-2">
                   <input
@@ -657,7 +659,7 @@ export function ReserverView() {
                       }
                     }}
                     placeholder={t("Ex. : ETE26")}
-                    className={cn(inputClass, "uppercase")}
+                    className={cn(inputClass, "font-mono")}
                     maxLength={40}
                   />
                   <button
@@ -673,7 +675,7 @@ export function ReserverView() {
                   <p
                     role="status"
                     className={cn(
-                      "mt-2 text-sm font-semibold",
+                      "mt-2 text-sm",
                       quote.promo.valid && quote.promo_code ? "text-emerald-700" : quote.promo.valid ? "text-amber-700" : "text-red-700"
                     )}
                   >
@@ -682,28 +684,28 @@ export function ReserverView() {
                 )}
               </div>
 
-              <dl className="grid gap-3 rounded-2xl bg-mist p-5 text-sm sm:grid-cols-2">
+              <dl className="grid gap-4 rounded-md border border-slate-200 bg-slate-50 p-4 text-sm sm:grid-cols-2">
                 <div>
-                  <dt className="text-muted">{t("Conducteur")}</dt>
-                  <dd className="font-bold text-navy">{form.fullName}</dd>
+                  <dt className="text-slate-500">{t("Conducteur")}</dt>
+                  <dd className="font-medium text-slate-900">{form.fullName}</dd>
                 </div>
                 <div>
-                  <dt className="text-muted">{t("Contact")}</dt>
-                  <dd className="font-bold text-navy">
+                  <dt className="text-slate-500">{t("Contact")}</dt>
+                  <dd className="font-medium text-slate-900">
                     {form.phone} · {form.email}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-muted">{t("Départ")}</dt>
-                  <dd className="font-bold text-navy">
+                  <dt className="text-slate-500">{t("Départ")}</dt>
+                  <dd className="font-medium text-slate-900">
                     {t("{date} à {time}", { date: formatDate(form.pickupDate, true), time: form.pickupTime })}
                     <br />
                     {form.pickupPlace === HOME ? t("Livraison : {address}", { address: form.pickupAddress }) : t(form.pickupPlace)}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-muted">{t("Retour||date")}</dt>
-                  <dd className="font-bold text-navy">
+                  <dt className="text-slate-500">{t("Retour||date")}</dt>
+                  <dd className="font-medium text-slate-900">
                     {t("{date} à {time}", { date: formatDate(form.returnDate, true), time: form.returnTime })}
                     <br />
                     {form.differentReturn
@@ -717,8 +719,8 @@ export function ReserverView() {
                 </div>
               </dl>
 
-              <label className="flex items-start gap-3 rounded-2xl border-2 border-line p-4 text-sm text-ink-soft">
-                <input type="checkbox" className="mt-0.5 h-[18px] w-[18px] flex-shrink-0 accent-sky" checked={form.accepted} onChange={(e) => set("accepted", e.target.checked)} />
+              <label className="flex items-start gap-3 rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700">
+                <input type="checkbox" className="mt-0.5 h-4 w-4 flex-shrink-0 accent-sky" checked={form.accepted} onChange={(e) => set("accepted", e.target.checked)} />
                 {t(
                   "J'ai compris que ma demande doit être confirmée par l'agence MYLOC.DZ, et que le montant indiqué est réglé à la remise du véhicule."
                 )}
@@ -727,29 +729,29 @@ export function ReserverView() {
           )}
 
           {stepError && (
-            <p role="alert" className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+            <p role="alert" className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
               {stepError}
             </p>
           )}
 
           {/* Actions : barre collante en bas de l'écran sur mobile/tablette, avec le total
               (le récapitulatif complet est plus bas), en ligne sur grand écran. */}
-          <div className="sticky bottom-0 z-20 mt-6 rounded-t-3xl border border-b-0 border-line bg-white/95 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 shadow-[0_-8px_24px_-12px_rgba(10,31,68,0.25)] backdrop-blur xl:static xl:rounded-none xl:border-0 xl:bg-transparent xl:p-0 xl:shadow-none xl:backdrop-blur-none">
+          <div className="sticky bottom-0 z-20 mt-6 rounded-t-lg border border-b-0 border-slate-200 bg-white/95 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 shadow-[0_-4px_12px_-6px_rgba(15,23,42,0.12)] backdrop-blur xl:static xl:rounded-none xl:border-0 xl:bg-transparent xl:p-0 xl:shadow-none xl:backdrop-blur-none">
             {car && days > 0 && (
               <div className="mb-3 flex items-center justify-between gap-3 xl:hidden">
-                <span className="flex-shrink-0 whitespace-nowrap text-xs font-bold uppercase tracking-wide text-muted">
+                <span className="flex-shrink-0 whitespace-nowrap text-xs text-slate-500">
                   {t("Total")} · {daysLabel(days)}
                 </span>
                 {totalLabel === null ? (
-                  <span className="min-w-0 text-end text-sm font-bold leading-tight text-amber-800">{t("Prix à confirmer par l'agence")}</span>
+                  <span className="min-w-0 text-end text-sm font-semibold leading-tight text-amber-800">{t("Prix à confirmer par l'agence")}</span>
                 ) : (
-                  <span className={cn("text-xl font-extrabold text-navy transition-opacity", quoting && "opacity-40")}>{totalLabel}</span>
+                  <span className={cn("text-lg font-semibold tabular-nums text-slate-900 transition-opacity", quoting && "opacity-40")}>{totalLabel}</span>
                 )}
               </div>
             )}
             <div className="flex gap-3 sm:justify-between">
               {step > 1 ? (
-                <button type="button" onClick={() => goTo(step - 1)} className={cn(secondaryBtn, "px-4 sm:px-6")}>
+                <button type="button" onClick={() => goTo(step - 1)} className={secondaryBtn}>
                   <ArrowLeft className="flip-rtl h-4 w-4" />
                   <span className="sr-only sm:not-sr-only">{t("Retour")}</span>
                 </button>
@@ -781,65 +783,65 @@ export function ReserverView() {
         {/* Sur mobile, pas de récapitulatif vide tant qu'aucun véhicule n'est choisi */}
         <aside className={cn("xl:sticky xl:top-8 xl:self-start", !car && "hidden xl:block")}>
           <Card className="overflow-hidden">
-            <div className="bg-brand-mist flex h-36 items-center justify-center px-6">
+            <div className="flex h-32 items-center justify-center border-b border-slate-200 bg-slate-50 px-6">
               {car ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
-                <img src={apiImageUrl(car.image_url)} alt={car.name} className="car-reflect max-h-28 w-auto object-contain" />
+                <img src={apiImageUrl(car.image_url)} alt={car.name} className="max-h-24 w-auto object-contain" />
               ) : (
-                <span className="text-sm font-semibold text-muted">{t("Aucun véhicule choisi")}</span>
+                <span className="text-sm text-slate-500">{t("Aucun véhicule choisi")}</span>
               )}
             </div>
-            <div className="flex flex-col gap-4 p-6">
-              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted">{t("Récapitulatif")}</p>
+            <div className="flex flex-col gap-4 p-5">
+              <p className="text-sm font-semibold text-slate-900">{t("Récapitulatif")}</p>
               {car && (
-                <p className="text-xl font-extrabold uppercase text-navy">
+                <p className="-mt-2 text-sm text-slate-500">
                   <bdi dir="ltr">
-                    {splitCarName(car.name).brand} <span className="text-sky-gradient">{splitCarName(car.name).model}</span>
+                    {splitCarName(car.name).brand} {splitCarName(car.name).model}
                   </bdi>
                 </p>
               )}
               <dl className="flex flex-col gap-2 text-sm">
                 <div className="flex justify-between gap-3">
-                  <dt className="text-muted">{t("Tarif")}</dt>
-                  <dd className="font-bold text-navy">{car ? `${formatPrice(car.price_per_day)} / ${t("jour")}` : "—"}</dd>
+                  <dt className="text-slate-500">{t("Tarif")}</dt>
+                  <dd className="font-medium text-slate-900">{car ? `${formatPrice(car.price_per_day)} / ${t("jour")}` : "—"}</dd>
                 </div>
                 <div className="flex justify-between gap-3">
-                  <dt className="text-muted">{t("Départ")}</dt>
-                  <dd className="text-end font-bold text-navy">{form.pickupDate ? `${formatDate(form.pickupDate)} · ${form.pickupTime}` : "—"}</dd>
+                  <dt className="text-slate-500">{t("Départ")}</dt>
+                  <dd className="text-end font-medium text-slate-900">{form.pickupDate ? `${formatDate(form.pickupDate)} · ${form.pickupTime}` : "—"}</dd>
                 </div>
                 <div className="flex justify-between gap-3">
-                  <dt className="text-muted">{t("Retour||date")}</dt>
-                  <dd className="text-end font-bold text-navy">{form.returnDate ? `${formatDate(form.returnDate)} · ${form.returnTime}` : "—"}</dd>
+                  <dt className="text-slate-500">{t("Retour||date")}</dt>
+                  <dd className="text-end font-medium text-slate-900">{form.returnDate ? `${formatDate(form.returnDate)} · ${form.returnTime}` : "—"}</dd>
                 </div>
                 <div className="flex justify-between gap-3">
-                  <dt className="text-muted">{t("Durée")}</dt>
-                  <dd className="font-bold text-navy">{days > 0 ? daysLabel(days) : "—"}</dd>
+                  <dt className="text-slate-500">{t("Durée")}</dt>
+                  <dd className="font-medium text-slate-900">{days > 0 ? daysLabel(days) : "—"}</dd>
                 </div>
               </dl>
               {quote && quote.discount_amount > 0 && (
-                <dl className="flex flex-col gap-2 rounded-2xl bg-emerald-50 p-3 text-sm">
+                <dl className="flex flex-col gap-2 rounded-md border border-emerald-600/20 bg-emerald-50 px-3 py-2.5 text-sm">
                   <div className="flex justify-between gap-3">
-                    <dt className="text-muted">{t("Prix de base")}</dt>
-                    <dd className="font-bold text-navy line-through decoration-1">{formatPrice(quote.base_price)}</dd>
+                    <dt className="text-slate-500">{t("Prix de base")}</dt>
+                    <dd className="font-semibold text-slate-900 line-through decoration-1">{formatPrice(quote.base_price)}</dd>
                   </div>
                   <div className="flex justify-between gap-3">
                     <dt className="font-semibold text-emerald-800">{t(quote.discount_label ?? "")}</dt>
-                    <dd className="font-bold text-emerald-800">
+                    <dd className="font-semibold text-emerald-800">
                       <bdi dir="ltr">-{formatPrice(quote.discount_amount)}</bdi>
                     </dd>
                   </div>
                 </dl>
               )}
-              <div className="flex items-end justify-between border-t border-line pt-4">
-                <span className="text-sm font-bold uppercase tracking-wide text-navy">{t("Total")}</span>
+              <div className="flex items-end justify-between border-t border-slate-200 pt-4">
+                <span className="text-sm font-medium text-slate-700">{t("Total")}</span>
                 {totalLabel === null ? (
-                  <span className="text-end text-sm font-bold text-amber-800">{t("Prix à confirmer par l'agence")}</span>
+                  <span className="text-end text-sm font-semibold text-amber-800">{t("Prix à confirmer par l'agence")}</span>
                 ) : (
-                  <span className={cn("text-3xl font-extrabold text-navy transition-opacity", quoting && "opacity-40")}>{totalLabel}</span>
+                  <span className={cn("text-2xl font-semibold tabular-nums text-slate-900 transition-opacity", quoting && "opacity-40")}>{totalLabel}</span>
                 )}
               </div>
               {quote?.loyalty && quote.loyalty.rentals < quote.loyalty.needed && (
-                <p className="rounded-2xl bg-sky-soft/60 p-3 text-xs font-semibold text-navy">
+                <p className="rounded-md border border-sky/30 bg-sky-soft/40 px-3 py-2 text-xs text-slate-700">
                   {t(
                     quote.loyalty.needed - quote.loyalty.rentals > 1
                       ? "Fidélité : encore {n} locations terminées pour profiter de -{percent} % sur vos prochaines réservations."
@@ -848,7 +850,7 @@ export function ReserverView() {
                   )}
                 </p>
               )}
-              <p className="text-xs leading-relaxed text-muted">{t("Prix final, assurance et assistance incluses. Réglé à la remise des clés.")}</p>
+              <p className="text-xs leading-relaxed text-slate-500">{t("Prix final, assurance et assistance incluses. Réglé à la remise des clés.")}</p>
             </div>
           </Card>
         </aside>

@@ -28,22 +28,22 @@ export function InspectionButton({ r }: { r: ReservationFromApi }) {
       <button
         type="button"
         onClick={show}
-        className="inline-flex h-10 items-center gap-2 rounded-full border-2 border-line px-4 text-xs font-bold text-navy hover:border-navy"
+        className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-300 px-3.5 text-sm font-medium hover:bg-slate-50 bg-white text-slate-700 shadow-sm"
       >
-        <ClipboardCheck className="h-4 w-4 text-sky-text" />
+        <ClipboardCheck className="h-4 w-4 text-slate-400" />
         {t("État des lieux")}
       </button>
       {open && (
         <Modal title={`${t("État des lieux")} · ${reservationRef(r.id)}`} onClose={() => setOpen(false)} wide>
-          <div className="p-6">
+          <div className="p-5">
             {state.loading ? (
               <div className="flex justify-center py-10">
-                <Loader2 className="h-6 w-6 animate-spin text-sky" />
+                <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
               </div>
             ) : state.error ? (
-              <p className="text-sm font-semibold text-red-700">{state.error}</p>
+              <p className="text-sm text-red-700">{state.error}</p>
             ) : !state.set?.depart && !state.set?.retour ? (
-              <p className="rounded-2xl bg-mist p-6 text-center text-sm text-muted">{t("L'état des lieux sera réalisé avec vous à la remise des clés.")}</p>
+              <p className="rounded-md border border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500">{t("L'état des lieux sera réalisé avec vous à la remise des clés.")}</p>
             ) : (
               <div className="grid gap-6 md:grid-cols-2">
                 <Block title={t("Au départ")} i={state.set?.depart} />
@@ -60,20 +60,20 @@ export function InspectionButton({ r }: { r: ReservationFromApi }) {
 function Block({ title, i }: { title: string; i?: Inspection }) {
   const { t } = useLang();
   return (
-    <div className="rounded-3xl border border-line p-5">
-      <p className="mb-3 text-sm font-extrabold uppercase text-navy">{title}</p>
+    <div className="rounded-lg border border-slate-200 p-4">
+      <p className="mb-3 text-sm font-semibold text-slate-900">{title}</p>
       {!i ? (
-        <p className="text-sm text-muted">{t("Pas encore réalisé.")}</p>
+        <p className="text-sm text-slate-500">{t("Pas encore réalisé.")}</p>
       ) : (
         <div className="flex flex-col gap-3 text-sm">
           <p>
-            <span className="text-muted">{t("Kilométrage :")} </span>
-            <strong className="text-navy">{i.mileage != null ? `${i.mileage.toLocaleString(dateLocale())} ${t("km")}` : "—"}</strong>
+            <span className="text-slate-500">{t("Kilométrage :")} </span>
+            <strong className="font-medium text-slate-900">{i.mileage != null ? `${i.mileage.toLocaleString(dateLocale())} ${t("km")}` : "—"}</strong>
           </p>
           <FuelGauge value={i.fuel_level} />
           <CarDamageMap marked={i.damages.map((d) => d.zone)} className="[&_svg]:h-48" />
           {i.damages.length > 0 && (
-            <ul className="list-disc ps-5 text-ink-soft">
+            <ul className="list-disc ps-5 text-slate-600">
               {i.damages.map((d) => (
                 <li key={d.zone}>
                   {t(zoneLabels[d.zone])}
@@ -82,7 +82,7 @@ function Block({ title, i }: { title: string; i?: Inspection }) {
               ))}
             </ul>
           )}
-          {i.notes && <p className="text-ink-soft">{i.notes}</p>}
+          {i.notes && <p className="text-slate-600">{i.notes}</p>}
           {i.photos.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {i.photos.map((p, n) => (
@@ -94,7 +94,7 @@ function Block({ title, i }: { title: string; i?: Inspection }) {
                   aria-label={t("{title} : photo {n} sur {total} (nouvel onglet)", { title, n: n + 1, total: i.photos.length })}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={apiImageUrl(p)} alt="" className="h-16 w-20 rounded-xl object-cover" />
+                  <img src={apiImageUrl(p)} alt="" className="h-16 w-20 rounded-md object-cover" />
                 </a>
               ))}
             </div>

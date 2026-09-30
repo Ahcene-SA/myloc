@@ -11,7 +11,7 @@ const DAYS = 14;
 // Colonnes (classes écrites en entier pour Tailwind) : colonne véhicule plus étroite sur mobile
 const GRID_COLS = "grid-cols-[112px_repeat(14,minmax(42px,1fr))] sm:grid-cols-[minmax(150px,190px)_repeat(14,minmax(46px,1fr))]";
 // Colonne véhicule fixée à gauche pendant le défilement horizontal
-const STICKY_COL = "sticky left-0 z-20 border-r border-line shadow-[4px_0_8px_-6px_rgba(10,31,68,0.25)]";
+const STICKY_COL = "sticky left-0 z-20 border-r border-slate-200 shadow-[4px_0_8px_-6px_rgba(10,31,68,0.25)]";
 
 function dayLabel(iso: string) {
   const d = new Date(`${iso}T00:00:00`);
@@ -60,14 +60,14 @@ export function PlanningView() {
             type="button"
             onClick={() => setFrom(addDays(from, -7))}
             aria-label="Semaine précédente"
-            className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-line bg-white text-navy hover:border-navy"
+            className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-600 shadow-sm hover:bg-slate-50"
           >
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className="h-4 w-4" />
           </button>
           <button
             type="button"
             onClick={() => setFrom(today)}
-            className="h-11 rounded-full border-2 border-line bg-white px-4 text-xs font-bold uppercase tracking-wide text-navy hover:border-navy"
+            className="h-9 rounded-md border border-slate-300 bg-white px-3.5 text-sm font-medium hover:bg-slate-50 text-slate-700 shadow-sm"
           >
             Aujourd&apos;hui
           </button>
@@ -75,33 +75,33 @@ export function PlanningView() {
             type="button"
             onClick={() => setFrom(addDays(from, 7))}
             aria-label="Semaine suivante"
-            className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-line bg-white text-navy hover:border-navy"
+            className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-600 shadow-sm hover:bg-slate-50"
           >
-            <ChevronRight className="h-5 w-5" />
+            <ChevronRight className="h-4 w-4" />
           </button>
-          <p className="ml-2 text-sm font-bold capitalize text-navy">{rangeLabel}</p>
+          <p className="ms-2 text-sm font-semibold capitalize text-slate-900">{rangeLabel}</p>
         </div>
-        <div className="flex items-center gap-4 text-xs font-semibold text-ink-soft">
+        <div className="flex items-center gap-4 text-xs text-slate-600">
           <span className="flex items-center gap-1.5">
-            <span className="h-3 w-5 rounded bg-navy" /> Confirmée
+            <span className="h-2.5 w-4 rounded-sm bg-sky" /> Confirmée
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="h-3 w-5 rounded border-2 border-dashed border-amber-500 bg-amber-100" /> En attente
+            <span className="h-2.5 w-4 rounded-sm border border-dashed border-amber-400 bg-amber-50" /> En attente
           </span>
         </div>
       </div>
 
       {!atEnd && (
-        <p className="mb-2 flex items-center justify-end gap-1 text-xs font-semibold text-muted lg:hidden" aria-hidden="true">
+        <p className="mb-2 flex items-center justify-end gap-1 text-xs text-slate-500 lg:hidden" aria-hidden="true">
           Faites défiler pour voir les {DAYS} jours <ChevronRight className="h-3.5 w-3.5" />
         </p>
       )}
       <div className="relative">
-        <div onScroll={onScroll} className="overflow-x-auto rounded-3xl border border-line bg-white">
+        <div onScroll={onScroll} className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
           <div className="min-w-[700px] sm:min-w-[860px]">
             {/* En-tête des jours */}
-            <div className={cn("grid border-b border-line bg-mist", GRID_COLS)}>
-              <div className={cn(STICKY_COL, "bg-mist px-3 py-3 text-[11px] font-bold uppercase tracking-[0.14em] text-muted sm:px-4")}>
+            <div className={cn("grid border-b border-slate-200 bg-slate-50", GRID_COLS)}>
+              <div className={cn(STICKY_COL, "bg-slate-50 px-3 py-3 text-xs font-medium text-slate-500 sm:px-4")}>
                 Véhicule
               </div>
               {days.map((d) => {
@@ -110,31 +110,31 @@ export function PlanningView() {
                   <div
                     key={d}
                     className={cn(
-                      "border-l border-line py-2 text-center",
-                      l.weekend && "bg-sky-soft/50",
-                      d === today && "bg-sky text-navy"
+                      "border-s border-slate-200 py-2 text-center",
+                      l.weekend && "bg-slate-100/70",
+                      d === today && "bg-sky-soft text-sky-text"
                     )}
                   >
-                    <p className="text-[10px] font-bold uppercase tracking-wide text-muted">{l.weekday}</p>
-                    <p className="text-sm font-extrabold text-navy">{l.day}</p>
+                    <p className="text-xs text-slate-500">{l.weekday}</p>
+                    <p className={cn("text-sm font-medium tabular-nums", d === today ? "text-sky-text" : "text-slate-900")}>{l.day}</p>
                   </div>
                 );
               })}
             </div>
 
-            {cars.length === 0 && <p className="p-6 text-sm text-muted">Ajoutez des véhicules pour voir le planning.</p>}
+            {cars.length === 0 && <p className="p-6 text-sm text-slate-500">Ajoutez des véhicules pour voir le planning.</p>}
 
             {cars.map((car) => {
               const carRes = active.filter((r) => r.car_id === car.id);
               return (
-                <div key={car.id} className={cn("grid border-b border-line last:border-0", GRID_COLS)}>
+                <div key={car.id} className={cn("grid border-b border-slate-200 last:border-0", GRID_COLS)}>
                   <div
-                    className={cn(STICKY_COL, "row-start-1 flex min-h-14 min-w-0 flex-col justify-center bg-white px-3 py-2 sm:px-4")}
+                    className={cn(STICKY_COL, "row-start-1 flex min-h-12 min-w-0 flex-col justify-center bg-white px-3 py-2 sm:px-4")}
                     style={{ gridColumn: 1 }}
                     title={car.name}
                   >
-                    <p className="truncate text-sm font-extrabold text-navy">{car.name}</p>
-                    {car.status !== "available" && <p className="text-[11px] font-semibold text-muted">Retiré du site</p>}
+                    <p className="truncate text-sm font-medium text-slate-900">{car.name}</p>
+                    {car.status !== "available" && <p className="text-xs text-slate-500">Retiré du site</p>}
                   </div>
 
                   {/* Cases libres : clic = nouvelle réservation ce jour-là */}
@@ -146,9 +146,9 @@ export function PlanningView() {
                       aria-label={`Réserver ${car.name} le ${d}`}
                       title="Nouvelle réservation"
                       className={cn(
-                        "row-start-1 min-h-14 border-l border-line transition-colors hover:bg-sky-soft",
-                        dayLabel(d).weekend && "bg-sky-soft/30",
-                        d === today && "bg-sky/10"
+                        "row-start-1 min-h-12 border-s border-slate-100 transition-colors hover:bg-slate-100",
+                        dayLabel(d).weekend && "bg-slate-50",
+                        d === today && "bg-sky-soft/40"
                       )}
                       style={{ gridColumn: i + 2 }}
                     />
@@ -171,8 +171,8 @@ export function PlanningView() {
                         title={`${r.full_name} · ${car.name} · ${r.start_date} → ${r.end_date}${pending ? " · En attente" : ""}`}
                         aria-label={`${r.full_name}, ${car.name}, du ${r.start_date} au ${r.end_date}${pending ? ", en attente" : ""}`}
                         className={cn(
-                          "row-start-1 z-10 mx-0.5 my-2 flex items-center overflow-hidden rounded-xl px-2.5 text-left text-xs font-bold",
-                          pending ? "border-2 border-dashed border-amber-500 bg-amber-100 text-amber-900" : "bg-navy text-white hover:bg-navy-soft"
+                          "row-start-1 z-10 mx-0.5 my-2 flex items-center overflow-hidden rounded px-2 text-start text-xs font-medium",
+                          pending ? "border border-dashed border-amber-400 bg-amber-50 text-amber-900" : "bg-sky text-white hover:bg-sky-mid"
                         )}
                         style={{ gridColumn: `${s + 2} / ${e + 2}` }}
                       >
@@ -187,10 +187,10 @@ export function PlanningView() {
         </div>
         {/* Dégradé sur le bord droit : il reste des jours à voir */}
         {!atEnd && (
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-10 rounded-r-3xl bg-gradient-to-l from-white to-transparent lg:hidden" />
+          <div className="pointer-events-none absolute inset-y-0 end-0 w-10 rounded-e-lg bg-gradient-to-l from-white to-transparent lg:hidden" />
         )}
       </div>
-      <p className="mt-3 text-xs text-muted">
+      <p className="mt-3 text-xs text-slate-500">
         Cliquez sur une réservation pour l&apos;ouvrir, ou sur une case libre pour créer une réservation à cette date. Le jour du retour reste libre
         pour une nouvelle location.
       </p>

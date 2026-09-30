@@ -43,17 +43,17 @@ export function AccountView() {
 
 function Section({ icon: Icon, title, text, children }: { icon: React.ElementType; title: string; text?: string; children: ReactNode }) {
   return (
-    <Card className="p-6">
-      <div className="mb-5 flex items-start gap-3">
-        <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-sky-soft text-sky-text">
-          <Icon className="h-5 w-5" />
+    <Card className="overflow-hidden">
+      <div className="flex items-start gap-3 border-b border-slate-200 px-5 py-3.5">
+        <span className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-500">
+          <Icon className="h-4 w-4" />
         </span>
         <div>
-          <p className="text-sm font-extrabold uppercase tracking-wide text-navy">{title}</p>
-          {text && <p className="mt-0.5 text-sm text-muted">{text}</p>}
+          <p className="text-sm font-semibold text-slate-900">{title}</p>
+          {text && <p className="mt-0.5 text-sm text-slate-500">{text}</p>}
         </div>
       </div>
-      {children}
+      <div className="p-5">{children}</div>
     </Card>
   );
 }
@@ -61,7 +61,7 @@ function Section({ icon: Icon, title, text, children }: { icon: React.ElementTyp
 function Ok({ message }: { message: string }) {
   if (!message) return null;
   return (
-    <p role="status" className="flex items-center gap-2 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
+    <p role="status" className="flex items-center gap-2 rounded-md border border-emerald-600/20 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-800">
       <Check className="h-4 w-4" /> {message}
     </p>
   );
@@ -232,8 +232,8 @@ function TwoFactorCard({ owner }: { owner: boolean }) {
       <div className="flex flex-col gap-4">
         {enabled ? (
           <>
-            <p className="inline-flex w-fit items-center gap-2 rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-bold text-emerald-800">
-              <ShieldCheck className="h-4 w-4" /> Protection active
+            <p className="inline-flex w-fit items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+              <ShieldCheck className="h-3.5 w-3.5" /> Protection active
             </p>
             {mode === null && (
               <div className="flex flex-wrap gap-2">
@@ -241,7 +241,7 @@ function TwoFactorCard({ owner }: { owner: boolean }) {
                   Nouveaux codes de secours
                 </button>
                 {!owner && (
-                  <button type="button" onClick={() => setMode("disable")} className="inline-flex h-12 items-center rounded-full px-5 text-sm font-bold text-red-700 hover:bg-red-50">
+                  <button type="button" onClick={() => setMode("disable")} className="inline-flex h-9 items-center rounded-md px-3.5 text-sm font-medium text-red-700 hover:bg-red-50">
                     Désactiver
                   </button>
                 )}
@@ -259,8 +259,8 @@ function TwoFactorCard({ owner }: { owner: boolean }) {
                 }}
                 className="flex flex-col gap-3"
               >
-                <p className="text-sm text-ink-soft">Les anciens codes de secours ne fonctionneront plus. Tapez le code actuel de votre application :</p>
-                <input aria-label="Code à 6 chiffres de l'application" inputMode="numeric" autoComplete="one-time-code" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="000000" className={`${inputClass} max-w-48 text-center font-mono text-xl tracking-[0.3em]`} />
+                <p className="text-sm text-slate-600">Les anciens codes de secours ne fonctionneront plus. Tapez le code actuel de votre application :</p>
+                <input aria-label="Code à 6 chiffres de l'application" inputMode="numeric" autoComplete="one-time-code" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="000000" className={`${inputClass} max-w-40 text-center font-mono text-base tracking-widest`} />
                 <div className="flex gap-2">
                   <button type="submit" disabled={busy || code.length !== 6} className={primaryBtn}>
                     {busy && <Loader2 className="h-4 w-4 animate-spin" />} Générer
@@ -284,10 +284,10 @@ function TwoFactorCard({ owner }: { owner: boolean }) {
                 }}
                 className="flex flex-col gap-3"
               >
-                <p className="text-sm text-ink-soft">Confirmez avec votre mot de passe :</p>
+                <p className="text-sm text-slate-600">Confirmez avec votre mot de passe :</p>
                 <input aria-label="Votre mot de passe" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} className={`${inputClass} max-w-xs`} required />
                 <div className="flex gap-2">
-                  <button type="submit" disabled={busy} className="inline-flex h-12 items-center gap-2 rounded-full bg-red-600 px-5 text-sm font-bold text-white disabled:opacity-60">
+                  <button type="submit" disabled={busy} className="inline-flex h-9 items-center gap-2 rounded-md bg-red-600 px-3.5 text-sm font-medium text-white shadow-sm hover:bg-red-700 disabled:opacity-60">
                     {busy && <Loader2 className="h-4 w-4 animate-spin" />} Désactiver
                   </button>
                   <button type="button" onClick={() => setMode(null)} className={secondaryBtn}>
@@ -310,19 +310,19 @@ function TwoFactorCard({ owner }: { owner: boolean }) {
             }}
             className="flex flex-col gap-4 sm:flex-row sm:items-start"
           >
-            <div className="rounded-2xl border border-line bg-white p-3">
+            <div className="rounded-md border border-slate-200 bg-white p-3">
               <QrCode value={setup.otpauth} size={170} />
             </div>
-            <div className="flex flex-1 flex-col gap-3 text-sm text-ink-soft">
+            <div className="flex flex-1 flex-col gap-3 text-sm text-slate-600">
               <p>
-                1. Dans <b className="text-navy">Google Authenticator</b>, touchez <b className="text-navy">+</b> puis{" "}
-                <b className="text-navy">Scanner un QR code</b>.
+                1. Dans <b className="text-slate-900">Google Authenticator</b>, touchez <b className="text-slate-900">+</b> puis{" "}
+                <b className="text-slate-900">Scanner un QR code</b>.
               </p>
               <p className="break-all text-xs">
-                Ou saisissez la clé : <span className="font-mono font-bold text-navy">{setup.secret.match(/.{1,4}/g)?.join(" ")}</span>
+                Ou saisissez la clé : <span className="font-mono font-semibold text-slate-900">{setup.secret.match(/.{1,4}/g)?.join(" ")}</span>
               </p>
               <p>2. Tapez le code à 6 chiffres affiché :</p>
-              <input aria-label="Code à 6 chiffres de l'application" inputMode="numeric" autoComplete="one-time-code" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="000000" className={`${inputClass} max-w-48 text-center font-mono text-xl tracking-[0.3em]`} />
+              <input aria-label="Code à 6 chiffres de l'application" inputMode="numeric" autoComplete="one-time-code" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="000000" className={`${inputClass} max-w-40 text-center font-mono text-base tracking-widest`} />
               <button type="submit" disabled={busy || code.length !== 6} className={`${primaryBtn} w-fit`}>
                 {busy && <Loader2 className="h-4 w-4 animate-spin" />} Activer
               </button>
@@ -339,7 +339,7 @@ function TwoFactorCard({ owner }: { owner: boolean }) {
 
       {codes && (
         <Modal title="Codes de secours" onClose={() => setCodes(null)}>
-          <div className="p-6">
+          <div className="p-5">
             <RecoveryCodes codes={codes} dark={false} onDone={() => setCodes(null)} />
           </div>
         </Modal>
@@ -354,9 +354,9 @@ function AlertsCard() {
   return (
     <Section icon={BellRing} title="Alertes de réservation" text="Chaque nouvelle demande faite sur le site s'affiche ici en direct (vérification toutes les 20 secondes).">
       <div className="flex flex-col gap-3">
-        <label className="flex cursor-pointer items-center justify-between gap-4 rounded-2xl bg-mist px-4 py-3">
-          <span className="flex items-center gap-2 text-sm font-bold text-navy">
-            <Volume2 className="h-4 w-4 text-sky-text" /> Son à chaque nouvelle demande
+        <label className="flex cursor-pointer items-center justify-between gap-4 rounded-md border border-slate-200 px-3 py-2.5">
+          <span className="flex items-center gap-2 text-sm font-medium text-slate-700">
+            <Volume2 className="h-4 w-4 text-slate-400" /> Son à chaque nouvelle demande
           </span>
           <input
             type="checkbox"
@@ -365,15 +365,15 @@ function AlertsCard() {
               setAlertSound(e.target.checked);
               if (e.target.checked) playChime();
             }}
-            className="h-5 w-5 accent-sky"
+            className="h-4 w-4 accent-sky"
           />
         </label>
         {notif === "granted" ? (
-          <p className="flex items-center gap-2 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
+          <p className="flex items-center gap-2 rounded-md border border-emerald-600/20 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-800">
             <Check className="h-4 w-4" /> Notifications activées : vous êtes prévenu même si l&apos;onglet est en arrière-plan.
           </p>
         ) : notif === "denied" ? (
-          <p className="rounded-2xl bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
+          <p className="rounded-md border border-amber-600/20 bg-amber-50 px-3 py-2.5 text-sm text-amber-800">
             Notifications bloquées par le navigateur. Autorisez-les dans les réglages du site (icône à gauche de l&apos;adresse).
           </p>
         ) : notif === "default" ? (
@@ -381,7 +381,7 @@ function AlertsCard() {
             <BellRing className="h-4 w-4" /> Activer les notifications du navigateur
           </button>
         ) : null}
-        <p className="text-xs text-muted">L&apos;agence reçoit aussi un e-mail à chaque nouvelle demande, et le client est prévenu par e-mail quand vous confirmez ou refusez.</p>
+        <p className="text-xs text-slate-500">L&apos;agence reçoit aussi un e-mail à chaque nouvelle demande, et le client est prévenu par e-mail quand vous confirmez ou refusez.</p>
       </div>
     </Section>
   );
@@ -414,9 +414,9 @@ function DevicesCard() {
     >
       {confirm ? (
         <div className="flex flex-col gap-3">
-          <p className="text-sm font-semibold text-navy">Fermer toutes vos sessions, y compris celle-ci ? Il faudra vous reconnecter.</p>
+          <p className="text-sm text-slate-900">Fermer toutes vos sessions, y compris celle-ci ? Il faudra vous reconnecter.</p>
           <div className="flex gap-2">
-            <button type="button" disabled={busy} onClick={all} className="inline-flex h-12 items-center gap-2 rounded-full bg-navy px-5 text-sm font-bold text-white disabled:opacity-60">
+            <button type="button" disabled={busy} onClick={all} className={primaryBtn}>
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />} Tout déconnecter
             </button>
             <button type="button" onClick={() => setConfirm(false)} className={secondaryBtn}>

@@ -23,11 +23,11 @@ function promoValue(p: PromoCode) {
 
 function promoState(p: PromoCode): { label: string; cls: string } {
   const today = todayIso();
-  if (!Number(p.active)) return { label: "Désactivé", cls: "bg-slate-200 text-slate-700" };
-  if (p.valid_until && p.valid_until < today) return { label: "Expiré", cls: "bg-slate-200 text-slate-700" };
-  if (p.max_uses && p.uses >= p.max_uses) return { label: "Épuisé", cls: "bg-slate-200 text-slate-700" };
-  if (p.valid_from && p.valid_from > today) return { label: "Programmé", cls: "bg-sky-soft text-sky-text" };
-  return { label: "Actif", cls: "bg-emerald-100 text-emerald-800" };
+  if (!Number(p.active)) return { label: "Désactivé", cls: "bg-slate-50 text-slate-600 ring-slate-500/20" };
+  if (p.valid_until && p.valid_until < today) return { label: "Expiré", cls: "bg-slate-50 text-slate-600 ring-slate-500/20" };
+  if (p.max_uses && p.uses >= p.max_uses) return { label: "Épuisé", cls: "bg-slate-50 text-slate-600 ring-slate-500/20" };
+  if (p.valid_from && p.valid_from > today) return { label: "Programmé", cls: "bg-sky-soft/60 text-sky-text ring-sky/30" };
+  return { label: "Actif", cls: "bg-emerald-50 text-emerald-700 ring-emerald-600/20" };
 }
 
 export function PromosView() {
@@ -80,18 +80,18 @@ export function PromosView() {
       <RulesCard initial={rules} onSaved={setRules} />
 
       <Card className="mt-6 overflow-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-3 px-6 pt-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-3.5">
           <div>
-            <p className="text-sm font-extrabold uppercase tracking-wide text-navy">Codes promo</p>
-            <p className="text-sm text-muted">À partager sur Instagram, WhatsApp ou à vos clients fidèles. Le client le saisit à la réservation.</p>
+            <p className="text-sm font-semibold text-slate-900">Codes promo</p>
+            <p className="text-sm text-slate-500">À partager sur Instagram, WhatsApp ou à vos clients fidèles. Le client le saisit à la réservation.</p>
           </div>
         </div>
         {promos.length === 0 ? (
-          <p className="m-6 rounded-2xl bg-mist px-4 py-8 text-center text-sm text-muted">
-            Aucun code pour l&apos;instant. Exemple : <strong className="text-navy">ETE26</strong> pour -15 % cet été.
+          <p className="px-5 py-10 text-center text-sm text-slate-500">
+            Aucun code pour l&apos;instant. Exemple : <strong className="text-slate-900">ETE26</strong> pour -15 % cet été.
           </p>
         ) : (
-          <ul className="mt-4 divide-y divide-line border-t border-line">
+          <ul className="divide-y divide-slate-200">
             {promos.map((p) => (
               <PromoRow key={p.id} p={p} onEdit={() => setEditing(p)} onChange={upsert} onDelete={() => setPromos((l) => l.filter((x) => x.id !== p.id))} />
             ))}
@@ -140,17 +140,17 @@ function RulesCard({ initial, onSaved }: { initial: PricingRules; onSaved: (r: P
   };
 
   return (
-    <Card className="p-6">
+    <Card className="p-5">
       <form onSubmit={save} className="grid gap-8 lg:grid-cols-2">
         <div>
-          <p className="text-sm font-extrabold uppercase tracking-wide text-navy">Remise selon la durée</p>
-          <p className="mb-4 text-sm text-muted">Appliquée automatiquement, affichée sur l&apos;accueil.</p>
+          <p className="text-sm font-semibold text-slate-900">Remise selon la durée</p>
+          <p className="mb-4 text-sm text-slate-500">Appliquée automatiquement, affichée sur l&apos;accueil.</p>
           <div className="flex flex-col gap-3">
             {r.duration.map((t, i) => (
               // Deux groupes insécables : sur mobile, la remise passe à la ligne d'un seul bloc
               <div
                 key={i}
-                className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border border-line p-3 text-sm font-semibold text-navy sm:flex-nowrap sm:border-0 sm:p-0"
+                className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-slate-200 p-3 text-sm text-slate-700 sm:flex-nowrap sm:border-0 sm:p-0"
               >
                 <span className="flex items-center gap-2 whitespace-nowrap">
                   <span className="w-8 sm:w-auto">Dès</span>
@@ -160,12 +160,12 @@ function RulesCard({ initial, onSaved }: { initial: PricingRules; onSaved: (r: P
                     value={t.min_days}
                     onChange={(e) => setTier(i, "min_days", e.target.value)}
                     aria-label="Nombre de jours minimum"
-                    className={cn(inputClass, "h-11 w-20 flex-shrink-0 px-3")}
+                    className={cn(inputClass, "h-9 w-20 flex-shrink-0 px-3")}
                   />
                   <span>jours :</span>
                 </span>
                 <span className="flex items-center gap-2 whitespace-nowrap">
-                  <span className="w-8 text-muted sm:w-auto">-</span>
+                  <span className="w-8 text-slate-500 sm:w-auto">-</span>
                   <input
                     type="number"
                     min={1}
@@ -174,7 +174,7 @@ function RulesCard({ initial, onSaved }: { initial: PricingRules; onSaved: (r: P
                     value={t.percent}
                     onChange={(e) => setTier(i, "percent", e.target.value)}
                     aria-label="Pourcentage de remise"
-                    className={cn(inputClass, "h-11 w-20 flex-shrink-0 px-3")}
+                    className={cn(inputClass, "h-9 w-20 flex-shrink-0 px-3")}
                   />
                   <span>%</span>
                 </span>
@@ -182,7 +182,7 @@ function RulesCard({ initial, onSaved }: { initial: PricingRules; onSaved: (r: P
                   type="button"
                   onClick={() => setR((x) => ({ ...x, duration: x.duration.filter((_, k) => k !== i) }))}
                   aria-label="Supprimer cette tranche"
-                  className="ms-auto flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-muted hover:bg-mist hover:text-red-600"
+                  className="ms-auto flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-red-600"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -193,7 +193,7 @@ function RulesCard({ initial, onSaved }: { initial: PricingRules; onSaved: (r: P
               onClick={() =>
                 setR((x) => ({ ...x, duration: [...x.duration, { min_days: (x.duration.at(-1)?.min_days ?? 3) + 7, percent: 5 }] }))
               }
-              className="inline-flex w-fit items-center gap-1.5 text-sm font-bold text-sky-text hover:underline"
+              className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-sky-text hover:underline"
             >
               <Plus className="h-4 w-4" /> Ajouter une tranche
             </button>
@@ -201,18 +201,18 @@ function RulesCard({ initial, onSaved }: { initial: PricingRules; onSaved: (r: P
         </div>
 
         <div>
-          <p className="text-sm font-extrabold uppercase tracking-wide text-navy">Programme fidélité</p>
-          <p className="mb-4 text-sm text-muted">Pour les clients avec un compte, calculé sur leurs locations terminées.</p>
-          <label className="mb-4 flex cursor-pointer items-center gap-3 text-sm font-semibold text-navy">
+          <p className="text-sm font-semibold text-slate-900">Programme fidélité</p>
+          <p className="mb-4 text-sm text-slate-500">Pour les clients avec un compte, calculé sur leurs locations terminées.</p>
+          <label className="mb-4 flex cursor-pointer items-center gap-3 text-sm font-medium text-slate-700">
             <input
               type="checkbox"
               checked={r.loyalty.enabled}
               onChange={(e) => setR((x) => ({ ...x, loyalty: { ...x.loyalty, enabled: e.target.checked } }))}
-              className="h-5 w-5 accent-sky"
+              className="h-4 w-4 accent-sky"
             />
             Activer la remise fidélité
           </label>
-          <div className={cn("flex flex-wrap items-center gap-x-3 gap-y-2 text-sm font-semibold text-navy", !r.loyalty.enabled && "opacity-50")}>
+          <div className={cn("flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-slate-700", !r.loyalty.enabled && "opacity-50")}>
             <span className="flex items-center gap-2 whitespace-nowrap">
               <span>À partir de</span>
               <input
@@ -222,7 +222,7 @@ function RulesCard({ initial, onSaved }: { initial: PricingRules; onSaved: (r: P
                 disabled={!r.loyalty.enabled}
                 onChange={(e) => setR((x) => ({ ...x, loyalty: { ...x.loyalty, min_rentals: Number(e.target.value) } }))}
                 aria-label="Nombre de locations"
-                className={cn(inputClass, "h-11 w-20 flex-shrink-0 px-3")}
+                className={cn(inputClass, "h-9 w-20 flex-shrink-0 px-3")}
               />
               <span>locations :</span>
             </span>
@@ -237,19 +237,19 @@ function RulesCard({ initial, onSaved }: { initial: PricingRules; onSaved: (r: P
                 disabled={!r.loyalty.enabled}
                 onChange={(e) => setR((x) => ({ ...x, loyalty: { ...x.loyalty, percent: Number(e.target.value) } }))}
                 aria-label="Pourcentage fidélité"
-                className={cn(inputClass, "h-11 w-20 flex-shrink-0 px-3")}
+                className={cn(inputClass, "h-9 w-20 flex-shrink-0 px-3")}
               />
               <span>%</span>
             </span>
           </div>
-          <p className="mt-4 rounded-2xl bg-sky-soft/60 p-3 text-xs font-semibold text-navy">
+          <p className="mt-4 rounded-md border border-sky/30 bg-sky-soft/40 px-3 py-2 text-xs text-slate-700">
             Les remises ne se cumulent pas : le client obtient automatiquement la plus avantageuse (durée, fidélité ou code promo).
           </p>
         </div>
 
         <div className="flex flex-col gap-3 lg:col-span-2">
           <FormError message={err} />
-          {msg && <p className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">{msg}</p>}
+          {msg && <p className="rounded-md border border-emerald-600/20 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-800">{msg}</p>}
           <button type="submit" disabled={busy} className={cn(primaryBtn, "w-fit")}>
             {busy && <Loader2 className="h-4 w-4 animate-spin" />}
             Enregistrer les remises
@@ -310,7 +310,7 @@ function PromoRow({
   ].filter(Boolean);
 
   return (
-    <li className="flex flex-col gap-3 px-6 py-4 sm:flex-row sm:items-center">
+    <li className="flex flex-col gap-3 px-5 py-3 hover:bg-slate-50/60 sm:flex-row sm:items-center">
       <div className="flex min-w-0 flex-1 items-center gap-4">
         <button
           type="button"
@@ -321,27 +321,27 @@ function PromoRow({
             });
           }}
           title="Copier le code"
-          className="group flex items-center gap-2 rounded-xl border-2 border-dashed border-sky bg-sky-soft/40 px-3 py-2 font-mono text-sm font-extrabold tracking-wider text-navy"
+          className="group flex items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 font-mono text-sm font-medium text-slate-900 hover:border-slate-300"
         >
           {p.code}
-          <Copy className="h-3.5 w-3.5 text-sky-text opacity-60 group-hover:opacity-100" />
+          <Copy className="h-3.5 w-3.5 text-slate-400 group-hover:text-slate-600" />
         </button>
         <div className="min-w-0">
-          <p className="font-extrabold text-navy">
-            {promoValue(p)} {p.description && <span className="font-semibold text-muted">· {p.description}</span>}
+          <p className="text-sm font-medium text-slate-900">
+            {promoValue(p)} {p.description && <span className="font-normal text-slate-500">· {p.description}</span>}
           </p>
-          <p className="text-xs text-muted">{copied ? "Code copié !" : conditions.join(" · ")}</p>
-          {err && <p className="text-xs font-semibold text-red-700">{err}</p>}
+          <p className="text-xs text-slate-500">{copied ? "Code copié !" : conditions.join(" · ")}</p>
+          {err && <p className="text-xs text-red-700">{err}</p>}
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <span className={cn("rounded-full px-3 py-1 text-[11px] font-bold", state.cls)}>{state.label}</span>
+        <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset", state.cls)}>{state.label}</span>
         {confirm ? (
           <>
-            <button type="button" onClick={remove} disabled={busy} className="h-9 rounded-full bg-red-600 px-3 text-xs font-bold text-white">
+            <button type="button" onClick={remove} disabled={busy} className="h-8 rounded-md bg-red-600 px-3 text-sm font-medium text-white shadow-sm hover:bg-red-700">
               Supprimer
             </button>
-            <button type="button" onClick={() => setConfirm(false)} className="h-9 rounded-full border-2 border-line px-3 text-xs font-bold text-navy">
+            <button type="button" onClick={() => setConfirm(false)} className={cn(secondaryBtn, "h-8 px-3")}>
               Annuler
             </button>
           </>
@@ -351,7 +351,7 @@ function PromoRow({
               type="button"
               onClick={toggle}
               disabled={busy}
-              className="h-9 rounded-full border-2 border-line px-3 text-xs font-bold text-navy hover:border-navy disabled:opacity-50"
+              className={cn(secondaryBtn, "h-8 px-3")}
             >
               {Number(p.active) ? "Désactiver" : "Activer"}
             </button>
@@ -359,7 +359,7 @@ function PromoRow({
               type="button"
               onClick={onEdit}
               aria-label={`Modifier ${p.code}`}
-              className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-line text-navy hover:border-navy"
+              className="flex h-8 w-8 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-900"
             >
               <Pencil className="h-3.5 w-3.5" />
             </button>
@@ -367,7 +367,7 @@ function PromoRow({
               type="button"
               onClick={() => setConfirm(true)}
               aria-label={`Supprimer ${p.code}`}
-              className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-line text-red-600 hover:border-red-600"
+              className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 hover:bg-red-50 hover:text-red-600"
             >
               <Trash2 className="h-3.5 w-3.5" />
             </button>
@@ -420,7 +420,7 @@ function PromoForm({ promo, onClose, onSaved }: { promo: PromoCode | null; onClo
 
   return (
     <Modal title={promo ? "Modifier le code" : "Nouveau code promo"} onClose={onClose}>
-      <form onSubmit={submit} className="grid gap-4 p-6 sm:grid-cols-2">
+      <form onSubmit={submit} className="grid gap-4 p-5 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <label htmlFor="pc-code" className={labelClass}>
             Code
@@ -429,7 +429,7 @@ function PromoForm({ promo, onClose, onSaved }: { promo: PromoCode | null; onClo
             id="pc-code"
             value={f.code}
             onChange={(e) => set("code", e.target.value.toUpperCase().replace(/\s/g, ""))}
-            className={cn(inputClass, "font-mono uppercase tracking-wider")}
+            className={cn(inputClass, "font-mono")}
             placeholder="ETE26"
             required
             minLength={3}
@@ -492,14 +492,14 @@ function PromoForm({ promo, onClose, onSaved }: { promo: PromoCode | null; onClo
           </label>
           <input id="pc-max" type="number" min={1} value={f.max_uses} onChange={(e) => set("max_uses", e.target.value)} className={inputClass} placeholder="Illimité" />
         </div>
-        <label className="flex cursor-pointer items-center gap-3 rounded-2xl bg-mist p-4 text-sm font-semibold text-navy sm:col-span-2">
-          <input type="checkbox" checked={f.active} onChange={(e) => set("active", e.target.checked)} className="h-5 w-5 accent-sky" />
+        <label className="flex cursor-pointer items-center gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-medium text-slate-700 sm:col-span-2">
+          <input type="checkbox" checked={f.active} onChange={(e) => set("active", e.target.checked)} className="h-4 w-4 accent-sky" />
           Code actif
         </label>
         <div className="sm:col-span-2">
           <FormError message={err} />
         </div>
-        <div className="flex flex-col-reverse gap-3 sm:col-span-2 sm:flex-row sm:justify-end">
+        <div className="-mx-5 -mb-5 flex flex-col-reverse gap-2 border-t border-slate-200 bg-slate-50 px-5 py-3.5 sm:col-span-2 sm:flex-row sm:justify-end">
           <button type="button" onClick={onClose} className={secondaryBtn}>
             Annuler
           </button>

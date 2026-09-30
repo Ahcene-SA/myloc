@@ -89,11 +89,12 @@ export function ReservationsView() {
         </button>
       </PageTitle>
 
-      <div className="mb-6 flex flex-col gap-4">
+      <div className="mb-4 flex flex-col gap-3 lg:flex-row-reverse lg:items-center lg:justify-between">
         <SearchInput
           value={search}
           onChange={setReservationSearch}
           placeholder="Rechercher : nom, téléphone, email, référence, véhicule…"
+          className="lg:w-96"
         />
         <FilterChips
           options={filters.map((f) => ({ ...f, count: searched.filter((r) => matchesFilter(r, f.id, today)).length }))}
@@ -114,17 +115,17 @@ export function ReservationsView() {
           }
         />
       ) : (
-        <div className="overflow-hidden rounded-3xl border border-line bg-white">
+        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
           {/* En-têtes (grand écran) */}
-          <div className="hidden grid-cols-[1.1fr_1.3fr_1.1fr_0.7fr_0.8fr_24px] gap-4 border-b border-line bg-mist px-6 py-3 text-[11px] font-bold uppercase tracking-[0.14em] text-muted lg:grid">
+          <div className="hidden grid-cols-[1.1fr_1.3fr_1.1fr_0.7fr_0.8fr_24px] gap-4 border-b border-slate-200 bg-slate-50 px-5 py-2.5 text-xs font-medium text-slate-500 lg:grid">
             <span>Client</span>
             <span>Véhicule · période</span>
             <span>Réservation</span>
-            <span className="text-right">Montant</span>
+            <span className="text-end">Montant</span>
             <span>Statut</span>
             <span />
           </div>
-          <ul className="divide-y divide-line">
+          <ul className="divide-y divide-slate-200">
             {list.map((r) => {
               const phase = phaseOf(r, today);
               const days = daysBetween(r.start_date || "", r.end_date || "");
@@ -134,34 +135,34 @@ export function ReservationsView() {
                     type="button"
                     onClick={() => openReservation(r.id)}
                     className={cn(
-                      "grid w-full gap-2 px-6 py-4 text-left transition-colors hover:bg-sky-soft/40 lg:grid-cols-[1.1fr_1.3fr_1.1fr_0.7fr_0.8fr_24px] lg:items-center lg:gap-4",
-                      phase === "pending" && "bg-amber-50/60"
+                      "grid w-full gap-1.5 px-5 py-3 text-start text-sm transition-colors hover:bg-slate-50 lg:grid-cols-[1.1fr_1.3fr_1.1fr_0.7fr_0.8fr_24px] lg:items-center lg:gap-4",
+                      phase === "pending" && "shadow-[inset_2px_0_0_var(--color-amber-400)]"
                     )}
                   >
                     <div className="min-w-0">
-                      <p className="truncate font-extrabold text-navy">{r.full_name}</p>
-                      <p className="truncate text-sm text-muted">{r.phone}</p>
+                      <p className="truncate font-medium text-slate-900">{r.full_name}</p>
+                      <p className="truncate text-xs text-slate-500">{r.phone}</p>
                     </div>
                     <div className="min-w-0">
-                      <p className="truncate font-bold text-navy">{r.car_name}</p>
-                      <p className="text-sm text-ink-soft">
+                      <p className="truncate font-medium text-slate-900">{r.car_name}</p>
+                      <p className="text-xs text-slate-500">
                         {formatDate(r.start_date)} → {formatDate(r.end_date)} · {days} j
                       </p>
                     </div>
-                    <div className="min-w-0 text-sm">
-                      <p className="font-bold text-navy">{reservationRef(r.id)}</p>
-                      <p className="flex flex-wrap items-center gap-1.5 text-xs text-muted">
+                    <div className="min-w-0">
+                      <p className="tabular-nums text-slate-700">{reservationRef(r.id)}</p>
+                      <p className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
                         {formatDateTime(r.created_at)} <SourceBadge source={r.source} />
                       </p>
                     </div>
-                    <p className="font-extrabold text-navy lg:text-right">{formatPrice(r.total_price)}</p>
+                    <p className="font-medium tabular-nums text-slate-900 lg:text-end">{formatPrice(r.total_price)}</p>
                     <div className="flex flex-wrap items-center gap-2">
                       <StatusBadge status={r.status} />
                       {(phase === "ongoing" || phase === "past") && (
-                        <span className="text-[11px] font-bold uppercase tracking-wide text-muted">{phaseLabel[phase]}</span>
+                        <span className="text-xs text-slate-500">{phaseLabel[phase]}</span>
                       )}
                     </div>
-                    <ChevronRight className="hidden h-5 w-5 text-muted lg:block" />
+                    <ChevronRight className="hidden h-4 w-4 text-slate-400 lg:block" />
                   </button>
                 </li>
               );

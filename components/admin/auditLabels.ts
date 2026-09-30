@@ -60,11 +60,11 @@ export const auditGroups: { id: string; label: string; prefix: string }[] = [
 ];
 
 export const toneClass: Record<Tone, string> = {
-  neutral: "bg-slate-100 text-slate-700",
-  good: "bg-emerald-100 text-emerald-800",
-  bad: "bg-red-100 text-red-700",
-  warn: "bg-amber-100 text-amber-800",
-  security: "bg-sky-soft text-sky-text",
+  neutral: "bg-slate-50 text-slate-600 ring-1 ring-inset ring-slate-500/20",
+  good: "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20",
+  bad: "bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20",
+  warn: "bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-600/20",
+  security: "bg-sky-soft/60 text-sky-text ring-1 ring-inset ring-sky/30",
 };
 
 export function auditLabel(action: string) {

@@ -60,13 +60,13 @@ export function AuditView() {
         <button
           type="button"
           onClick={() => setReload((r) => r + 1)}
-          className="inline-flex h-11 items-center gap-2 rounded-full border-2 border-line bg-white px-4 text-sm font-bold text-navy hover:border-navy"
+          className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-300 bg-white px-3.5 text-sm font-medium hover:bg-slate-50 text-slate-700 shadow-sm"
         >
           <RefreshCw className="h-4 w-4" /> Actualiser
         </button>
       </PageTitle>
 
-      <Card className="mb-6 grid gap-4 p-5 sm:grid-cols-2 xl:grid-cols-4">
+      <Card className="mb-4 grid gap-4 p-4 sm:grid-cols-2 xl:grid-cols-4">
         <div>
           <label htmlFor="au-user" className={labelClass}>
             Membre de l&apos;équipe
@@ -110,32 +110,32 @@ export function AuditView() {
         <ErrorBlock message={data.error} onRetry={() => setReload((r) => r + 1)} />
       ) : loading && !data ? (
         <div className="flex h-40 items-center justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-sky" />
+          <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
         </div>
       ) : data && data.entries.length === 0 ? (
         <EmptyState title="Rien à afficher" text="Aucune action ne correspond à ces filtres." />
       ) : (
         <Card className={cn("overflow-hidden transition-opacity", loading && "opacity-50")}>
-          <ul className="divide-y divide-line">
+          <ul className="divide-y divide-slate-200">
             {data?.entries.map((e) => {
               const meta = auditLabel(e.action);
               const detail = auditDetail(e);
               return (
-                <li key={e.id} className="flex flex-col gap-1 px-5 py-3.5 sm:flex-row sm:items-center sm:gap-4">
-                  <span className="w-32 flex-shrink-0 text-xs font-semibold text-muted">{formatDateTime(e.created_at)}</span>
-                  <span className="w-40 flex-shrink-0 truncate text-sm font-extrabold text-navy">{e.user_name || "Système"}</span>
-                  <span className={cn("w-fit flex-shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-bold", toneClass[meta.tone])}>{meta.label}</span>
-                  <span className="min-w-0 flex-1 truncate text-sm text-ink-soft" title={detail}>
+                <li key={e.id} className="flex flex-col gap-1 px-5 py-3 hover:bg-slate-50 sm:flex-row sm:items-center sm:gap-4">
+                  <span className="w-32 flex-shrink-0 text-xs tabular-nums text-slate-500">{formatDateTime(e.created_at)}</span>
+                  <span className="w-40 flex-shrink-0 truncate text-sm font-medium text-slate-900">{e.user_name || "Système"}</span>
+                  <span className={cn("w-fit flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium", toneClass[meta.tone])}>{meta.label}</span>
+                  <span className="min-w-0 flex-1 truncate text-sm text-slate-600" title={detail}>
                     {e.entity_type === "reservation" && e.entity_id ? `MYL-${String(e.entity_id).padStart(6, "0")} · ` : ""}
                     {detail}
                   </span>
-                  {e.ip && <span className="hidden flex-shrink-0 font-mono text-[11px] text-muted xl:inline">{e.ip}</span>}
+                  {e.ip && <span className="hidden flex-shrink-0 font-mono text-xs text-slate-500 xl:inline">{e.ip}</span>}
                 </li>
               );
             })}
           </ul>
-          <div className="flex items-center justify-between border-t border-line px-5 py-3 text-sm">
-            <span className="text-muted">
+          <div className="flex items-center justify-between border-t border-slate-200 px-5 py-3 text-sm">
+            <span className="text-slate-500">
               {data?.total ?? 0} action{(data?.total ?? 0) > 1 ? "s" : ""}
             </span>
             <div className="flex items-center gap-2">
@@ -143,18 +143,18 @@ export function AuditView() {
                 type="button"
                 disabled={page === 0}
                 onClick={() => setPage((p) => p - 1)}
-                className="h-9 rounded-full border-2 border-line px-3 text-xs font-bold text-navy disabled:opacity-40"
+                className="h-9 rounded-md border border-slate-300 px-3 text-sm font-medium disabled:opacity-40 bg-white text-slate-700 shadow-sm"
               >
                 ← Plus récentes
               </button>
-              <span className="text-xs font-semibold text-muted">
+              <span className="text-xs text-slate-500">
                 {page + 1}/{pages}
               </span>
               <button
                 type="button"
                 disabled={page + 1 >= pages}
                 onClick={() => setPage((p) => p + 1)}
-                className="h-9 rounded-full border-2 border-line px-3 text-xs font-bold text-navy disabled:opacity-40"
+                className="h-9 rounded-md border border-slate-300 px-3 text-sm font-medium disabled:opacity-40 bg-white text-slate-700 shadow-sm"
               >
                 Plus anciennes →
               </button>
