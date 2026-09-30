@@ -26,6 +26,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
+    networks:
+      - dokploy-network
     restart: unless-stopped
 
   backend:
@@ -65,6 +67,8 @@ services:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
     volumes:
       - uploads:/var/www/html/public/images
+    networks:
+      - dokploy-network
     restart: unless-stopped
 
   frontend:
@@ -75,13 +79,11 @@ services:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.example.com}
     depends_on:
       - backend
-    # Dokploy : le service doit être sur dokploy-network pour que le domaine y soit attaché.
-    # traefik.docker.network évite le Bad Gateway (Traefik choisit une IP du mauvais réseau
-    # quand le conteneur est sur plusieurs réseaux).
+    # Tout le monde sur dokploy-network seulement : Traefik (qui vit sur ce réseau) voit
+    # une seule IP possible et le DNS de service (backend, mariadb) reste disponible.
     ports:
       - 80
     networks:
-      - default
       - dokploy-network
     labels:
       - "traefik.enable=true"
@@ -93,6 +95,5 @@ volumes:
   uploads:
 
 networks:
-  default:
   dokploy-network:
     external: true
