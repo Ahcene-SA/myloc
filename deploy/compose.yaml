@@ -75,8 +75,6 @@ services:
     build:
       context: ..
       dockerfile: deploy/Dockerfile.frontend
-      args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.example.com}
     depends_on:
       - backend
     # Tout le monde sur dokploy-network seulement : Traefik (qui vit sur ce réseau) voit

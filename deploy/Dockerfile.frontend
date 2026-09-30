@@ -5,10 +5,10 @@ COPY package*.json ./
 # npm install (et non npm ci) : le lockfile Windows ne référence pas les
 # dépendances optionnelles Linux (@emnapi/*) et npm ci le refuse.
 RUN npm install --no-audit --no-fund
+# La valeur de l'API vient de .env.production (commit dans le dépôt) — lue
+# automatiquement par `next build`, aucun build-arg requis. Pour la changer :
+# modifier .env.production et re-déployer.
 COPY . .
-# NEXT_PUBLIC_* est inliné pendant ce build : le changer demande un rebuild.
-ARG NEXT_PUBLIC_API_URL
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 RUN npm run build
 
 FROM nginx:1.27-alpine
