@@ -109,14 +109,14 @@ export function HeroCars({ scrollYProgress, reduce }: { scrollYProgress: MotionV
 
   return (
     <div className="relative h-[280px] [perspective:1200px] sm:h-[380px] lg:h-[500px]">
-      {/* Vraie photo de la baie d'Alger, adoucie et fondue derrière les voitures */}
+      {/* Baie d'Alger et Maqam Echahid (visuel de la plaquette MYLOC), fondue derrière les voitures */}
       <motion.div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-[-14%] bottom-8 h-[80%]"
+        className="pointer-events-none absolute inset-x-[-22%] bottom-[26%] h-[100%]"
         style={{
           y: sceneY,
-          maskImage: "radial-gradient(ellipse 50% 55% at 50% 55%, #000 45%, transparent 100%)",
-          WebkitMaskImage: "radial-gradient(ellipse 50% 55% at 50% 55%, #000 45%, transparent 100%)",
+          maskImage: "radial-gradient(ellipse 50% 50% at 50% 55%, #000 58%, transparent 100%)",
+          WebkitMaskImage: "radial-gradient(ellipse 50% 50% at 50% 55%, #000 58%, transparent 100%)",
         }}
         initial={reduce ? false : { opacity: 0, scale: 1.04 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -124,9 +124,9 @@ export function HeroCars({ scrollYProgress, reduce }: { scrollYProgress: MotionV
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="images/decor/baie-alger.webp"
+          src="images/decor/baie-alger-maqam.webp"
           alt=""
-          className="h-full w-full object-cover object-[50%_30%] opacity-55 blur-[2px] saturate-[0.9]"
+          className="h-full w-full object-cover object-[50%_92%]"
         />
       </motion.div>
       <motion.div className="absolute inset-x-0 bottom-10 sm:bottom-14" style={{ y: stageY, scale: stageScale, rotateY: tilt }}>

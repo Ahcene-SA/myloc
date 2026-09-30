@@ -28,6 +28,7 @@ import {
   formatPrice,
   formatTime,
   primaryBtn,
+  secondaryBtn,
   reservationRef,
   todayIso,
 } from "../client/shared";
@@ -120,7 +121,7 @@ export function DashboardView() {
 
   return (
     <div>
-      <PageTitle kicker="Tableau de bord" title={`Bonjour, ${firstName}`}>
+      <PageTitle kicker={`Bonjour, ${firstName}`} title="Tableau de bord">
         <button type="button" onClick={() => startNewReservation()} className={primaryBtn}>
           <PlusCircle className="h-4 w-4" />
           Nouvelle réservation
@@ -134,24 +135,19 @@ export function DashboardView() {
             type="button"
             onClick={go}
             className={cn(
-              "group rounded-3xl border bg-white p-4 text-left transition-colors hover:border-navy sm:p-5",
-              alert ? "border-amber-300 ring-4 ring-amber-100" : "border-line"
+              "group min-w-0 rounded-lg border border-slate-200 bg-white p-4 text-start shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50/60",
+              alert && "border-t-2 border-t-amber-400"
             )}
           >
-            <div className="flex items-center justify-between">
-              <span
-                className={cn(
-                  "flex h-11 w-11 items-center justify-center rounded-2xl",
-                  alert ? "bg-amber-100 text-amber-800" : "bg-sky-soft text-sky-text"
-                )}
-              >
-                <Icon className="h-5 w-5" />
-              </span>
-              <ArrowRight className="h-4 w-4 text-muted transition-transform group-hover:translate-x-1" />
+            <div className="flex items-center justify-between gap-2">
+              <span className="truncate text-sm font-medium text-slate-500">{label}</span>
+              <Icon className={cn("h-4 w-4 flex-shrink-0", alert ? "text-amber-600" : "text-slate-400")} />
             </div>
-            <p className="mt-4 truncate text-2xl font-extrabold text-navy sm:text-3xl">{value}</p>
-            <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.14em] text-navy">{label}</p>
-            <p className="hidden text-xs text-muted sm:block">{hint}</p>
+            <p className="mt-2 truncate text-2xl font-semibold tabular-nums tracking-tight text-slate-900">{value}</p>
+            <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-slate-500">
+              <span className="truncate">{hint}</span>
+              <ArrowRight className="h-3 w-3 flex-shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
+            </p>
           </button>
         ))}
       </div>
@@ -159,35 +155,35 @@ export function DashboardView() {
       {/* items-start : la carte « Aujourd'hui et demain » garde sa hauteur naturelle */}
       <div className="mt-6 grid items-start gap-6 xl:grid-cols-[1.25fr_1fr]">
         {/* Demandes à traiter */}
-        <Card className="p-6">
-          <div className="mb-4 flex items-center justify-between">
-            <p className="text-sm font-extrabold uppercase tracking-wide text-navy">Demandes à traiter</p>
+        <Card className="overflow-hidden">
+          <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3.5">
+            <p className="text-sm font-semibold text-slate-900">Demandes à traiter</p>
             {pending.length > 0 && (
-              <button type="button" onClick={() => showReservations("pending")} className="text-xs font-bold text-sky-text hover:underline">
+              <button type="button" onClick={() => showReservations("pending")} className="text-sm font-medium text-sky-text hover:underline">
                 Tout voir
               </button>
             )}
           </div>
           {pending.length === 0 ? (
-            <p className="rounded-2xl bg-mist px-4 py-8 text-center text-sm text-muted">
+            <p className="px-5 py-10 text-center text-sm text-slate-500">
               Aucune demande en attente. Les nouvelles réservations du site arriveront ici.
             </p>
           ) : (
             <>
               {pendingFresh.length > 0 && (
-                <ul className="flex flex-col gap-3">
+                <ul className="divide-y divide-slate-200">
                   {pendingFresh.slice(0, 5).map((r) => (
                     <PendingRow key={r.id} r={r} onOpen={() => openReservation(r.id)} />
                   ))}
                 </ul>
               )}
               {pendingOverdue.length > 0 && (
-                <div className={cn(pendingFresh.length > 0 && "mt-5 border-t border-line pt-4")}>
-                  <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.16em] text-red-700">
+                <div className={cn(pendingFresh.length > 0 && "border-t border-slate-200")}>
+                  <p className="bg-slate-50 px-5 pt-3 text-xs font-medium text-red-700">
                     Date de départ dépassée ({pendingOverdue.length})
                   </p>
-                  <p className="mb-3 text-xs text-muted">Demandes restées sans réponse : refusez-les, ou ouvrez-les pour changer les dates.</p>
-                  <ul className="flex flex-col gap-3">
+                  <p className="border-b border-slate-200 bg-slate-50 px-5 pb-3 text-xs text-slate-500">Demandes restées sans réponse : refusez-les, ou ouvrez-les pour changer les dates.</p>
+                  <ul className="divide-y divide-slate-200">
                     {pendingOverdue.slice(0, 5).map((r) => (
                       <PendingRow key={r.id} r={r} overdue onOpen={() => openReservation(r.id)} />
                     ))}
@@ -199,8 +195,9 @@ export function DashboardView() {
         </Card>
 
         {/* Mouvements du jour */}
-        <Card className="p-6">
-          <p className="mb-4 text-sm font-extrabold uppercase tracking-wide text-navy">Aujourd&apos;hui et demain</p>
+        <Card className="overflow-hidden">
+          <p className="border-b border-slate-200 px-5 py-3.5 text-sm font-semibold text-slate-900">Aujourd&apos;hui et demain</p>
+          <div className="p-5">
           <MovementList
             title="Départs"
             icon={LogOut}
@@ -212,7 +209,7 @@ export function DashboardView() {
             }))}
             onOpen={openReservation}
           />
-          <div className="my-5 h-px bg-line" />
+          <div className="my-4 h-px bg-slate-200" />
           <MovementList
             title="Retours"
             icon={LogIn}
@@ -224,14 +221,15 @@ export function DashboardView() {
             }))}
             onOpen={openReservation}
           />
+          </div>
         </Card>
       </div>
 
       {/* État de la flotte aujourd'hui */}
-      <Card className="mt-6 p-6">
-        <p className="mb-4 text-sm font-extrabold uppercase tracking-wide text-navy">La flotte aujourd&apos;hui</p>
+      <Card className="mt-6 p-5">
+        <p className="mb-4 text-sm font-semibold text-slate-900">La flotte aujourd&apos;hui</p>
         {cars.length === 0 ? (
-          <p className="text-sm text-muted">Aucun véhicule pour l&apos;instant.</p>
+          <p className="text-sm text-slate-500">Aucun véhicule pour l&apos;instant.</p>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {cars.map((c) => {
@@ -241,21 +239,21 @@ export function DashboardView() {
                 .sort((a, b) => (a.start_date || "").localeCompare(b.start_date || ""))[0];
               const state =
                 c.status !== "available"
-                  ? { label: "Retiré du site", cls: "bg-slate-200 text-slate-700" }
+                  ? { label: "Retiré du site", cls: "bg-slate-50 text-slate-600 ring-slate-500/20" }
                   : current
-                    ? { label: `Loué → ${formatDate(current.end_date)}`, cls: "bg-sky-soft text-sky-text" }
-                    : { label: "Libre", cls: "bg-emerald-100 text-emerald-800" };
+                    ? { label: `Loué → ${formatDate(current.end_date)}`, cls: "bg-sky-soft/60 text-sky-text ring-sky/30" }
+                    : { label: "Libre", cls: "bg-emerald-50 text-emerald-700 ring-emerald-600/20" };
               return (
-                <div key={c.id} className="flex items-center gap-3 rounded-2xl border border-line p-3">
-                  <div className="bg-brand-mist flex h-14 w-20 flex-shrink-0 items-center justify-center rounded-xl">
+                <div key={c.id} className="flex items-center gap-3 rounded-md border border-slate-200 p-2.5">
+                  <div className="flex h-12 w-16 flex-shrink-0 items-center justify-center rounded border border-slate-100 bg-slate-50">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={apiImageUrl(c.image_url)} alt="" className="max-h-11 w-auto object-contain" />
+                    <img src={apiImageUrl(c.image_url)} alt="" className="max-h-9 w-auto object-contain" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-extrabold text-navy">{c.name}</p>
-                    <span className={cn("mt-1 inline-block rounded-full px-2.5 py-0.5 text-[11px] font-bold", state.cls)}>{state.label}</span>
+                    <p className="truncate text-sm font-medium text-slate-900">{c.name}</p>
+                    <span className={cn("mt-1 inline-flex rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset", state.cls)}>{state.label}</span>
                     {next && !current && c.status === "available" && (
-                      <p className="mt-1 flex items-center gap-1 text-[11px] text-muted">
+                      <p className="mt-1 flex items-center gap-1 text-xs text-slate-500">
                         <CalendarClock className="h-3 w-3" /> Prochaine : {formatDate(next.start_date)}
                       </p>
                     )}
@@ -289,29 +287,29 @@ function PendingRow({ r, onOpen, overdue = false }: { r: ReservationFromApi; onO
   };
 
   return (
-    <li className={cn("rounded-2xl border p-4", overdue ? "border-red-200 bg-red-50/40" : "border-line")}>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <button type="button" onClick={onOpen} className="min-w-0 text-left">
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
+    <li className={cn("px-5 py-3.5 transition-colors hover:bg-slate-50/60", overdue && "bg-red-50/30")}>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <button type="button" onClick={onOpen} className="min-w-0 text-start">
+          <p className="text-xs text-slate-500">
             {reservationRef(r.id)} · reçue {formatDateTime(r.created_at)} <SourceBadge source={r.source} />
             {overdue && (
-              <span className="ms-1 inline-flex rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold normal-case tracking-normal text-red-700">
+              <span className="ms-1 inline-flex rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/20">
                 Date dépassée
               </span>
             )}
           </p>
-          <p className="mt-1 font-extrabold text-navy">
-            {r.full_name} <span className="font-semibold text-muted">· {r.car_name}</span>
+          <p className="mt-0.5 text-sm font-medium text-slate-900">
+            {r.full_name} <span className="font-normal text-slate-500">· {r.car_name}</span>
           </p>
-          <p className="text-sm text-ink-soft">
-            {formatDate(r.start_date)} → {formatDate(r.end_date)} · <span className="font-bold">{formatPrice(r.total_price)}</span>
+          <p className="text-sm text-slate-600">
+            {formatDate(r.start_date)} → {formatDate(r.end_date)} · <span className="font-medium tabular-nums text-slate-900">{formatPrice(r.total_price)}</span>
           </p>
         </button>
         <div className="flex gap-2">
           <button
             type="button"
             onClick={onOpen}
-            className="inline-flex h-10 items-center rounded-full border-2 border-line px-4 text-xs font-bold text-navy hover:border-navy"
+            className={cn(secondaryBtn, "h-8 px-3")}
           >
             Détails
           </button>
@@ -320,7 +318,7 @@ function PendingRow({ r, onOpen, overdue = false }: { r: ReservationFromApi; onO
               type="button"
               onClick={() => decide("rejected")}
               disabled={busy}
-              className="inline-flex h-10 items-center gap-1.5 rounded-full bg-red-600 px-4 text-xs font-bold text-white hover:bg-red-700 disabled:opacity-60"
+              className="inline-flex h-8 items-center gap-1.5 rounded-md bg-red-600 px-3 text-sm font-medium text-white shadow-sm hover:bg-red-700 disabled:opacity-60"
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
               Refuser
@@ -330,7 +328,7 @@ function PendingRow({ r, onOpen, overdue = false }: { r: ReservationFromApi; onO
               type="button"
               onClick={() => decide("confirmed")}
               disabled={busy}
-              className="inline-flex h-10 items-center gap-1.5 rounded-full bg-emerald-600 px-4 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-60"
+              className={cn(primaryBtn, "h-8 px-3")}
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
               Confirmer
@@ -338,7 +336,7 @@ function PendingRow({ r, onOpen, overdue = false }: { r: ReservationFromApi; onO
           )}
         </div>
       </div>
-      {err && <p className="mt-2 text-sm font-semibold text-red-700">{err}</p>}
+      {err && <p className="mt-2 text-sm text-red-700">{err}</p>}
     </li>
   );
 }
@@ -358,27 +356,27 @@ function MovementList({
 }) {
   return (
     <div>
-      <p className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-muted">
-        <Icon className="h-4 w-4 text-sky-text" /> {title}
+      <p className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-500">
+        <Icon className="h-4 w-4 text-slate-400" /> {title}
       </p>
       {items.length === 0 ? (
-        <p className="text-sm text-muted">{empty}</p>
+        <p className="text-sm text-slate-500">{empty}</p>
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="divide-y divide-slate-200 rounded-md border border-slate-200">
           {items.map(({ r, when, where }) => (
             <li key={r.id}>
               <button
                 type="button"
                 onClick={() => onOpen(r.id)}
-                className="flex w-full items-center justify-between gap-3 rounded-2xl bg-mist px-4 py-3 text-left hover:bg-sky-soft/60"
+                className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-start hover:bg-slate-50"
               >
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-bold text-navy">
+                  <p className="truncate text-sm font-medium text-slate-900">
                     {r.car_name} · {r.full_name}
                   </p>
-                  <p className="truncate text-xs text-muted">{where || "Lieu non précisé"}</p>
+                  <p className="truncate text-xs text-slate-500">{where || "Lieu non précisé"}</p>
                 </div>
-                <span className="flex-shrink-0 text-xs font-bold text-sky-text">{when}</span>
+                <span className="flex-shrink-0 text-xs font-medium text-slate-600">{when}</span>
               </button>
             </li>
           ))}

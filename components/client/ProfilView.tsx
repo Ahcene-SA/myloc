@@ -11,13 +11,13 @@ import { Card, PageTitle, formatDate, inputClass, labelClass, primaryBtn, second
 function Feedback({ ok, error }: { ok: string; error: string }) {
   if (error)
     return (
-      <p role="alert" className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+      <p role="alert" className="rounded-md border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
         {error}
       </p>
     );
   if (ok)
     return (
-      <p role="status" className="flex items-center gap-2 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
+      <p role="status" className="flex items-center gap-2 rounded-md border border-emerald-600/20 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-800">
         <Check className="h-4 w-4" />
         {ok}
       </p>
@@ -87,18 +87,18 @@ export function ProfilView() {
       <PageTitle kicker={t("Compte")} title={t("Mon profil")} />
 
       <div className="grid gap-6 xl:grid-cols-[320px_1fr]">
-        <Card className="flex flex-col items-center gap-3 p-8 text-center xl:self-start">
-          <span className="flex h-20 w-20 items-center justify-center rounded-full bg-sky text-2xl font-extrabold text-navy">{initials}</span>
-          <p className="text-lg font-extrabold text-navy">{user?.full_name}</p>
-          <p className="text-sm text-muted">{user?.email}</p>
-          {user?.created_at && <p className="text-xs text-muted">{t("Client depuis le {date}", { date: formatDate(user.created_at.slice(0, 10)) })}</p>}
+        <Card className="flex flex-col items-center gap-1 p-6 text-center xl:self-start">
+          <span className="mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-sky-soft text-lg font-semibold text-sky-text ring-1 ring-sky/30">{initials}</span>
+          <p className="text-base font-semibold text-slate-900">{user?.full_name}</p>
+          <p className="text-sm text-slate-500">{user?.email}</p>
+          {user?.created_at && <p className="text-xs text-slate-500">{t("Client depuis le {date}", { date: formatDate(user.created_at.slice(0, 10)) })}</p>}
           <button
             type="button"
             onClick={() => {
               logout();
               window.location.href = pageUrl("login");
             }}
-            className={`${secondaryBtn} mt-3 w-full`}
+            className={`${secondaryBtn} mt-4 w-full`}
           >
             <LogOut className="flip-rtl h-4 w-4" />
             {t("Se déconnecter")}
@@ -106,9 +106,9 @@ export function ProfilView() {
         </Card>
 
         <div className="flex flex-col gap-6">
-          <Card className="p-6 sm:p-8">
-            <p className="mb-5 text-sm font-extrabold uppercase tracking-wide text-navy">{t("Informations personnelles")}</p>
-            <form onSubmit={saveProfile} className="grid gap-5 sm:grid-cols-2">
+          <Card className="p-5 sm:p-6">
+            <p className="mb-4 text-sm font-semibold text-slate-900">{t("Informations personnelles")}</p>
+            <form onSubmit={saveProfile} className="grid gap-4 sm:grid-cols-2">
               <label className="sm:col-span-2">
                 <span className={labelClass}>{t("Nom et prénom")}</span>
                 <input className={inputClass} value={fullName} onChange={(e) => setFullName(e.target.value)} autoComplete="name" required minLength={2} />
@@ -116,7 +116,7 @@ export function ProfilView() {
               <label>
                 <span className={labelClass}>{t("Email")}</span>
                 <input className={inputClass} value={user?.email || ""} disabled />
-                <span className="mt-1.5 block text-xs text-muted">{t("Pour changer d'email, contactez l'agence.")}</span>
+                <span className="mt-1.5 block text-xs text-slate-500">{t("Pour changer d'email, contactez l'agence.")}</span>
               </label>
               <label>
                 <span className={labelClass}>{t("Téléphone")}</span>
@@ -132,9 +132,9 @@ export function ProfilView() {
             </form>
           </Card>
 
-          <Card className="p-6 sm:p-8">
-            <p className="mb-5 text-sm font-extrabold uppercase tracking-wide text-navy">{t("Mot de passe")}</p>
-            <form onSubmit={savePassword} className="grid gap-5 sm:grid-cols-3">
+          <Card className="p-5 sm:p-6">
+            <p className="mb-4 text-sm font-semibold text-slate-900">{t("Mot de passe")}</p>
+            <form onSubmit={savePassword} className="grid gap-4 sm:grid-cols-3">
               <label>
                 <span className={labelClass}>{t("Actuel")}</span>
                 <input type="password" className={inputClass} value={current} onChange={(e) => setCurrent(e.target.value)} autoComplete="current-password" required />

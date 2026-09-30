@@ -90,18 +90,19 @@ export function SearchInput({
   return (
     <label className={cn("relative block", className)}>
       <span className="sr-only">{placeholder}</span>
-      <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+      <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
       <input
         type="search"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="h-12 w-full rounded-full border-2 border-line bg-white pl-11 pr-4 text-sm font-semibold text-navy outline-none placeholder:font-medium placeholder:text-muted/70 focus:border-sky"
+        className="h-9 w-full rounded-md border border-slate-300 bg-white ps-9 pe-3 text-sm text-slate-900 shadow-sm outline-none placeholder:text-slate-400 focus:border-sky focus:ring-2 focus:ring-sky/25"
       />
     </label>
   );
 }
 
+/** Filtres en onglets segmentés. */
 export function FilterChips<T extends string>({
   options,
   value,
@@ -112,22 +113,26 @@ export function FilterChips<T extends string>({
   onChange: (v: T) => void;
 }) {
   return (
-    <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1" role="group" aria-label="Filtrer">
-      {options.map((o) => (
-        <button
-          key={o.id}
-          type="button"
-          onClick={() => onChange(o.id)}
-          aria-pressed={value === o.id}
-          className={cn(
-            "flex h-10 flex-shrink-0 items-center gap-2 rounded-full border-2 px-4 text-xs font-bold uppercase tracking-wide",
-            value === o.id ? "border-navy bg-navy text-white" : "border-line bg-white text-navy hover:border-navy"
-          )}
-        >
-          {o.label}
-          {o.count !== undefined && <span className={value === o.id ? "text-sky" : "text-muted"}>{o.count}</span>}
-        </button>
-      ))}
+    <div className="no-scrollbar -mx-1 overflow-x-auto px-1">
+      <div className="inline-flex gap-0.5 rounded-lg bg-slate-100 p-0.5" role="group" aria-label="Filtrer">
+        {options.map((o) => (
+          <button
+            key={o.id}
+            type="button"
+            onClick={() => onChange(o.id)}
+            aria-pressed={value === o.id}
+            className={cn(
+              "flex h-8 flex-shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-3 text-sm font-medium transition-colors",
+              value === o.id ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200" : "text-slate-600 hover:text-slate-900"
+            )}
+          >
+            {o.label}
+            {o.count !== undefined && (
+              <span className={cn("text-xs tabular-nums", value === o.id ? "text-slate-500" : "text-slate-400")}>{o.count}</span>
+            )}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -145,23 +150,21 @@ function useEscape(onClose: () => void) {
   }, [onClose]);
 }
 
+const closeBtn =
+  "flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900";
+
 /** Panneau latéral (détail d'une réservation). */
 export function Drawer({ title, onClose, children }: { title: ReactNode; onClose: () => void; children: ReactNode }) {
   useEscape(onClose);
   const { t } = useLang();
   return (
     <div className="fixed inset-0 z-[60]" role="dialog" aria-modal="true">
-      <div className="absolute inset-0 bg-navy/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="absolute inset-y-0 right-0 flex w-full max-w-xl flex-col bg-white shadow-2xl">
-        <div className="flex items-center justify-between gap-4 border-b border-line px-6 py-5">
+      <div className="absolute inset-0 bg-slate-900/30" onClick={onClose} />
+      <div className="absolute inset-y-0 end-0 flex w-full max-w-xl flex-col border-s border-slate-200 bg-white shadow-xl">
+        <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4">
           <div className="min-w-0">{title}</div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={t("Fermer")}
-            className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-mist text-navy hover:bg-line"
-          >
-            <X className="h-5 w-5" />
+          <button type="button" onClick={onClose} aria-label={t("Fermer")} className={closeBtn}>
+            <X className="h-4 w-4" />
           </button>
         </div>
         <div className="flex-1 overflow-y-auto">{children}</div>
@@ -186,22 +189,17 @@ export function Modal({
   const { t } = useLang();
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center sm:p-6" role="dialog" aria-modal="true" aria-label={title}>
-      <div className="absolute inset-0 bg-navy/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-slate-900/30" onClick={onClose} />
       <div
         className={cn(
-          "relative flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl",
+          "relative flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-lg border border-slate-200 bg-white shadow-xl sm:rounded-lg",
           wide ? "sm:max-w-3xl" : "sm:max-w-lg"
         )}
       >
-        <div className="flex items-center justify-between gap-4 border-b border-line px-6 py-5">
-          <p className="text-lg font-extrabold uppercase text-navy">{title}</p>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={t("Fermer")}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-mist text-navy hover:bg-line"
-          >
-            <X className="h-5 w-5" />
+        <div className="flex items-center justify-between gap-4 border-b border-slate-200 px-5 py-3.5">
+          <p className="text-base font-semibold text-slate-900">{title}</p>
+          <button type="button" onClick={onClose} aria-label={t("Fermer")} className={closeBtn}>
+            <X className="h-4 w-4" />
           </button>
         </div>
         <div className="overflow-y-auto">{children}</div>
@@ -213,7 +211,7 @@ export function Modal({
 export function FormError({ message }: { message: string }) {
   if (!message) return null;
   return (
-    <p role="alert" className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+    <p role="alert" className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
       {message}
     </p>
   );
@@ -222,7 +220,7 @@ export function FormError({ message }: { message: string }) {
 export function SourceBadge({ source }: { source?: string }) {
   if (source !== "agence") return null;
   return (
-    <span className="inline-flex items-center rounded-full bg-navy/5 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-navy">
+    <span className="inline-flex items-center rounded-full bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/20">
       Saisie agence
     </span>
   );

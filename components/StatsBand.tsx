@@ -2,9 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { animate, motion, useInView, useReducedMotion } from "framer-motion";
-import { Car, Clock3, Headphones, MapPin } from "lucide-react";
+import { Car, Clock3, Headphones, Baby } from "lucide-react";
 import { fetchCars } from "@/lib/api";
-import { site } from "@/lib/site";
 import { useLang } from "@/lib/i18n";
 
 /** Nombre qui défile de 0 à sa valeur quand il apparaît à l'écran. */
@@ -38,7 +37,7 @@ function Counter({ to, suffix = "" }: { to: number; suffix?: string }) {
 }
 
 export function StatsBand() {
-  const [fleet, setFleet] = useState(7);
+  const [fleet, setFleet] = useState(12);
   const { t } = useLang();
 
   useEffect(() => {
@@ -53,7 +52,7 @@ export function StatsBand() {
 
   const stats = [
     { icon: Car, value: fleet, suffix: "", label: t("véhicules récents") },
-    { icon: MapPin, value: site.agencies.length, suffix: "", label: t("points de retrait") },
+    { icon: Baby, value: 0, suffix: ` ${t("DA")}`, label: t("siège bébé et cosy"), fixed: true },
     // « 24/7 » est un libellé, pas une quantité : affiché tel quel (pas de 21/7, 22/7…)
     { icon: Headphones, value: 24, suffix: "/7", label: t("assistance"), fixed: true },
     { icon: Clock3, value: 2, suffix: ` ${t("min")}`, label: t("pour réserver") },

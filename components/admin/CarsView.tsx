@@ -63,7 +63,7 @@ export function CarsView() {
         )}
       </PageTitle>
 
-      <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center">
+      <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center">
         <SearchInput value={search} onChange={setSearch} placeholder="Rechercher un véhicule…" className="lg:max-w-sm lg:flex-1" />
         <FilterChips
           options={(
@@ -91,7 +91,7 @@ export function CarsView() {
           }
         />
       ) : (
-        <div className="grid gap-5 sm:grid-cols-2 2xl:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-3">
           {list.map((c) => (
             <CarAdminCard key={c.id} car={c} owner={owner} onEdit={() => setEditing(c)} />
           ))}
@@ -146,53 +146,53 @@ function CarAdminCard({ car, owner, onEdit }: { car: CarFromApi; owner: boolean;
 
   return (
     <Card className={cn("flex flex-col overflow-hidden", !online && "opacity-80")}>
-      <div className="bg-brand-mist relative flex h-44 items-center justify-center p-5">
+      <div className="relative flex h-36 items-center justify-center border-b border-slate-200 bg-slate-50 p-4">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={apiImageUrl(car.image_url)} alt={car.name} className={cn("car-reflect max-h-32 w-auto object-contain", !online && "grayscale")} />
+        <img src={apiImageUrl(car.image_url)} alt={car.name} className={cn("max-h-24 w-auto object-contain", !online && "grayscale")} />
         <span
           className={cn(
-            "absolute left-4 top-4 rounded-full px-3 py-1 text-[11px] font-bold",
-            online ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-slate-700"
+            "absolute start-3 top-3 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset",
+            online ? "bg-emerald-50 text-emerald-700 ring-emerald-600/20" : "bg-white text-slate-600 ring-slate-500/20"
           )}
         >
           {online ? "En ligne" : "Retiré du site"}
         </span>
       </div>
-      <div className="flex flex-1 flex-col gap-3 p-5">
+      <div className="flex flex-1 flex-col gap-3 p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted">{categoryLabel(car.category)}</p>
-            <p className="truncate text-lg font-extrabold uppercase text-navy">
-              {brand} <span className="text-sky-gradient">{model}</span>
+            <p className="text-xs text-slate-500">{categoryLabel(car.category)}</p>
+            <p className="truncate text-base font-semibold text-slate-900">
+              {brand} {model}
             </p>
           </div>
-          <p className="flex-shrink-0 text-right">
-            <span className="text-lg font-extrabold text-navy">{formatPrice(car.price_per_day)}</span>
-            <span className="block text-[11px] text-muted">/ jour</span>
+          <p className="flex-shrink-0 text-end">
+            <span className="text-base font-semibold tabular-nums text-slate-900">{formatPrice(car.price_per_day)}</span>
+            <span className="block text-xs text-slate-500">/ jour</span>
           </p>
         </div>
-        <p className="text-sm text-ink-soft">
-          {car.plate && <span className="mr-1 rounded-md border border-line px-1.5 py-0.5 font-mono text-xs font-bold text-navy">{car.plate}</span>}
+        <p className="text-sm text-slate-600">
+          {car.plate && <span className="me-1 rounded-md border border-slate-200 px-1.5 py-0.5 bg-slate-50 font-mono text-xs text-slate-700">{car.plate}</span>}
           {formatTransmission(car.transmission)} · {car.seats} places · {car.year}
           {car.reservations_count !== undefined && (
-            <span className="text-muted">
+            <span className="text-slate-500">
               {" "}
               · {car.reservations_count} réservation{Number(car.reservations_count) > 1 ? "s" : ""}
             </span>
           )}
         </p>
 
-        {msg && <p className="rounded-2xl bg-sky-soft/60 p-3 text-xs font-semibold text-navy">{msg}</p>}
-        {err && <p className="text-sm font-semibold text-red-700">{err}</p>}
+        {msg && <p className="rounded-md border border-sky/30 bg-sky-soft/40 px-3 py-2 text-xs text-slate-700">{msg}</p>}
+        {err && <p className="text-sm text-red-700">{err}</p>}
 
-        <div className="mt-auto flex flex-wrap gap-2 pt-2">
+        <div className="mt-auto flex flex-wrap gap-2 border-t border-slate-200 pt-3">
           {confirmDelete ? (
             <>
               <button
                 type="button"
                 onClick={remove}
                 disabled={!!busy}
-                className="inline-flex h-10 items-center gap-1.5 rounded-full bg-red-600 px-4 text-xs font-bold text-white hover:bg-red-700 disabled:opacity-60"
+                className="inline-flex h-8 items-center gap-1.5 rounded-md bg-red-600 px-3 text-sm font-medium text-white shadow-sm hover:bg-red-700 disabled:opacity-60"
               >
                 {busy === "delete" && <Loader2 className="h-4 w-4 animate-spin" />}
                 Oui, supprimer
@@ -200,7 +200,7 @@ function CarAdminCard({ car, owner, onEdit }: { car: CarFromApi; owner: boolean;
               <button
                 type="button"
                 onClick={() => setConfirmDelete(false)}
-                className="inline-flex h-10 items-center rounded-full border-2 border-line px-4 text-xs font-bold text-navy hover:border-navy"
+                className={cn(secondaryBtn, "h-8 px-3")}
               >
                 Annuler
               </button>
@@ -211,7 +211,7 @@ function CarAdminCard({ car, owner, onEdit }: { car: CarFromApi; owner: boolean;
                 <button
                   type="button"
                   onClick={onEdit}
-                  className="inline-flex h-10 items-center gap-1.5 rounded-full bg-navy px-4 text-xs font-bold text-white hover:bg-navy-soft"
+                  className={cn(secondaryBtn, "h-8 px-3")}
                 >
                   <Pencil className="h-3.5 w-3.5" /> Modifier
                 </button>
@@ -220,7 +220,7 @@ function CarAdminCard({ car, owner, onEdit }: { car: CarFromApi; owner: boolean;
                 type="button"
                 onClick={toggle}
                 disabled={!!busy}
-                className="inline-flex h-10 items-center gap-1.5 rounded-full border-2 border-line px-4 text-xs font-bold text-navy hover:border-navy disabled:opacity-60"
+                className={cn(secondaryBtn, "h-8 px-3")}
               >
                 {busy === "toggle" ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -236,7 +236,7 @@ function CarAdminCard({ car, owner, onEdit }: { car: CarFromApi; owner: boolean;
                   type="button"
                   onClick={() => setConfirmDelete(true)}
                   aria-label={`Supprimer ${car.name}`}
-                  className="ml-auto inline-flex h-10 w-10 items-center justify-center rounded-full border-2 border-line text-red-600 hover:border-red-600"
+                  className="ms-auto inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -314,22 +314,22 @@ function CarFormModal({ car, onClose }: { car: CarFromApi | null; onClose: () =>
 
   return (
     <Modal title={car ? "Modifier le véhicule" : "Ajouter un véhicule"} onClose={onClose} wide>
-      <form onSubmit={submit} className="grid gap-5 p-6 sm:grid-cols-2">
+      <form onSubmit={submit} className="grid gap-4 p-5 sm:grid-cols-2">
         {/* Photo */}
         <div className="sm:col-span-2">
           <p className={labelClass}>Photo</p>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-            <div className="bg-brand-mist flex h-36 w-full items-center justify-center rounded-2xl sm:w-64">
+            <div className="flex h-32 w-full items-center justify-center rounded-md border border-dashed border-slate-300 bg-slate-50 sm:w-56">
               {uploading ? (
-                <Loader2 className="h-6 w-6 animate-spin text-sky" />
+                <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
               ) : f.image ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={apiImageUrl(f.image)} alt="" className="car-reflect max-h-28 w-auto object-contain" />
+                <img src={apiImageUrl(f.image)} alt="" className="max-h-28 w-auto object-contain" />
               ) : (
-                <ImagePlus className="h-8 w-8 text-muted" />
+                <ImagePlus className="h-6 w-6 text-slate-400" />
               )}
             </div>
-            <div className="flex flex-col gap-2 text-sm text-muted">
+            <div className="flex flex-col gap-2 text-sm text-slate-500">
               <input
                 ref={fileRef}
                 type="file"
@@ -337,7 +337,7 @@ function CarFormModal({ car, onClose }: { car: CarFromApi | null; onClose: () =>
                 className="hidden"
                 onChange={(e) => onFile(e.target.files?.[0])}
               />
-              <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading} className={cn(secondaryBtn, "h-11 w-fit")}>
+              <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading} className={cn(secondaryBtn, "w-fit")}>
                 <Upload className="h-4 w-4" />
                 {f.image ? "Changer la photo" : "Choisir une photo"}
               </button>
@@ -360,7 +360,7 @@ function CarFormModal({ car, onClose }: { car: CarFromApi | null; onClose: () =>
             minLength={2}
             maxLength={100}
           />
-          <p className="mt-1.5 text-xs text-muted">Le premier mot est affiché comme la marque, le reste en bleu.</p>
+          <p className="mt-1.5 text-xs text-slate-500">Le premier mot est affiché comme la marque, le reste en bleu.</p>
         </div>
         <div>
           <label htmlFor="car-plate" className={labelClass}>
@@ -370,11 +370,11 @@ function CarFormModal({ car, onClose }: { car: CarFromApi | null; onClose: () =>
             id="car-plate"
             value={f.plate}
             onChange={(e) => set("plate", e.target.value.toUpperCase())}
-            className={cn(inputClass, "uppercase")}
+            className={cn(inputClass, "font-mono")}
             placeholder="Ex. : 12345-124-16"
             maxLength={20}
           />
-          <p className="mt-1.5 text-xs text-muted">Interne : figure sur le contrat, jamais sur le site.</p>
+          <p className="mt-1.5 text-xs text-slate-500">Interne : figure sur le contrat, jamais sur le site.</p>
         </div>
         <div>
           <label htmlFor="car-cat" className={labelClass}>
@@ -444,11 +444,11 @@ function CarFormModal({ car, onClose }: { car: CarFromApi | null; onClose: () =>
             rows={2}
             value={f.description}
             onChange={(e) => set("description", e.target.value)}
-            className="w-full rounded-2xl border-2 border-line bg-mist px-4 py-3 text-sm font-semibold text-navy outline-none focus:border-sky focus:bg-white"
+            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none placeholder:text-slate-400 focus:border-sky focus:ring-2 focus:ring-sky/25"
           />
         </div>
-        <label className="flex cursor-pointer items-center gap-3 rounded-2xl bg-mist p-4 text-sm font-semibold text-navy sm:col-span-2">
-          <input type="checkbox" checked={f.online} onChange={(e) => set("online", e.target.checked)} className="h-5 w-5 accent-sky" />
+        <label className="flex cursor-pointer items-center gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-medium text-slate-700 sm:col-span-2">
+          <input type="checkbox" checked={f.online} onChange={(e) => set("online", e.target.checked)} className="h-4 w-4 accent-sky" />
           Visible sur le site et réservable par les clients
         </label>
 
@@ -456,7 +456,7 @@ function CarFormModal({ car, onClose }: { car: CarFromApi | null; onClose: () =>
           <FormError message={err} />
         </div>
 
-        <div className="flex flex-col-reverse gap-3 sm:col-span-2 sm:flex-row sm:justify-end">
+        <div className="-mx-5 -mb-5 flex flex-col-reverse gap-2 border-t border-slate-200 bg-slate-50 px-5 py-3.5 sm:col-span-2 sm:flex-row sm:justify-end">
           <button type="button" onClick={onClose} className={secondaryBtn}>
             Annuler
           </button>

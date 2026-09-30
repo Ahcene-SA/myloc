@@ -36,7 +36,7 @@ export function AdminLayout() {
 
   if (!mounted || isLoading || !token || !isStaff(user?.role)) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-mist">
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
         <LoadingBlock label="Vérification de votre session…" />
       </div>
     );
@@ -49,10 +49,10 @@ export function AdminLayout() {
     <AdminProvider>
       <IdleGuard />
       <ReservationAlerts />
-      <div className="min-h-screen bg-mist">
+      <div className="min-h-screen bg-slate-50">
         <AdminSidebar />
-        <main className="transition-all duration-300 md:pl-72">
-          <div className="p-4 pt-20 sm:p-6 sm:pt-22 md:pt-8 lg:p-10">
+        <main className="md:ps-64">
+          <div className="px-4 pb-10 pt-20 sm:px-6 md:pt-8 lg:px-10">
             <AdminContent />
           </div>
         </main>

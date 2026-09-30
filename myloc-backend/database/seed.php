@@ -59,23 +59,8 @@ try {
     // Demo fleet (same cars as on the website), only if the table is empty.
     $count = (int) $db->query("SELECT COUNT(*) FROM cars")->fetchColumn();
     if ($count === 0) {
-        $cars = [
-            ['citadine', 'Clio 5 Alpino', 55, 'automatique', 5, 2024, 'clio5-alpino.png'],
-            ['citadine', 'Clio 5 Techno', 52, 'automatique', 5, 2024, 'clio5-techno.png'],
-            ['citadine', 'Citroën C3', 48, 'manuel', 5, 2024, 'citroen-c3.png'],
-            ['compacte', 'Opel Astra', 75, 'automatique', 5, 2024, 'opel-astra.png'],
-            ['suv', 'Opel Mokka', 80, 'automatique', 5, 2024, 'opel-mokka.png'],
-            ['suv', 'Renault Captur', 72, 'automatique', 5, 2024, 'renault-captur.png'],
-            ['suv', 'Jetour X70+', 95, 'automatique', 7, 2025, 'jetour-x70-plus.png'],
-        ];
-        $stmt = $db->prepare("
-            INSERT INTO cars (category, name, price_per_day, transmission, seats, year, image_url, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, 'available')
-        ");
-        foreach ($cars as [$cat, $name, $price, $trans, $seats, $year, $img]) {
-            $stmt->execute([$cat, $name, $price, $trans, $seats, $year, "images/cars/{$img}"]);
-        }
-        echo "Seeded demo fleet: " . count($cars) . " cars\n";
+        // Flotte réelle de l'agence (voir database/flotte.php)
+        require __DIR__ . '/flotte.php';
     } else {
         echo "Cars table not empty ({$count} cars): demo fleet skipped.\n";
     }

@@ -56,13 +56,13 @@ export function TeamView() {
         </button>
       </PageTitle>
 
-      <p className="-mt-4 mb-6 max-w-2xl text-sm text-ink-soft">
+      <p className="-mt-2 mb-5 max-w-2xl text-sm text-slate-500">
         Chaque membre a son propre compte : le journal d&apos;activité indique qui a fait quoi. Un employé gère les réservations, le planning et les
         états des lieux, sans accès aux prix, aux promos ni à l&apos;équipe.
       </p>
 
       <Card className="overflow-hidden">
-        <div className="hidden grid-cols-[1.4fr_1fr_0.9fr_0.9fr_1fr_48px] gap-4 border-b border-line bg-mist px-6 py-3 text-[11px] font-bold uppercase tracking-[0.14em] text-muted lg:grid">
+        <div className="hidden grid-cols-[1.4fr_1fr_0.9fr_0.9fr_1fr_48px] gap-4 border-b border-slate-200 bg-slate-50 px-5 py-2.5 text-xs font-medium text-slate-500 lg:grid">
           <span>Membre</span>
           <span>Agence</span>
           <span>Rôle</span>
@@ -70,7 +70,7 @@ export function TeamView() {
           <span>Dernière connexion</span>
           <span />
         </div>
-        <ul className="divide-y divide-line">
+        <ul className="divide-y divide-slate-200">
           {team.map((m) => (
             <MemberRow
               key={m.id}
@@ -154,59 +154,59 @@ function MemberRow({
     });
 
   return (
-    <li className={cn("relative px-6 py-4", !m.active && "bg-mist/60")}>
+    <li className={cn("relative px-5 py-3 text-sm", !m.active && "bg-slate-50")}>
       <div className="grid gap-2 lg:grid-cols-[1.4fr_1fr_0.9fr_0.9fr_1fr_48px] lg:items-center lg:gap-4">
         <div className="min-w-0">
-          <p className={cn("truncate font-extrabold", m.active ? "text-navy" : "text-muted line-through")}>
-            {m.full_name} {isMe && <span className="ms-1 rounded-full bg-sky-soft px-2 py-0.5 text-[10px] font-bold text-sky-text no-underline">Vous</span>}
+          <p className={cn("truncate font-medium", m.active ? "text-slate-900" : "text-slate-500 line-through")}>
+            {m.full_name} {isMe && <span className="ms-1 rounded-full bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-600 no-underline">Vous</span>}
           </p>
-          <p className="truncate text-sm text-muted">
+          <p className="truncate text-xs text-slate-500">
             {m.email} · {m.phone}
           </p>
         </div>
-        <p className="text-sm text-ink-soft">{m.agency || "Toutes les agences"}</p>
+        <p className="text-sm text-slate-600">{m.agency || "Toutes les agences"}</p>
         <p>
           <span
             className={cn(
-              "rounded-full px-2.5 py-1 text-[11px] font-bold",
-              m.role === "owner" ? "bg-navy text-white" : "bg-sky-soft text-sky-text"
+              "rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset",
+              m.role === "owner" ? "bg-sky-soft/60 text-sky-text ring-sky/30" : "bg-slate-50 text-slate-600 ring-slate-500/20"
             )}
           >
             {m.role === "owner" ? "Propriétaire" : "Employé"}
           </span>
-          {!m.active && <span className="ms-2 rounded-full bg-slate-200 px-2.5 py-1 text-[11px] font-bold text-slate-700">Désactivé</span>}
+          {!m.active && <span className="ms-2 rounded-full bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/20">Désactivé</span>}
         </p>
-        <p className="flex flex-wrap items-center gap-1.5 text-xs font-semibold">
+        <p className="flex flex-wrap items-center gap-1.5 text-xs">
           {m.totp_enabled ? (
             <span className="inline-flex items-center gap-1 text-emerald-700">
-              <ShieldCheck className="h-4 w-4" /> Code 2FA
+              <ShieldCheck className="h-3.5 w-3.5" /> Code 2FA
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1 text-muted">
-              <ShieldOff className="h-4 w-4" /> Sans 2FA
+            <span className="inline-flex items-center gap-1 text-slate-500">
+              <ShieldOff className="h-3.5 w-3.5" /> Sans 2FA
             </span>
           )}
           {m.must_change_password && <span className="text-amber-700">· mot de passe provisoire</span>}
         </p>
-        <p className="text-sm text-muted">{m.last_login_at ? formatDateTime(m.last_login_at) : "Jamais connecté"}</p>
+        <p className="text-sm text-slate-500">{m.last_login_at ? formatDateTime(m.last_login_at) : "Jamais connecté"}</p>
         {!isMe && (
           <button
             type="button"
             onClick={() => setMenu(!menu)}
             aria-label={`Actions pour ${m.full_name}`}
             aria-expanded={menu}
-            className="flex h-10 w-10 items-center justify-center justify-self-end rounded-full border-2 border-line text-navy hover:border-navy"
+            className="flex h-8 w-8 items-center justify-center justify-self-end rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-900"
           >
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreHorizontal className="h-5 w-5" />}
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreHorizontal className="h-4 w-4" />}
           </button>
         )}
       </div>
 
       {menu && !isMe && (
-        <div className="mt-3 flex flex-col gap-3 rounded-2xl border border-line bg-white p-4">
+        <div className="mt-3 flex flex-col gap-3 rounded-md border border-slate-200 bg-slate-50 p-3">
           {confirm ? (
             <div className="flex flex-col gap-3 text-sm">
-              <p className="font-semibold text-navy">
+              <p className="text-slate-900">
                 {confirm === "deactivate" &&
                   `Désactiver le compte de ${m.full_name} ? Il sera déconnecté immédiatement. L'historique de ses actions est conservé.`}
                 {confirm === "reset2fa" && `Réinitialiser la double authentification de ${m.full_name} ? Ses sessions ouvertes seront fermées.`}
@@ -220,44 +220,44 @@ function MemberRow({
                   type="button"
                   disabled={busy}
                   onClick={confirm === "deactivate" ? toggleActive : confirm === "reset2fa" ? reset2fa : changeRole}
-                  className="h-10 rounded-full bg-navy px-4 text-xs font-bold text-white disabled:opacity-60"
+                  className={primaryBtn}
                 >
                   Confirmer
                 </button>
-                <button type="button" onClick={() => setConfirm(null)} className="h-10 rounded-full border-2 border-line px-4 text-xs font-bold text-navy">
+                <button type="button" onClick={() => setConfirm(null)} className="h-9 rounded-md border border-slate-300 px-3.5 text-sm font-medium bg-white text-slate-700 shadow-sm">
                   Annuler
                 </button>
               </div>
             </div>
           ) : (
             <div className="flex flex-wrap gap-2">
-              <button type="button" disabled={busy} onClick={resetPassword} className="inline-flex h-10 items-center gap-1.5 rounded-full border-2 border-line px-4 text-xs font-bold text-navy hover:border-navy">
+              <button type="button" disabled={busy} onClick={resetPassword} className="inline-flex h-9 items-center gap-1.5 rounded-md border border-slate-300 px-3.5 text-sm font-medium hover:bg-slate-50 bg-white text-slate-700 shadow-sm">
                 <KeyRound className="h-3.5 w-3.5" /> Nouveau mot de passe provisoire
               </button>
               {m.totp_enabled && (
-                <button type="button" onClick={() => setConfirm("reset2fa")} className="inline-flex h-10 items-center gap-1.5 rounded-full border-2 border-line px-4 text-xs font-bold text-navy hover:border-navy">
+                <button type="button" onClick={() => setConfirm("reset2fa")} className="inline-flex h-9 items-center gap-1.5 rounded-md border border-slate-300 px-3.5 text-sm font-medium hover:bg-slate-50 bg-white text-slate-700 shadow-sm">
                   <ShieldOff className="h-3.5 w-3.5" /> Réinitialiser la 2FA
                 </button>
               )}
               {!lastOwner && m.active && (
-                <button type="button" onClick={() => setConfirm("role")} className="inline-flex h-10 items-center rounded-full border-2 border-line px-4 text-xs font-bold text-navy hover:border-navy">
+                <button type="button" onClick={() => setConfirm("role")} className="inline-flex h-9 items-center rounded-md border border-slate-300 px-3.5 text-sm font-medium hover:bg-slate-50 bg-white text-slate-700 shadow-sm">
                   {m.role === "owner" ? "Passer employé" : "Passer propriétaire"}
                 </button>
               )}
               {m.active ? (
                 !lastOwner && (
-                  <button type="button" onClick={() => setConfirm("deactivate")} className="inline-flex h-10 items-center rounded-full border-2 border-red-200 px-4 text-xs font-bold text-red-700 hover:border-red-600">
+                  <button type="button" onClick={() => setConfirm("deactivate")} className="inline-flex h-9 items-center rounded-md border border-slate-300 bg-white px-3.5 text-sm font-medium text-red-700 shadow-sm hover:bg-red-50">
                     Désactiver le compte
                   </button>
                 )
               ) : (
-                <button type="button" disabled={busy} onClick={toggleActive} className="inline-flex h-10 items-center rounded-full bg-emerald-600 px-4 text-xs font-bold text-white hover:bg-emerald-700">
+                <button type="button" disabled={busy} onClick={toggleActive} className={primaryBtn}>
                   Réactiver le compte
                 </button>
               )}
             </div>
           )}
-          {err && <p className="text-sm font-semibold text-red-700">{err}</p>}
+          {err && <p className="text-sm text-red-700">{err}</p>}
         </div>
       )}
     </li>
@@ -285,7 +285,7 @@ function AddMemberModal({ onClose, onCreated }: { onClose: () => void; onCreated
 
   return (
     <Modal title="Ajouter un membre" onClose={onClose}>
-      <form onSubmit={submit} className="flex flex-col gap-4 p-6">
+      <form onSubmit={submit} className="flex flex-col gap-4 p-5">
         <div>
           <label htmlFor="tm-name" className={labelClass}>
             Nom complet
@@ -329,24 +329,24 @@ function AddMemberModal({ onClose, onCreated }: { onClose: () => void; onCreated
               <label
                 key={value}
                 className={cn(
-                  "flex cursor-pointer flex-col gap-1 rounded-2xl border-2 p-4",
-                  f.role === value ? "border-sky bg-sky-soft/50" : "border-line"
+                  "flex cursor-pointer flex-col gap-1 rounded-md border px-3 py-2.5",
+                  f.role === value ? "border-sky bg-sky-soft/40 ring-1 ring-sky" : "border-slate-200 hover:bg-slate-50"
                 )}
               >
-                <span className="flex items-center gap-2 text-sm font-bold text-navy">
+                <span className="flex items-center gap-2 text-sm font-medium text-slate-900">
                   <input type="radio" name="tm-role" checked={f.role === value} onChange={() => set("role", value)} className="accent-sky" />
                   {label}
                 </span>
-                <span className="text-xs text-muted">{text}</span>
+                <span className="text-xs text-slate-500">{text}</span>
               </label>
             ))}
           </div>
         </fieldset>
-        <p className="rounded-2xl bg-mist p-3 text-xs text-ink-soft">
+        <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
           Un mot de passe provisoire sera généré : l&apos;employé devra le remplacer à sa première connexion sur l&apos;espace agence.
         </p>
         <FormError message={err} />
-        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+        <div className="-mx-5 -mb-5 flex flex-col-reverse gap-2 border-t border-slate-200 bg-slate-50 px-5 py-3.5 sm:flex-row sm:justify-end">
           <button type="button" onClick={onClose} className={secondaryBtn}>
             Annuler
           </button>
@@ -366,16 +366,16 @@ function TemporaryPasswordModal({ name, email, password, onClose }: { name: stri
   const message = `Bonjour ${name.split(" ")[0]}, voici ton accès à l'espace agence MYLOC.DZ :\n${agencyUrl}\nIdentifiant : ${email}\nMot de passe provisoire : ${password}\nTu devras choisir ton propre mot de passe à la première connexion.`;
   return (
     <Modal title="Mot de passe provisoire" onClose={onClose}>
-      <div className="flex flex-col gap-4 p-6">
-        <p className="text-sm text-ink-soft">
-          Transmettez ces informations à <b className="text-navy">{name}</b> en main propre ou par message privé. Le mot de passe ne sera{" "}
+      <div className="flex flex-col gap-4 p-5">
+        <p className="text-sm text-slate-600">
+          Transmettez ces informations à <b className="text-slate-900">{name}</b> en main propre ou par message privé. Le mot de passe ne sera{" "}
           <b>plus affiché</b> ensuite.
         </p>
-        <div className="rounded-2xl bg-mist p-4 text-sm">
-          <p className="text-muted">Identifiant</p>
-          <p className="font-bold text-navy">{email}</p>
-          <p className="mt-3 text-muted">Mot de passe provisoire</p>
-          <p className="font-mono text-2xl font-extrabold tracking-wider text-navy">{password}</p>
+        <div className="rounded-md border border-slate-200 bg-slate-50 p-4 text-sm">
+          <p className="text-slate-500">Identifiant</p>
+          <p className="font-medium text-slate-900">{email}</p>
+          <p className="mt-3 text-slate-500">Mot de passe provisoire</p>
+          <p className="font-mono text-xl font-medium text-slate-900">{password}</p>
         </div>
         <button
           type="button"

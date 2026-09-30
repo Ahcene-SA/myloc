@@ -4,8 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { easeInOut, interpolate, motion, useReducedMotion, useScroll, useSpring, useTransform, type MotionValue } from "framer-motion";
 import { Armchair, ArrowDown, CalendarDays, Cog } from "lucide-react";
 import { apiImageUrl, fetchCars, formatTransmission, type CarFromApi } from "@/lib/api";
-import { categoryInfo, site } from "@/lib/site";
+import { categoryInfo } from "@/lib/site";
 import { useLang } from "@/lib/i18n";
+import { formatPrice } from "./client/shared";
 
 interface ShowCar {
   id: string;
@@ -253,7 +254,7 @@ function Slide({ car, i, n, dir, progress }: { car: ShowCar; i: number; n: numbe
           <p className="leading-none">
             <span className="block text-[11px] font-semibold uppercase tracking-[0.16em] text-white/50">{t("À partir de")}</span>
             <span className="mt-1 block whitespace-nowrap text-4xl font-extrabold">
-              {car.price} {site.currency}
+              {formatPrice(car.price)}
               <span className="ms-1 text-sm font-semibold text-white/50">/ {t("jour")}</span>
             </span>
           </p>
@@ -294,7 +295,7 @@ function StaticShowroom({ cars }: { cars: ShowCar[] }) {
                 </bdi>
               </p>
               <p className="text-white/60">
-                {car.price} {site.currency} / {t("jour")}
+                {formatPrice(car.price)} / {t("jour")}
               </p>
             </div>
           ))}

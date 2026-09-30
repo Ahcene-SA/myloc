@@ -95,8 +95,8 @@ export function InspectionModal({
 
   return (
     <Modal title={`État des lieux · ${type === "depart" ? "départ" : "retour"}`} onClose={onClose} wide>
-      <form onSubmit={submit} className="flex flex-col gap-6 p-6">
-        <p className="-mt-2 text-sm text-muted">
+      <form onSubmit={submit} className="flex flex-col gap-6 p-5">
+        <p className="-mt-2 text-sm text-slate-500">
           {reservationRef(r.id)} · {r.car_name} · {r.full_name}
         </p>
 
@@ -117,10 +117,10 @@ export function InspectionModal({
                 placeholder="Ex. : 42150"
               />
               {type === "retour" && depart?.mileage != null && (
-                <p className={cn("mt-1.5 text-sm font-semibold", driven !== null && driven < 0 ? "text-red-700" : "text-muted")}>
+                <p className={cn("mt-1.5 text-sm", driven !== null && driven < 0 ? "text-red-700" : "text-slate-500")}>
                   Départ : {depart.mileage.toLocaleString("fr-FR")} km
                   {driven !== null && driven >= 0 && (
-                    <span className="text-navy"> · {driven.toLocaleString("fr-FR")} km parcourus</span>
+                    <span className="text-slate-900"> · {driven.toLocaleString("fr-FR")} km parcourus</span>
                   )}
                 </p>
               )}
@@ -130,7 +130,7 @@ export function InspectionModal({
               <p className={labelClass}>Carburant</p>
               <FuelGauge value={fuel} onChange={setFuel} />
               {type === "retour" && depart?.fuel_level != null && fuel !== null && fuel < depart.fuel_level && (
-                <p className="mt-1.5 text-sm font-semibold text-amber-700">
+                <p className="mt-1.5 text-sm text-amber-700">
                   Moins qu&apos;au départ ({depart.fuel_level}/8) : prévoir le complément.
                 </p>
               )}
@@ -139,7 +139,7 @@ export function InspectionModal({
             <div>
               <p className={labelClass}>Dommages {damages.length > 0 && `(${damages.length})`}</p>
               {damages.length === 0 ? (
-                <p className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
+                <p className="rounded-md border border-emerald-600/20 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-800">
                   Aucun dommage signalé. Touchez une zone de la voiture pour en ajouter un.
                 </p>
               ) : (
@@ -148,8 +148,8 @@ export function InspectionModal({
                     <li key={d.zone} className="flex items-center gap-2">
                       <span
                         className={cn(
-                          "w-36 flex-shrink-0 rounded-full px-3 py-1 text-xs font-bold",
-                          newZones.includes(d.zone) ? "bg-amber-100 text-amber-900" : "bg-red-50 text-red-700"
+                          "w-36 flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset",
+                          newZones.includes(d.zone) ? "bg-amber-50 text-amber-800 ring-amber-600/20" : "bg-red-50 text-red-700 ring-red-600/20"
                         )}
                       >
                         {zoneLabels[d.zone]}
@@ -161,13 +161,13 @@ export function InspectionModal({
                         placeholder="Ex. : rayure 10 cm"
                         aria-label={`Détail ${zoneLabels[d.zone]}`}
                         maxLength={200}
-                        className={cn(inputClass, "h-10 text-sm")}
+                        className={cn(inputClass, "h-8")}
                       />
                       <button
                         type="button"
                         onClick={() => toggle(d.zone)}
                         aria-label={`Retirer ${zoneLabels[d.zone]}`}
-                        className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-muted hover:bg-mist hover:text-red-600"
+                        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-red-600"
                       >
                         <X className="h-4 w-4" />
                       </button>
@@ -178,7 +178,7 @@ export function InspectionModal({
             </div>
           </div>
 
-          <div className="rounded-3xl bg-mist p-4">
+          <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
             <CarDamageMap marked={zones} highlight={newZones} onToggle={toggle} />
           </div>
         </div>
@@ -187,31 +187,31 @@ export function InspectionModal({
           <p className={labelClass}>Photos ({photos.length}/12)</p>
           <div className="flex flex-wrap gap-3">
             {photos.map((p) => (
-              <div key={p} className="group relative h-24 w-32 overflow-hidden rounded-2xl bg-mist">
+              <div key={p} className="group relative h-24 w-32 overflow-hidden rounded-md border border-slate-200 bg-slate-50">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={apiImageUrl(p)} alt="" className="h-full w-full object-cover" />
                 <button
                   type="button"
                   onClick={() => setPhotos((l) => l.filter((x) => x !== p))}
                   aria-label="Retirer la photo"
-                  className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-navy/80 text-white"
+                  className="absolute end-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-md bg-slate-900/70 text-white hover:bg-slate-900"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-3.5 w-3.5" />
                 </button>
               </div>
             ))}
             {Array.from({ length: uploading }, (_, i) => (
-              <div key={`u${i}`} className="flex h-24 w-32 items-center justify-center rounded-2xl bg-mist">
-                <Loader2 className="h-5 w-5 animate-spin text-sky" />
+              <div key={`u${i}`} className="flex h-24 w-32 items-center justify-center rounded-md border border-slate-200 bg-slate-50">
+                <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
               </div>
             ))}
             {photos.length + uploading < 12 && (
               <button
                 type="button"
                 onClick={() => fileRef.current?.click()}
-                className="flex h-24 w-32 flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-line text-xs font-bold text-navy hover:border-sky"
+                className="flex h-24 w-32 flex-col items-center justify-center gap-1 rounded-md border border-dashed border-slate-300 text-xs font-medium text-slate-600 hover:border-slate-400 hover:bg-slate-50"
               >
-                <Camera className="h-5 w-5 text-sky-text" />
+                <Camera className="h-5 w-5 text-slate-400" />
                 Ajouter
               </button>
             )}
@@ -225,7 +225,7 @@ export function InspectionModal({
             className="hidden"
             onChange={(e) => addPhotos(e.target.files)}
           />
-          <p className="mt-2 text-xs text-muted">Sur téléphone, le bouton ouvre directement l&apos;appareil photo. Les photos sont allégées avant l&apos;envoi.</p>
+          <p className="mt-2 text-xs text-slate-500">Sur téléphone, le bouton ouvre directement l&apos;appareil photo. Les photos sont allégées avant l&apos;envoi.</p>
         </div>
 
         <div>
@@ -239,13 +239,13 @@ export function InspectionModal({
             onChange={(e) => setNotes(e.target.value)}
             maxLength={2000}
             placeholder="Ex. : siège bébé fourni, véhicule propre"
-            className="w-full rounded-2xl border-2 border-line bg-mist px-4 py-3 text-sm font-semibold text-navy outline-none focus:border-sky focus:bg-white"
+            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none placeholder:text-slate-400 focus:border-sky focus:ring-2 focus:ring-sky/25"
           />
         </div>
 
         <FormError message={err} />
 
-        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+        <div className="-mx-5 -mb-5 flex flex-col-reverse gap-2 border-t border-slate-200 bg-slate-50 px-5 py-3.5 sm:flex-row sm:justify-end">
           <button type="button" onClick={onClose} className={secondaryBtn}>
             Annuler
           </button>

@@ -48,18 +48,18 @@ export function PaiementsView() {
       <PageTitle kicker={t("Facturation")} title={t("Paiements")} />
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Card className="p-6">
-          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted">{t("À régler (locations à venir)")}</p>
-          <p className="mt-2 text-3xl font-extrabold text-navy">{formatPrice(toPay)}</p>
+        <Card className="p-4">
+          <p className="text-sm font-medium text-slate-500">{t("À régler (locations à venir)")}</p>
+          <p className="mt-1.5 text-2xl font-semibold tabular-nums text-slate-900">{formatPrice(toPay)}</p>
         </Card>
-        <Card className="p-6">
-          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted">{t("Locations terminées")}</p>
-          <p className="mt-2 text-3xl font-extrabold text-navy">{formatPrice(finished)}</p>
+        <Card className="p-4">
+          <p className="text-sm font-medium text-slate-500">{t("Locations terminées")}</p>
+          <p className="mt-1.5 text-2xl font-semibold tabular-nums text-slate-900">{formatPrice(finished)}</p>
         </Card>
       </div>
 
-      <div className="mt-4 flex gap-3 rounded-3xl bg-sky-soft/60 p-5 text-sm text-navy">
-        <Info className="mt-0.5 h-5 w-5 flex-shrink-0 text-sky-text" />
+      <div className="mt-4 flex gap-3 rounded-md border border-sky/30 bg-sky-soft/40 px-4 py-3 text-sm text-slate-700">
+        <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-sky-text" />
         <p>
           {t(
             "Aucun paiement n'est demandé en ligne. Le montant de chaque location se règle directement auprès de MYLOC.DZ, selon le moyen choisi lors de la réservation."
@@ -68,39 +68,39 @@ export function PaiementsView() {
       </div>
 
       <Card className="mt-6 overflow-hidden">
-        <p className="px-6 pt-6 text-sm font-extrabold uppercase tracking-wide text-navy">{t("Détail par réservation")}</p>
+        <p className="border-b border-slate-200 px-5 py-3.5 text-sm font-semibold text-slate-900">{t("Détail par réservation")}</p>
         {billable.length === 0 ? (
-          <p className="px-6 pb-8 pt-3 text-sm text-muted">{t("Vos réservations en attente ou confirmées apparaîtront ici avec leur montant.")}</p>
+          <p className="px-5 py-6 text-sm text-slate-500">{t("Vos réservations en attente ou confirmées apparaîtront ici avec leur montant.")}</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="mt-4 w-full min-w-[640px] text-start text-sm">
+            <table className="w-full min-w-[640px] text-start text-sm">
               <thead>
-                <tr className="border-y border-line bg-mist text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
-                  <th className="px-6 py-3">{t("Réservation")}</th>
-                  <th className="px-3 py-3">{t("Période")}</th>
-                  <th className="px-3 py-3">{t("Paiement")}</th>
-                  <th className="px-3 py-3">{t("Statut")}</th>
-                  <th className="px-6 py-3 text-end">{t("Montant")}</th>
+                <tr className="border-b border-slate-200 bg-slate-50 text-xs font-medium text-slate-500">
+                  <th className="px-5 py-2.5">{t("Réservation")}</th>
+                  <th className="px-3 py-2.5">{t("Période")}</th>
+                  <th className="px-3 py-2.5">{t("Paiement")}</th>
+                  <th className="px-3 py-2.5">{t("Statut")}</th>
+                  <th className="px-5 py-2.5 text-end">{t("Montant")}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-line">
+              <tbody className="divide-y divide-slate-200">
                 {billable.map((r) => (
-                  <tr key={r.id}>
-                    <td className="px-6 py-4">
-                      <p className="font-bold text-navy">
+                  <tr key={r.id} className="hover:bg-slate-50">
+                    <td className="px-5 py-3">
+                      <p className="font-medium text-slate-900">
                         <bdi dir="ltr">{r.car_name}</bdi>
                       </p>
-                      <p className="text-xs text-muted">{reservationRef(r.id)}</p>
+                      <p className="text-xs text-slate-500">{reservationRef(r.id)}</p>
                     </td>
-                    <td className="px-3 py-4 text-ink-soft">
+                    <td className="px-3 py-3 text-slate-600">
                       {formatDate(r.start_date)} {t("→")} {formatDate(r.end_date)}
-                      <span className="block text-xs text-muted">{daysLabel(daysBetween(r.start_date || "", r.end_date || ""))}</span>
+                      <span className="block text-xs text-slate-500">{daysLabel(daysBetween(r.start_date || "", r.end_date || ""))}</span>
                     </td>
-                    <td className="px-3 py-4 text-ink-soft">{r.payment_method ? t(paymentLabels[r.payment_method]) : t("À définir avec l'agence")}</td>
-                    <td className="px-3 py-4">
+                    <td className="px-3 py-3 text-slate-600">{r.payment_method ? t(paymentLabels[r.payment_method]) : t("À définir avec l'agence")}</td>
+                    <td className="px-3 py-3">
                       <StatusBadge status={r.status} />
                     </td>
-                    <td className="px-6 py-4 text-end font-extrabold text-navy">{formatPrice(r.total_price)}</td>
+                    <td className="px-5 py-3 text-end font-medium tabular-nums text-slate-900">{formatPrice(r.total_price)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -111,13 +111,13 @@ export function PaiementsView() {
 
       <div className="mt-6 grid gap-4 md:grid-cols-3">
         {methods.map(({ icon: Icon, title, text }) => (
-          <Card key={title} className="flex gap-4 p-5">
-            <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-sky-soft text-sky-text">
-              <Icon className="h-5 w-5" />
+          <Card key={title} className="flex gap-3 p-4">
+            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-500">
+              <Icon className="h-4 w-4" />
             </span>
             <div>
-              <p className="font-bold text-navy">{t(title)}</p>
-              <p className="mt-1 text-sm text-muted">{t(text)}</p>
+              <p className="text-sm font-semibold text-slate-900">{t(title)}</p>
+              <p className="mt-1 text-sm text-slate-500">{t(text)}</p>
             </div>
           </Card>
         ))}

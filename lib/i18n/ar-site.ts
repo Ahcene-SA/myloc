@@ -170,4 +170,22 @@ export const arSite: Record<string, string> = {
   "Aucun véhicule disponible pour le moment.": "لا توجد سيارات متاحة حاليًا.",
   "Prenez la route": "انطلقوا في الطريق",
   "l'esprit léger": "براحة بال",
+
+  // ── Infos de l'agence (plaquette MYLOC) ──
+  "Votre partenaire mobilité en Algérie, partout où vous en avez besoin.": "شريككم في التنقل في الجزائر، أينما احتجتم إلينا.",
+  "Livraison aéroports et wilayas": "توصيل إلى المطارات والولايات",
+  "Siège bébé offert": "مقعد الأطفال مجاني",
+  "siège bébé et cosy": "مقعد الأطفال والكوزي",
+  "DA": "دج",
+  "Agence basée à Alger": "وكالة في الجزائر العاصمة",
+  "Notre agence de Birkhadem vous accueille et prépare votre véhicule avant chaque départ.": "تستقبلكم وكالتنا في بئر خادم وتجهّز سيارتكم قبل كل انطلاق.",
+  "Livraison aux aéroports": "توصيل إلى المطارات",
+  "Votre voiture vous attend à votre arrivée, dans plusieurs aéroports d'Algérie.": "سيارتكم في انتظاركم عند وصولكم، في عدة مطارات بالجزائر.",
+  "Livraison dans plusieurs wilayas": "توصيل إلى عدة ولايات",
+  "Nous livrons votre véhicule là où vous en avez besoin, à domicile ou à l'hôtel.": "نوصل سيارتكم حيث تحتاجونها، إلى المنزل أو الفندق.",
+  "Des modèles 2025 et 2026, entretenus et nettoyés avant chaque location.": "طرازات 2025 و2026، مصانة ونظيفة قبل كل كراء.",
+  "Siège bébé et cosy offerts": "مقعد الأطفال والكوزي مجانًا",
+  "Voyagez en famille : sièges bébé et cosy disponibles gratuitement sur demande.": "سافروا مع العائلة: مقاعد الأطفال والكوزي متوفرة مجانًا عند الطلب.",
+  "Assistance réactive": "مساعدة سريعة",
+  "Une équipe joignable par téléphone et WhatsApp pour vous accompagner sur la route.": "فريق متاح عبر الهاتف وواتساب لمرافقتكم على الطريق.",
 };

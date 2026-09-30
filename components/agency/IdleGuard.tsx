@@ -81,22 +81,22 @@ export function IdleGuard() {
   };
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-navy/50 p-4 backdrop-blur-sm" role="alertdialog" aria-modal="true" aria-labelledby="idle-title">
-      <div className="w-full max-w-sm rounded-3xl bg-white p-7 text-center shadow-2xl">
-        <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-800">
-          <Clock className="h-6 w-6" />
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/40 p-4" role="alertdialog" aria-modal="true" aria-labelledby="idle-title">
+      <div className="w-full max-w-sm rounded-lg border border-slate-200 bg-white p-6 text-center shadow-xl">
+        <span className="mx-auto flex h-9 w-9 items-center justify-center rounded-md bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20">
+          <Clock className="h-4 w-4" />
         </span>
-        <p id="idle-title" className="mt-4 text-xl font-extrabold text-navy">
+        <p id="idle-title" className="mt-4 text-base font-semibold text-slate-900">
           Vous êtes toujours là ?
         </p>
-        <p className="mt-2 text-sm text-ink-soft">
-          Par sécurité, vous serez déconnecté dans <b className="text-navy">{left} s</b>.
+        <p className="mt-2 text-sm text-slate-600">
+          Par sécurité, vous serez déconnecté dans <b className="text-slate-900">{left} s</b>.
         </p>
-        <div className="mt-6 flex flex-col gap-2">
-          <button type="button" onClick={stay} autoFocus className="h-12 rounded-full bg-sky text-sm font-bold text-navy hover:bg-sky-mid hover:text-white">
+        <div className="mt-5 flex flex-col gap-2">
+          <button type="button" onClick={stay} autoFocus className="h-9 rounded-md bg-navy text-sm font-medium text-white shadow-sm hover:bg-navy-soft">
             Rester connecté
           </button>
-          <button type="button" onClick={signOut} className="h-11 rounded-full text-sm font-bold text-muted hover:text-navy">
+          <button type="button" onClick={signOut} className="h-9 rounded-md border border-slate-300 bg-white text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50">
             Me déconnecter
           </button>
         </div>
