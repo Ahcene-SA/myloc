@@ -7,7 +7,7 @@
 #   DB_PASS=<mot de passe MariaDB>
 #   ADMIN_EMAIL=contact@myloc.dz
 #   ADMIN_PASSWORD=<mot de passe admin /agence>
-#   (ALLOWED_ORIGINS/MAIL_* optionnels — voir deploy/README.md)
+#   (ALLOWED_ORIGINS/MAIL_*/WHATSAPP_* optionnels — voir deploy/README.md)
 #
 # ATTENTION : NEXT_PUBLIC_* est inliné au moment du build — le changer demande un re-déploiement.
 
@@ -60,6 +60,15 @@ services:
       MAIL_FROM_NAME: MYLOC.DZ
       AGENCY_NOTIFY_EMAIL: ${AGENCY_NOTIFY_EMAIL:-}
       AGENCY_PHONE: ${AGENCY_PHONE:-}
+      # Alerte WhatsApp à l'agence à chaque réservation (voir deploy/README.md) :
+      # driver=log par défaut (message écrit dans logs/whatsapp/, rien n'est envoyé).
+      WHATSAPP_DRIVER: ${WHATSAPP_DRIVER:-log}
+      WHATSAPP_TO: ${WHATSAPP_TO:-}
+      WHATSAPP_TOKEN: ${WHATSAPP_TOKEN:-}
+      WHATSAPP_PHONE_ID: ${WHATSAPP_PHONE_ID:-}
+      WHATSAPP_TEMPLATE: ${WHATSAPP_TEMPLATE:-reservation}
+      WHATSAPP_LANG: ${WHATSAPP_LANG:-fr}
+      WHATSAPP_APIKEY: ${WHATSAPP_APIKEY:-}
       CURRENCY: DA
       FRONTEND_URL: ${FRONTEND_URL:-}
       PAGE_SUFFIX: .html

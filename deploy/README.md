@@ -50,6 +50,28 @@ Stack complète : site statique (Nginx) + API PHP (Apache) + MariaDB, avec donn�
 
 ## Notes
 
+- **WhatsApp** : chaque nouvelle réservation envoyée par le site déclenche une alerte WhatsApp
+  à l'agence, avec le récapitulatif (référence, véhicule, dates, total) et les coordonnées du
+  client (nom, téléphone, e-mail, note). Par défaut (`WHATSAPP_DRIVER=log`), rien n'est envoyé :
+  le texte est enregistré dans `logs/whatsapp/*.txt` du conteneur backend, pour vérifier le
+  contenu avant l'envoi réel. Trois façons d'envoyer :
+  - **API Cloud officielle (recommandé)** — `WHATSAPP_DRIVER=meta`. Nécessite un compte
+    Meta Business + un numéro « WhatsApp Business Platform » : créer un utilisateur système
+    avec la permission `whatsapp_business_messaging` (jeton permanent d'où `WHATSAPP_TOKEN`),
+    puis relever l'identifiant du numéro (`WHATSAPP_PHONE_ID`). Les messages initiés par
+    l'agence doivent passer par un **template** : dans l'espace Meta, créer un template
+    « utilitaire » dont le corps contient une variable `{{1}}` (le texte complet de l'alerte
+    est passé dedans), l'approuver, puis mettre son nom dans `WHATSAPP_TEMPLATE` (défaut
+    `reservation`) et sa langue dans `WHATSAPP_LANG` (défaut `fr`). Le destinataire
+    `WHATSAPP_TO` est le **numéro personnel de l'agence** (le numéro de l'équipe qui doit
+    recevoir les alertes, format international sans `+`, ex. `213560550590`) — il doit être un
+    **autre** numéro que celui déclaré chez Meta, sinon on s'enverrait un message à soi-même.
+  - **CallMeBot (test rapide, non officiel)** — `WHATSAPP_DRIVER=callmebot` + `WHATSAPP_APIKEY`
+    obtenue sur api.callmebot.com avec le numéro destinataire. Simple, mais service tiers
+    non garanti : à employer pour tester, pas pour la production.
+  - **Laisser `log`** : le texte reste dans le conteneur (consultable par la console Dokploy
+    du backend : `cat /var/www/html/logs/whatsapp/<fichier>.txt`).
+  - Si `WHATSAPP_TO` est vide, le numéro est repris de `AGENCY_PHONE`.
 - **CORS** : le backend accepte uniquement les origines de `ALLOWED_ORIGINS`. Si tu ajoutes
   un domaine, il faut aussi le mettre dans cette variable.
 - **Images de véhicules** : les uploads vont dans le volume `uploads`

@@ -11,6 +11,7 @@ use Myloc\Models\Reservation;
 use Myloc\Models\User;
 use Myloc\Services\Emails;
 use Myloc\Services\Pricing;
+use Myloc\Services\WhatsApp;
 use Myloc\Utils\Audit;
 use Myloc\Utils\Response;
 use Myloc\Utils\Validator;
@@ -149,10 +150,11 @@ class ReservationController
 
         $reservation = $this->reservationModel->findById($reservationId);
 
-        // Alerte à l'agence + accusé de réception au client (un échec d'envoi ne bloque pas)
+        // Alerte à l'agence (e-mail + WhatsApp) + accusé de réception au client (un échec d'envoi ne bloque pas)
         $detailed = $this->reservationModel->findDetailedById($reservationId);
         if ($detailed) {
             Emails::newReservation($detailed);
+            WhatsApp::newReservation($detailed);
         }
 
         Response::success('Réservation envoyée.', [
