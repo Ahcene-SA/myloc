@@ -13,14 +13,13 @@ export function getApiBase(): string {
     return "";
   }
 
-  // Runtime overrides (no rebuild needed).
-  if (typeof (window as unknown as Record<string, string>).MYLOC_API_URL === "string") {
-    return (window as unknown as Record<string, string>).MYLOC_API_URL.replace(/\/$/, "");
-  }
-
-  // Surcharge locale (tests) : jamais en production, sinon un script injecté
-  // pourrait détourner toutes les requêtes (et le jeton) vers un autre serveur.
+  // Surcharge runtime (window.MYLOC_API_URL / localStorage, tests) :
+  // jamais en production, sinon un script injecté pourrait détourner
+  // toutes les requêtes (et le jeton) vers un autre serveur.
   if (process.env.NODE_ENV !== "production") {
+    if (typeof (window as unknown as Record<string, string>).MYLOC_API_URL === "string") {
+      return (window as unknown as Record<string, string>).MYLOC_API_URL.replace(/\/$/, "");
+    }
     try {
       const stored = localStorage.getItem("myloc_api_url");
       if (stored) return stored.replace(/\/$/, "");

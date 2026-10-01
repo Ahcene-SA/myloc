@@ -357,12 +357,24 @@ export function RecoveryCodes({ codes, onDone, dark = true }: { codes: string[];
   const print = () => {
     const w = window.open("", "_blank", "width=480,height=640");
     if (!w) return;
-    w.document.write(
-      `<html><head><title>Codes de secours MYLOC.DZ</title></head><body style="font-family:system-ui;padding:32px">
-      <h2>MYLOC.DZ · Codes de secours</h2><p>Chaque code ne sert qu'une fois. À garder en lieu sûr, à l'agence.</p>
-      <pre style="font-size:20px;line-height:1.8">${codes.join("\n")}</pre>
-      <p style="color:#666">Imprimé le ${new Date().toLocaleString("fr-FR")}</p></body></html>`
-    );
+    // Contenu construit par l'API DOM : aucun code (y compris dans un code de secours)
+    // ne peut être interprété comme du HTML/JS.
+    const doc = w.document;
+    const title = doc.createElement("title");
+    title.textContent = "Codes de secours MYLOC.DZ";
+    const h2 = doc.createElement("h2");
+    h2.textContent = "MYLOC.DZ · Codes de secours";
+    const p = doc.createElement("p");
+    p.textContent = "Chaque code ne sert qu'une fois. À garder en lieu sûr, à l'agence.";
+    const pre = doc.createElement("pre");
+    pre.style.cssText = "font-size:20px;line-height:1.8";
+    pre.textContent = codes.join("\n");
+    const footer = doc.createElement("p");
+    footer.style.cssText = "color:#666";
+    footer.textContent = `Imprimé le ${new Date().toLocaleString("fr-FR")}`;
+    doc.body.style.cssText = "font-family:system-ui;padding:32px";
+    doc.head.append(title);
+    doc.body.append(h2, p, pre, footer);
     w.document.close();
     w.focus();
     w.print();

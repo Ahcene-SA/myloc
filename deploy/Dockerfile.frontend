@@ -2,9 +2,9 @@
 FROM node:22-alpine AS build
 WORKDIR /app
 COPY package*.json ./
-# npm install (et non npm ci) : le lockfile Windows ne référence pas les
-# dépendances optionnelles Linux (@emnapi/*) et npm ci le refuse.
-RUN npm install --no-audit --no-fund
+# npm ci : le lockfile (régénéré sous Linux, optionnelles @emnapi/* comprises) fixe
+# exactement les versions — aucune dérive de dépendance au re-déploiement.
+RUN npm ci --no-audit --no-fund
 # La valeur de l'API vient de .env.production (commit dans le dépôt) — lue
 # automatiquement par `next build`, aucun build-arg requis. Pour la changer :
 # modifier .env.production et re-déployer.
