@@ -12,9 +12,10 @@ cd /var/www/html
 # Écrit « CLÉ="valeur" » dans le .env. printf fait l'insertion de la valeur telle quelle :
 # contrairement au heredoc, un secret contenant $, un antislash ou un backtick n'est
 # jamais interpolé ni déformé.
-env_kv() { printf '%s="%s"\n' "$1" "$2"; }
+env_kv() { printf '%s="%s"\n' "$1" "$2" >> .env; }
 
 : > .env
+printf '# Configuration generee a chaque demarrage depuis l environnement — ne pas editer.\n' >> .env
 env_kv APP_ENV "${APP_ENV:-production}"
 env_kv APP_TIMEZONE "${APP_TIMEZONE:-Africa/Algiers}"
 env_kv DB_HOST "${DB_HOST:-mariadb}"
