@@ -107,9 +107,7 @@ export const arAuth: Record<string, string> = {
   "Véhicule ou dates manquants.": "السيارة أو التواريخ ناقصة.",
   "Véhicule introuvable.": "السيارة غير موجودة.",
   "Devis calculé.": "تم حساب السعر.",
-  "Ce code promo n'existe pas ou n'est plus actif.": "رمز التخفيض هذا غير موجود أو لم يعد صالحًا.",
-  "Ce code a expiré.": "انتهت صلاحية هذا الرمز.",
-  "Ce code a déjà été utilisé le nombre maximum de fois.": "بلغ هذا الرمز الحد الأقصى لعدد الاستخدامات.",
+  "Code promo invalide ou non applicable.": "رمز التخفيض غير صالح أو غير قابل للتطبيق.",
   "Code appliqué.": "تم تطبيق الرمز.",
   "Code valide, mais votre remise actuelle est plus avantageuse (remises non cumulables).":
     "الرمز صالح، لكن تخفيضك الحالي أفضل (التخفيضات غير قابلة للجمع).",
