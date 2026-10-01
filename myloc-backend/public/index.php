@@ -4,6 +4,12 @@ declare(strict_types=1);
 
 // Serve existing static files directly without bootstrapping the app.
 $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+// Défense en profondeur : toute traversée « .. » ne doit jamais atteindre le système de
+// fichiers, quel que soit le serveur (Apache normalise avant PHP ; php -S, un tunnel, non).
+if ($uri === null || strpos($uri, '..') !== false) {
+    http_response_code(404);
+    return false;
+}
 $staticPath = __DIR__ . $uri;
 if (file_exists($staticPath) && is_file($staticPath)) {
     return false;
@@ -81,7 +87,10 @@ $router->get('/api/auth/reset', fn() => $passwordResetController->check());
 $router->post('/api/auth/reset', fn() => $passwordResetController->reset());
 $router->put('/api/auth/me', fn() => $authController->updateMe());
 $router->put('/api/auth/password', fn() => $authController->changePassword());
-$router->get('/api/auth/clients', fn() => $authController->listClients(), 'admin');
+// Annuaire clients (emails, téléphones, dépenses) : réservé au propriétaire.
+$router->get('/api/auth/clients', fn() => $authController->listClients(), 'owner');
+// Révocation de tous les jetons du client (ordinateur perdu/volé).
+$router->post('/api/auth/logout-all', fn() => $authController->logoutAllDevices(), 'client');
 
 // Espace agence : connexion, 2FA, équipe, journal
 $router->post('/api/agency/login', fn() => $agencyController->login());

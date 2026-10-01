@@ -72,26 +72,22 @@ class AgencyController
         $this->rateLimiter->reset($key);
 
         $id = (int) $user['id'];
-        $role = AuthMiddleware::normalizeRole($user['role']);
 
         // 2FA déjà activée : on demande le code
         if ((int) $user['totp_enabled'] && $user['totp_secret']) {
             Response::success('Code requis.', ['step' => 'totp', 'challenge' => $this->challenge($user, false)]);
         }
 
-        // Propriétaire sans 2FA : mise en place obligatoire
-        if ($role === 'owner') {
-            $secret = Totp::generateSecret();
-            $this->users->setTotpSecret($id, $secret);
-            Response::success('Activez la double authentification.', [
-                'step' => 'totp_setup',
-                'challenge' => $this->challenge($user, true),
-                'secret' => $secret,
-                'otpauth' => Totp::uri($secret, $user['email']),
-            ]);
-        }
-
-        $this->issueSession($user);
+        // Sans 2FA : mise en place obligatoire pour TOUT l'équipe (propriétaire et employés) —
+        // un mot de passe volé ne doit pas suffire à ouvrir le back-office.
+        $secret = Totp::generateSecret();
+        $this->users->setTotpSecret($id, $secret);
+        Response::success('Activez la double authentification.', [
+            'step' => 'totp_setup',
+            'challenge' => $this->challenge($user, true),
+            'secret' => $secret,
+            'otpauth' => Totp::uri($secret, $user['email']),
+        ]);
     }
 
     /** Deuxième étape : code de l'application (ou code de secours). */
@@ -219,21 +215,12 @@ class AgencyController
         Response::success('Nouveaux codes de secours.', ['recovery_codes' => $plain]);
     }
 
-    /** Un employé peut retirer sa 2FA ; le propriétaire, jamais. */
+    /** La 2FA ne se retire pas soi-même : le propriétaire la réinitialise via « reset-2fa ». */
     public function twoFactorDisable(): void
     {
-        $auth = AuthMiddleware::requireStaff();
-        if ($auth['role'] === 'owner') {
-            Response::error('La double authentification est obligatoire pour le propriétaire.', 403);
-        }
-        $hash = $this->users->getPasswordHash($auth['user_id']);
-        $password = $this->json()['password'] ?? '';
-        if (!$hash || !is_string($password) || !password_verify($password, $hash)) {
-            Response::error('Mot de passe incorrect.', 422);
-        }
-        $this->users->setTotpSecret($auth['user_id'], null);
-        Audit::log('2fa_disabled', 'user', $auth['user_id']);
-        Response::success('Double authentification désactivée.');
+        AuthMiddleware::requireStaff();
+        Response::error('La double authentification ne peut plus être désactivée depuis cette page. '
+            . 'Seul le propriétaire peut réinitialiser une 2FA depuis l\'équipe.', 403);
     }
 
     /* ───────────── Équipe (propriétaire) ───────────── */

@@ -803,10 +803,6 @@ export async function regenerateRecoveryCodes(code: string): Promise<string[]> {
   return res.recovery_codes;
 }
 
-export async function twoFactorDisable(password: string): Promise<void> {
-  await request<unknown>("POST", "/agency/2fa/disable", { password }, true);
-}
-
 export interface TeamMember extends UserFromApi {
   role: "owner" | "employee";
 }

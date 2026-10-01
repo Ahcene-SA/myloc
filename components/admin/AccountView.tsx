@@ -12,7 +12,6 @@ import {
   changePassword,
   isOwner,
   regenerateRecoveryCodes,
-  twoFactorDisable,
   twoFactorEnable,
   twoFactorSetup,
   updateProfile,
@@ -195,8 +194,7 @@ function TwoFactorCard({ owner }: { owner: boolean }) {
   const [setup, setSetup] = useState<{ secret: string; otpauth: string } | null>(null);
   const [codes, setCodes] = useState<string[] | null>(null);
   const [code, setCode] = useState("");
-  const [password, setPassword] = useState("");
-  const [mode, setMode] = useState<null | "regenerate" | "disable">(null);
+  const [mode, setMode] = useState<null | "regenerate">(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
@@ -224,9 +222,7 @@ function TwoFactorCard({ owner }: { owner: boolean }) {
       text={
         enabled
           ? "Activée : un code à 6 chiffres de votre téléphone est demandé à chaque connexion."
-          : owner
-            ? "Obligatoire pour le propriétaire."
-            : "Recommandée : même si votre mot de passe fuite, personne n'entre sans votre téléphone."
+          : "Obligatoire pour toute l'équipe : même si votre mot de passe fuite, personne n'entre sans votre téléphone."
       }
     >
       <div className="flex flex-col gap-4">
@@ -240,11 +236,6 @@ function TwoFactorCard({ owner }: { owner: boolean }) {
                 <button type="button" onClick={() => setMode("regenerate")} className={secondaryBtn}>
                   Nouveaux codes de secours
                 </button>
-                {!owner && (
-                  <button type="button" onClick={() => setMode("disable")} className="inline-flex h-9 items-center rounded-md px-3.5 text-sm font-medium text-red-700 hover:bg-red-50">
-                    Désactiver
-                  </button>
-                )}
               </div>
             )}
             {mode === "regenerate" && (
@@ -264,31 +255,6 @@ function TwoFactorCard({ owner }: { owner: boolean }) {
                 <div className="flex gap-2">
                   <button type="submit" disabled={busy || code.length !== 6} className={primaryBtn}>
                     {busy && <Loader2 className="h-4 w-4 animate-spin" />} Générer
-                  </button>
-                  <button type="button" onClick={() => setMode(null)} className={secondaryBtn}>
-                    Annuler
-                  </button>
-                </div>
-              </form>
-            )}
-            {mode === "disable" && (
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  run(async () => {
-                    await twoFactorDisable(password);
-                    await refresh();
-                    setMode(null);
-                    setPassword("");
-                  });
-                }}
-                className="flex flex-col gap-3"
-              >
-                <p className="text-sm text-slate-600">Confirmez avec votre mot de passe :</p>
-                <input aria-label="Votre mot de passe" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} className={`${inputClass} max-w-xs`} required />
-                <div className="flex gap-2">
-                  <button type="submit" disabled={busy} className="inline-flex h-9 items-center gap-2 rounded-md bg-red-600 px-3.5 text-sm font-medium text-white shadow-sm hover:bg-red-700 disabled:opacity-60">
-                    {busy && <Loader2 className="h-4 w-4 animate-spin" />} Désactiver
                   </button>
                   <button type="button" onClick={() => setMode(null)} className={secondaryBtn}>
                     Annuler

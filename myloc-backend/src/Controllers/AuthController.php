@@ -204,9 +204,20 @@ class AuthController
 
     public function listClients(): void
     {
-        AuthMiddleware::requireStaff();
+        // L'annuaire clients est une information sensible (coordonnées, dépenses) :
+        // réservé au propriétaire, comme l'équipe et les journaux.
+        AuthMiddleware::requireOwner();
         $clients = $this->userModel->findClientsWithStats();
         Response::success('Clients récupérés.', ['clients' => $clients]);
+    }
+
+    /** Déconnexion partout : invalide le jeton actuel et tous les autres (version de jeton). */
+    public function logoutAllDevices(): void
+    {
+        $user = AuthMiddleware::requireClient();
+        $this->userModel->bumpTokenVersion((int) $user['user_id']);
+        Audit::log('client_logout_all', 'user', (int) $user['user_id']);
+        Response::success('Déconnecté de tous les appareils. Reconnectez-vous.');
     }
 
     private function getJsonInput(): array

@@ -95,13 +95,16 @@ class AuthMiddleware
     /** Un changement de mot de passe (ex. « mot de passe oublié ») ferme les autres sessions du client. */
     private static function checkClientSession(array $user, object $decoded): void
     {
-        $stmt = Database::shared()->getPdo()->prepare('SELECT token_version FROM users WHERE id = :id LIMIT 1');
+        $stmt = Database::shared()->getPdo()->prepare('SELECT active, token_version FROM users WHERE id = :id LIMIT 1');
         $stmt->execute([':id' => $user['user_id']]);
-        $version = $stmt->fetchColumn();
-        if ($version === false) {
+        $row = $stmt->fetch();
+        if ($row === false) {
             Response::error('Session invalide : reconnectez-vous.', 401);
         }
-        if ((int) $version !== (int) ($decoded->tv ?? 0)) {
+        if (!(int) $row['active']) {
+            Response::error('Compte désactivé. Contactez l\'agence.', 403);
+        }
+        if ((int) $row['token_version'] !== (int) ($decoded->tv ?? 0)) {
             Response::error('Session fermée : reconnectez-vous.', 401);
         }
     }
