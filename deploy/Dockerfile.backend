@@ -9,6 +9,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends libzip-dev defa
     && a2enmod rewrite headers \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# php.ini durci : les erreurs vont dans les journaux (jamais dans la réponse HTTP) et
+# l'en-tête X-Powered-By disparaît.
+RUN printf 'display_errors=Off\nlog_errors=On\nerror_log=/var/www/html/logs/php-errors.log\nexpose_php=Off\n' \
+    > /usr/local/etc/php/conf.d/zz-myloc.ini
+
 # Composer pour les dépendances (phpdotenv, php-jwt)
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
