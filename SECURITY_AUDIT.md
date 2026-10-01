@@ -74,6 +74,22 @@ Dépendances : phpdotenv 5.6.4, firebase/php-jwt 7.1.0, Next 16.2.10, React 19.2
 vulnérable épinglé. (Audit `composer`/`npm` exécuté implicitement par revue des versions ; rerun
 périodique recommandé — voir checklist.)
 
+## Preuves (stack Docker locale reconstruite sur cette branche, 2026-10-01)
+
+| # | Test | Résultat |
+|---|------|----------|
+| P1 | `curl -D -` backend direct | `X-Powered-By` absent (`zz-myloc.ini`) |
+| P2 | `Origin: https://evil.example` → `/api/pricing/rules` | **aucun** `Access-Control-Allow-Origin` |
+| P3 | `Origin: https://ahcene-sa.github.io` | `Access-Control-Allow-Origin: https://ahcene-sa.github.io` + `Vary: Origin` |
+| P4 | `GET /images/cars/car-…png` via Nginx frontal | HTTP 200, 99 042 octets (S26) |
+| P5 | 11 `POST /api/auth/register` même email | 1×201, 9×409, **11e → 429** |
+| P6 | 21 `POST /api/pricing/quote` code bidon | 20×200 message unique « Code promo invalide ou non applicable. », **21e → 429** |
+| P7 | XFF `9.9.9.9` sur le compteur saturé de P5 | 409 (compteur bien **par visiteur**, pas global) |
+| P8 | `php -S` + `GET /../.env` | refusé (le garde « .. » réagit même hors Apache) |
+| P9 | `/api/auth/clients` sans jeton | 401 (route passée en `'owner'`) |
+
+Le `.env` généré dans le conteneur contient les vraies valeurs + `TRUST_PROXY="1"`.
+
 ## Checklist hors code (à faire côté serveur/opérations)
 
 - [ ] **Rotation du mot de passe BD** avant fusion (S2) : choisir un nouveau `DB_PASS` dans
