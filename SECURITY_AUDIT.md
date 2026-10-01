@@ -106,7 +106,7 @@ Le `.env` généré dans le conteneur contient les vraies valeurs + `TRUST_PROXY
       réserver `root` qu'à la maintenance.
 - [ ] Sauvegardes : dump `mariadb-dump` quotidien du volume + stockage hors VPS ;
       tester la restauration une fois.
-- [ ] fail2ban / WAF : Cloudflare devant `myloc-dz.com` (proxy orange) filtre et cache
+- [ ] fail2ban / WAF : Cloudflare devant `mylocdz.com` (proxy orange) filtre et cache
       l'IP du serveur ; à défaut, un fail2ban sur les logs Traefik/Nginx.
 - [ ] Mise à jour : `composer audit` + `npm audit` mensuels (ou Dependabot) ;
       renouveler les bases d'images (`mariadb:11`, `php:8.3-apache`, `node:22-alpine`,
