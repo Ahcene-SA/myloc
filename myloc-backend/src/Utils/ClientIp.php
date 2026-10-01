@@ -6,9 +6,12 @@ namespace Myloc\Utils;
 
 /**
  * Adresse IP du visiteur.
- * Par défaut REMOTE_ADDR. Si l'API est derrière un proxy local (Nginx, Cloudflare Tunnel…)
- * et que TRUST_PROXY=1 dans .env, on lit l'en-tête transmis par ce proxy — uniquement quand
- * la connexion vient de la machine elle-même (127.0.0.1 / ::1), sinon l'en-tête serait falsifiable.
+ * Par défaut REMOTE_ADDR. TRUST_PROXY=1 signifie « la connexion directe vient de notre
+ * proxy de confiance » (le Nginx frontal de la stack compose, sur le réseau privé Docker) :
+ * on lit l'IP réelle qu'il transmet. Nginx réécrit X-Forwarded-For en une seule valeur
+ * (connexion réelle après Traefik, voir nginx-frontend.conf) ; CF-Connecting-IP reste pris
+ * en premier si un jour le site passe derrière Cloudflare.
+ * TRUST_PROXY=0 (développement, tunnels) : les en-têtes seraient falsifiables.
  */
 class ClientIp
 {
@@ -16,7 +19,7 @@ class ClientIp
     {
         $remote = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
         $trust = in_array(strtolower((string) ($_ENV['TRUST_PROXY'] ?? '')), ['1', 'true', 'yes', 'on'], true);
-        if (!$trust || !in_array($remote, ['127.0.0.1', '::1'], true)) {
+        if (!$trust) {
             return $remote;
         }
 
@@ -26,9 +29,14 @@ class ClientIp
         }
         $xff = (string) ($_SERVER['HTTP_X_FORWARDED_FOR'] ?? '');
         if ($xff !== '') {
-            $first = trim(explode(',', $xff)[0]);
-            if (filter_var($first, FILTER_VALIDATE_IP)) {
-                return $first;
+            // Entrée la plus à droite : ajoutée par le proxy de confiance (la gauche est
+            // falsifiable par le visiteur lui-même).
+            $entries = explode(',', $xff);
+            for ($i = count($entries) - 1; $i >= 0; $i--) {
+                $candidate = trim($entries[$i]);
+                if ($candidate !== '' && filter_var($candidate, FILTER_VALIDATE_IP)) {
+                    return $candidate;
+                }
             }
         }
         return $remote;

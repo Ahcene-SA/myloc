@@ -72,8 +72,12 @@ Stack complète : site statique (Nginx) + API PHP (Apache) + MariaDB, avec donn�
   - **Laisser `log`** : le texte reste dans le conteneur (consultable par la console Dokploy
     du backend : `cat /var/www/html/logs/whatsapp/<fichier>.txt`).
   - Si `WHATSAPP_TO` est vide, le numéro est repris de `AGENCY_PHONE`.
-- **CORS** : le backend accepte uniquement les origines de `ALLOWED_ORIGINS`. Si tu ajoutes
-  un domaine, il faut aussi le mettre dans cette variable.
+- **CORS** : le navigateur ne peut appeler l'API que depuis les origines de `ALLOWED_ORIGINS`
+  (défaut : `https://myloc-dz.com` + `https://ahcene-sa.github.io`). Si tu ajoutes un domaine,
+  il faut aussi le mettre dans cette variable ; liste vide (développement) = tout autoriser.
+- **IP visiteur** : l'API est derrière le Nginx frontal qui transmet l'IP réelle du visiteur ;
+  les limiteurs par IP (connexion, inscriptions, codes promo, réservations) comptent donc par
+  personne réelle, et non par conteneur.
 - **Images de véhicules** : les uploads vont dans le volume `uploads`
   (`/var/www/html/public/images` dans le conteneur). Le marqueur du premier lancement
   (`.myloc-seeded`) y vit aussi — pour relire flotte/admin, supprimer ce fichier et redémarrer.

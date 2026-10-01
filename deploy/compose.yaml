@@ -48,7 +48,9 @@ services:
       DB_PASS: ${DB_PASS:?DB_PASS requis (onglet Environment Dokploy)}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET requis (32+ caractères aléatoires)}
       JWT_EXPIRY: "86400"
-      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-https://localhost}
+      # Liste blanche CORS réelle (CorsMiddleware) : le site est sur son propre domaine ;
+      # ahcene-sa.github.io si le site est servi depuis GitHub Pages. Vide en dev = « * ».
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-https://myloc-dz.com,https://ahcene-sa.github.io}
       RATE_LIMIT_MAX_ATTEMPTS: "5"
       RATE_LIMIT_WINDOW_SECONDS: "900"
       MAIL_DRIVER: ${MAIL_DRIVER:-log}
