@@ -10,6 +10,8 @@ use Myloc\Models\Car;
 use Myloc\Models\Promo;
 use Myloc\Services\Pricing;
 use Myloc\Utils\Audit;
+use Myloc\Utils\ClientIp;
+use Myloc\Utils\RateLimiter;
 use Myloc\Utils\Response;
 use Myloc\Utils\Validator;
 
@@ -18,12 +20,14 @@ class PricingController
     private Pricing $pricing;
     private Promo $promos;
     private Car $cars;
+    private RateLimiter $promoLimiter;
 
     public function __construct(Database $db)
     {
         $this->pricing = new Pricing($db);
         $this->promos = new Promo($db);
         $this->cars = new Car($db);
+        $this->promoLimiter = new RateLimiter($db, 20, 600);
     }
 
     /** Devis : prix, remise appliquée et vérification d'un code promo (visiteur ou client connecté). */
@@ -47,6 +51,17 @@ class PricingController
         $user = AuthMiddleware::optionalUser();
         $userId = $user && $user['role'] === 'client' ? $user['user_id'] : null;
         $code = isset($input['promo_code']) ? Validator::sanitizeString($input['promo_code']) : null;
+
+        // Brute force de codes promo par un visiteur sans compte : chaque essai de code
+        // compte dans un compteur par adresse IP (20 par 10 minutes). Sans code, libre.
+        if ($code !== null && $code !== '') {
+            $key = 'promo:' . ClientIp::get();
+            if (!$this->promoLimiter->isAllowed($key)) {
+                $min = max(1, (int) ceil($this->promoLimiter->remainingLockoutSeconds($key) / 60));
+                Response::error("Trop de codes testés depuis cette connexion. Réessayez dans {$min} minute(s).", 429);
+            }
+            $this->promoLimiter->recordFailure($key);
+        }
 
         Response::success('Devis calculé.', ['quote' => $this->pricing->quote((float) $car['price_per_day'], $days, $userId, $code)]);
     }

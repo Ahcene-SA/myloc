@@ -255,7 +255,7 @@ class AgencyController
         }
 
         $temp = $this->temporaryPassword();
-        $id = $this->users->createStaff($fullName, $email, $phone, $role, $agency !== '' ? $agency : null, password_hash($temp, PASSWORD_BCRYPT));
+        $id = $this->users->createStaff($fullName, $email, $phone, $role, $agency !== '' ? $agency : null, password_hash($temp, PASSWORD_BCRYPT, ['cost' => 12]));
         Audit::log('member_created', 'user', $id, ['name' => $fullName, 'email' => $email, 'role' => $role]);
         Response::success('Compte créé.', ['member' => $this->users->findById($id), 'temporary_password' => $temp], 201);
     }
@@ -340,7 +340,7 @@ class AgencyController
             Response::error('Changez votre propre mot de passe depuis « Mon compte ».', 422);
         }
         $temp = $this->temporaryPassword();
-        $this->users->setTemporaryPassword($id, password_hash($temp, PASSWORD_BCRYPT));
+        $this->users->setTemporaryPassword($id, password_hash($temp, PASSWORD_BCRYPT, ['cost' => 12]));
         Audit::log('member_password_reset', 'user', $id, ['name' => $member['full_name']]);
         Response::success('Mot de passe réinitialisé.', ['temporary_password' => $temp]);
     }

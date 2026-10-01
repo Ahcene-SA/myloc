@@ -107,7 +107,7 @@ class PasswordResetController
             Response::error('Ce lien a déjà été utilisé. Demandez-en un nouveau.', 410);
         }
         $this->pdo->prepare('UPDATE users SET password_hash = :hash, must_change_password = 0, token_version = token_version + 1 WHERE id = :id')
-            ->execute([':hash' => password_hash($password, PASSWORD_BCRYPT), ':id' => $userId]);
+            ->execute([':hash' => password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]), ':id' => $userId]);
         $this->pdo->prepare('DELETE FROM password_resets WHERE user_id = :id AND id <> :rid')->execute([':id' => $userId, ':rid' => $row['reset_id']]);
         $this->pdo->commit();
 

@@ -170,20 +170,16 @@ class Pricing
     {
         $p = $this->promos->findByCode($code);
         $today = date('Y-m-d');
-        if (!$p || !(int) $p['active']) {
-            return [false, 'Ce code promo n\'existe pas ou n\'est plus actif.', 0.0, ''];
-        }
-        if ($p['valid_from'] && $today < $p['valid_from']) {
-            return [false, 'Ce code sera valable à partir du ' . date('d/m/Y', strtotime($p['valid_from'])) . '.', 0.0, ''];
-        }
-        if ($p['valid_until'] && $today > $p['valid_until']) {
-            return [false, 'Ce code a expiré.', 0.0, ''];
-        }
-        if ($p['max_uses'] !== null && (int) $p['uses'] >= (int) $p['max_uses']) {
-            return [false, 'Ce code a déjà été utilisé le nombre maximum de fois.', 0.0, ''];
-        }
-        if ($p['min_days'] !== null && $days < (int) $p['min_days']) {
-            return [false, 'Ce code est valable à partir de ' . (int) $p['min_days'] . ' jours de location.', 0.0, ''];
+        // Tous les états « inapplicable » (inexistant, désactivé, à venir, expiré, épuisé,
+        // durée minimale) donnent le même message : impossible de sonder l'état d'un code.
+        if (!$p
+            || !(int) $p['active']
+            || ($p['valid_from'] && $today < $p['valid_from'])
+            || ($p['valid_until'] && $today > $p['valid_until'])
+            || ($p['max_uses'] !== null && (int) $p['uses'] >= (int) $p['max_uses'])
+            || ($p['min_days'] !== null && $days < (int) $p['min_days'])
+        ) {
+            return [false, 'Code promo invalide ou non applicable.', 0.0, ''];
         }
         $value = (float) $p['discount_value'];
         if ($p['discount_type'] === 'percent') {

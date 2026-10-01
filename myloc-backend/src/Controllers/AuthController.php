@@ -19,21 +19,33 @@ class AuthController
     private User $userModel;
     private RateLimiter $rateLimiter;
     private RateLimiter $ipLimiter;
+    private RateLimiter $registerLimiter;
 
     /** Échecs de connexion tolérés par adresse IP sur la fenêtre IP_WINDOW_SECONDS. */
     public const IP_MAX_FAILURES = 20;
     public const IP_WINDOW_SECONDS = 900;
+    /** Inscriptions par adresse IP et par heure (sondage d'emails possédant un compte, faux comptes en masse). */
+    public const REGISTER_MAX_PER_IP = 10;
+    public const REGISTER_WINDOW_SECONDS = 3600;
 
     public function __construct(Database $db)
     {
         $this->userModel = new User($db);
         $this->rateLimiter = new RateLimiter($db);
         $this->ipLimiter = new RateLimiter($db, self::IP_MAX_FAILURES, self::IP_WINDOW_SECONDS);
+        $this->registerLimiter = new RateLimiter($db, self::REGISTER_MAX_PER_IP, self::REGISTER_WINDOW_SECONDS);
     }
 
     public function register(): void
     {
         $input = $this->getJsonInput();
+
+        // Sondage d'emails possédant un compte (409 distinct) et fausses inscriptions en
+        // masse : le compteur tourne par adresse IP (10 inscriptions par heure).
+        $rlKey = 'register:' . ClientIp::get();
+        if (!$this->registerLimiter->isAllowed($rlKey)) {
+            Response::error('Trop d\'inscriptions depuis cette connexion. Réessayez ultérieurement.', 429);
+        }
 
         $required = Validator::required($input, ['full_name', 'email', 'phone', 'password']);
         if (!empty($required)) {
@@ -59,11 +71,14 @@ class AuthController
         }
 
         if ($this->userModel->emailExists($email)) {
+            $this->registerLimiter->recordFailure($rlKey);
             Response::error('Un compte existe déjà avec cet email.', 409);
         }
 
-        $hash = password_hash($password, PASSWORD_BCRYPT);
+        $hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
         $userId = $this->userModel->create($fullName, $email, $phone, $hash);
+        // Chaque inscription créée compte dans le plafond (les erreurs de validation, non).
+        $this->registerLimiter->recordFailure($rlKey);
 
         $token = JwtHelper::encode($userId, 'client', ['scope' => 'client']);
 
@@ -186,7 +201,7 @@ class AuthController
             Response::error('Choisissez un mot de passe différent de l\'actuel.', 422);
         }
 
-        $this->userModel->updatePassword($user['user_id'], password_hash($new, PASSWORD_BCRYPT));
+        $this->userModel->updatePassword($user['user_id'], password_hash($new, PASSWORD_BCRYPT, ['cost' => 12]));
         // Les autres appareils sont déconnectés ; cet appareil reçoit un nouveau jeton
         $this->userModel->bumpTokenVersion($user['user_id']);
         $staff = AuthMiddleware::isStaffRole($user['role']);

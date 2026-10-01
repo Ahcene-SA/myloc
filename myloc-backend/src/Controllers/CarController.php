@@ -304,7 +304,10 @@ class CarController
         }
 
         if (array_key_exists('image_url', $input)) {
-            $data['image_url'] = Validator::sanitizeString($input['image_url']);
+            $url = Validator::sanitizeString($input['image_url']);
+            // Uniquement les fichiers renommés par notre upload (même règle que pour la
+            // suppression, CarController::delete) : jamais une URL externe ou un autre schéma.
+            $data['image_url'] = preg_match('#^images/cars/car-[a-f0-9]{16}\.(png|jpg|webp|gif)$#', $url) ? $url : '';
         }
 
         if (array_key_exists('status', $input)) {

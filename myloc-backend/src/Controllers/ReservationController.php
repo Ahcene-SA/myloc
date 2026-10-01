@@ -13,6 +13,8 @@ use Myloc\Services\Emails;
 use Myloc\Services\Pricing;
 use Myloc\Services\WhatsApp;
 use Myloc\Utils\Audit;
+use Myloc\Utils\ClientIp;
+use Myloc\Utils\RateLimiter;
 use Myloc\Utils\Response;
 use Myloc\Utils\Validator;
 
@@ -22,6 +24,8 @@ class ReservationController
     private const PAYMENT_METHODS = ['especes', 'carte', 'virement'];
     /** Demandes en attente simultanées par client (évite de bloquer toute la flotte). */
     private const MAX_PENDING_PER_CLIENT = 3;
+    /** Demandes de réservation par adresse IP et par jour (plafonne les comptes jetables). */
+    private const MAX_PER_IP_PER_DAY = 10;
     /** Réservation en ligne : départ au plus tard dans 12 mois. */
     private const MAX_MONTHS_AHEAD = 12;
     /** Remise maximale qu'un employé peut accorder sous le tarif calculé (au-delà : le propriétaire). */
@@ -34,6 +38,7 @@ class ReservationController
     private User $userModel;
     private Pricing $pricing;
     private \PDO $pdo;
+    private RateLimiter $ipReservationLimiter;
 
     public function __construct(Database $db)
     {
@@ -42,12 +47,19 @@ class ReservationController
         $this->userModel = new User($db);
         $this->reservationModel = new Reservation($db);
         $this->carModel = new Car($db);
+        $this->ipReservationLimiter = new RateLimiter($db, self::MAX_PER_IP_PER_DAY, 86400);
     }
 
     public function create(): void
     {
         $user = AuthMiddleware::requireClient();
         $input = $this->getJsonInput();
+
+        // Plafond par adresse IP, indépendant du nombre de comptes (bots à comptes jetables).
+        $ipKey = 'reserv:' . ClientIp::get();
+        if (!$this->ipReservationLimiter->isAllowed($ipKey)) {
+            Response::error('Trop de demandes de réservation depuis cette connexion. Réessayez demain.', 429);
+        }
 
         $required = Validator::required($input, ['car_id', 'start_date', 'end_date', 'full_name', 'email', 'phone']);
         if (!empty($required)) {
@@ -147,6 +159,9 @@ class ReservationController
             $this->rollBack();
             throw $e;
         }
+
+        // Seules les réservations créées comptent dans le plafond (les erreurs de validation, non).
+        $this->ipReservationLimiter->recordFailure($ipKey);
 
         $reservation = $this->reservationModel->findById($reservationId);
 
