@@ -50,6 +50,11 @@ Stack complète : site statique (Nginx) + API PHP (Apache) + MariaDB, avec donn�
 
 ## Notes
 
+- **Périmètre de l'équipe** : les employés (`/agence`) peuvent confirmer/annuler/refuser des
+  réservations, gérer les contrôles documentaires et éditer les véhicules — tout sauf la
+  gestion de l'équipe, les codes promo, les règles de tarification et **l'annuaire clients**
+  (réservé au propriétaire). Un employé qui quitte l'agence : « désactiver » son compte dans
+  Équipe ; sa 2FA reste en place à sa réactivation (et son jeton expiré est refusé).
 - **WhatsApp** : chaque nouvelle réservation envoyée par le site déclenche une alerte WhatsApp
   à l'agence, avec le récapitulatif (référence, véhicule, dates, total) et les coordonnées du
   client (nom, téléphone, e-mail, note). Par défaut (`WHATSAPP_DRIVER=log`), rien n'est envoyé :

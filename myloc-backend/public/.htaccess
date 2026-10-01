@@ -15,3 +15,9 @@
 <IfModule mod_headers.c>
     SetEnvIf Authorization .+ HTTP_AUTHORIZATION=$0
 </IfModule>
+
+# Défense en profondeur : ces fichiers n'appartiennent jamais au site public
+# (la configuration vit hors de public/, ce bloc la protège si elle un jour migre ici).
+<FilesMatch "\.(env|log|bak|sql|ini|pem|key)$">
+    Require all denied
+</FilesMatch>

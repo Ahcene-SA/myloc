@@ -63,7 +63,11 @@ class Mailer
         $file = sprintf('%s/%s_%s.html', $dir, date('Ymd-His'), trim((string) $slug, '-'));
         $header = sprintf(
             "<!-- À : %s | Objet : %s | %s -->\n<div style=\"font:13px monospace;background:#fffbe6;padding:8px 12px;border-bottom:1px solid #eee\">À : %s — Objet : %s</div>\n",
-            $to, $subject, date('c'), htmlspecialchars($to), htmlspecialchars($subject)
+            htmlspecialchars($to, ENT_QUOTES, 'UTF-8'),
+            htmlspecialchars($subject, ENT_QUOTES, 'UTF-8'),
+            date('c'),
+            htmlspecialchars($to),
+            htmlspecialchars($subject)
         );
         file_put_contents($file, $header . $html);
         error_log("[mail] {$to} — {$subject} → logs/mails/" . basename($file));
