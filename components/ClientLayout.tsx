@@ -4,6 +4,7 @@ import { useEffect, useSyncExternalStore } from "react";
 import { ClientProvider } from "./ClientContext";
 import { ClientSidebar } from "./ClientSidebar";
 import { ClientContent } from "./ClientContent";
+import { StatusNotice } from "./client/StatusNotice";
 import { useAuth } from "./AuthContext";
 import { LoadingBlock } from "./client/shared";
 import { pageUrl } from "@/lib/routes";
@@ -38,6 +39,7 @@ export function ClientLayout() {
   return (
     <ClientProvider>
       <div className="min-h-screen bg-slate-50">
+        <StatusNotice />
         <ClientSidebar />
         <main className="md:ps-64">
           <div className="px-4 pb-10 pt-20 sm:px-6 md:pt-8 lg:px-10">

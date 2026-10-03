@@ -47,6 +47,9 @@ interface ClientContextValue {
   refresh: () => Promise<void>;
   /** Remplace une réservation dans la liste (après annulation, par exemple). */
   upsertReservation: (r: ReservationFromApi) => void;
+  /** Réponse de l'agence arrivée pendant que l'espace est ouvert (bandeau à afficher). */
+  statusNotice: ReservationFromApi | null;
+  dismissStatusNotice: () => void;
 }
 
 const ClientContext = createContext<ClientContextValue | undefined>(undefined);
@@ -94,6 +97,42 @@ export function ClientProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // Mise à jour en direct : la réponse de l'agence apparaît sans recharger la page
+  const [statusNotice, setStatusNotice] = useState<ReservationFromApi | null>(null);
+  const dismissStatusNotice = useCallback(() => setStatusNotice(null), []);
+  useEffect(() => {
+    let cancelled = false;
+    let busy = false;
+    const check = async () => {
+      if (busy || document.visibilityState !== "visible") return;
+      busy = true;
+      try {
+        const fresh = await fetchMyReservations();
+        if (cancelled) return;
+        setReservations((old) => {
+          const before = new Map(old.map((r) => [r.id, r.status]));
+          const changed = fresh.find((r) => before.has(r.id) && before.get(r.id) !== r.status && r.status !== "pending");
+          if (changed) setStatusNotice(changed);
+          return fresh;
+        });
+      } catch {
+        /* réseau coupé ou session expirée : géré au prochain tour / par l'API */
+      } finally {
+        busy = false;
+      }
+    };
+    const timer = window.setInterval(check, 20_000);
+    const onVisible = () => document.visibilityState === "visible" && check();
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+    };
+  }, []);
+
   const setActiveTab = (tab: ClientTab) => {
     setActiveTabState(tab);
     if (tab !== "reserver") setPreselectedCarId(null);
@@ -119,7 +158,21 @@ export function ClientProvider({ children }: { children: ReactNode }) {
 
   return (
     <ClientContext.Provider
-      value={{ activeTab, setActiveTab, preselectedCarId, goReserve, bookingPrefill, cars, reservations, loading, error, refresh, upsertReservation }}
+      value={{
+        activeTab,
+        setActiveTab,
+        preselectedCarId,
+        goReserve,
+        bookingPrefill,
+        cars,
+        reservations,
+        loading,
+        error,
+        refresh,
+        upsertReservation,
+        statusNotice,
+        dismissStatusNotice,
+      }}
     >
       {children}
     </ClientContext.Provider>

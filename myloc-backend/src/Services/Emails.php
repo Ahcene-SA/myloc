@@ -15,10 +15,42 @@ use Myloc\Utils\Mailer;
  */
 class Emails
 {
+    /**
+     * Adresse publique du site, pour les liens des e-mails.
+     * FRONTEND_URL dans le .env si renseigné, sinon déduite de la requête en cours
+     * (le site et l'API sont sur le même domaine en production), sinon localhost.
+     */
+    public static function siteUrl(): string
+    {
+        $configured = rtrim(trim((string) ($_ENV['FRONTEND_URL'] ?? '')), '/');
+        $host = (string) ($_SERVER['HTTP_X_FORWARDED_HOST'] ?? $_SERVER['HTTP_HOST'] ?? '');
+        $host = preg_replace('/[^a-z0-9.:\-]/i', '', explode(',', $host)[0]);
+        $isLocal = fn(string $h) => (bool) preg_match('/^(localhost|127\.0\.0\.1)(:\d+)?$/', $h);
+        // Une adresse « localhost » copiée de l'exemple est ignorée quand le site est en ligne
+        if ($configured !== '' && !(preg_match('#^https?://(localhost|127\.0\.0\.1)#', $configured) && $host !== '' && !$isLocal($host))) {
+            return $configured;
+        }
+        if ($host === '') {
+            return 'http://localhost:3001';
+        }
+        $https = ($_SERVER['HTTPS'] ?? '') === 'on' || ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https'
+            || !preg_match('/^(localhost|127\.0\.0\.1)(:\d+)?$/', $host);
+        // En local, l'API (port 8000) n'est pas le site (port 3001)
+        if (preg_match('/^(localhost|127\.0\.0\.1):8000$/', $host)) {
+            return 'http://localhost:3001';
+        }
+        return ($https ? 'https://' : 'http://') . $host;
+    }
+
+    /** Lien vers une page du site (« .html » en ligne, sans extension en développement local). */
     public static function pageLink(string $page, array $query = []): string
     {
-        $base = rtrim($_ENV['FRONTEND_URL'] ?? 'http://localhost:3001', '/');
-        $suffix = $_ENV['PAGE_SUFFIX'] ?? '';
+        $base = self::siteUrl();
+        // Le site exporté a des pages « client.html », « agence.html »… ; en local (npm run dev) pas d'extension
+        $suffix = trim((string) ($_ENV['PAGE_SUFFIX'] ?? ''));
+        if ($suffix === '') {
+            $suffix = preg_match('#^https?://(localhost|127\.0\.0\.1)#', $base) ? '' : '.html';
+        }
         return $base . '/' . $page . $suffix . ($query ? '?' . http_build_query($query) : '');
     }
 
@@ -193,6 +225,6 @@ class Emails
             . self::summary($r) . $noteHtml
             . '<p>D\'autres véhicules sont peut-être disponibles sur vos dates.</p>';
         Mailer::send($r['email'], ($status === 'rejected' ? 'Réservation non acceptée · ' : 'Réservation annulée · ') . $ref,
-            self::layout($status === 'rejected' ? 'Réservation non acceptée' : 'Réservation annulée', $body, ['Voir les voitures disponibles', rtrim($_ENV['FRONTEND_URL'] ?? 'http://localhost:3001', '/') . '/#vehicules']));
+            self::layout($status === 'rejected' ? 'Réservation non acceptée' : 'Réservation annulée', $body, ['Voir les voitures disponibles', self::siteUrl() . '/#vehicules']));
     }
 }
