@@ -149,20 +149,21 @@ export function CarCard({ car, index = 0, quote, onBook }: CarCardProps) {
             </div>
           </div>
         ) : (
-          <div className="mt-auto flex items-end justify-between gap-3 pt-5">
+          <div className="mt-auto pt-5">
             <p className="leading-none">
               <span className="block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">{t("À partir de")}</span>
-              <span className="mt-1.5 block whitespace-nowrap text-[28px] font-extrabold text-navy">
-                {formatPrice(car.price)}
-                <span className="ms-1 whitespace-nowrap text-xs font-semibold text-muted">/ {t(car.priceUnit)}</span>
+              <span className="mt-1.5 flex flex-wrap items-baseline gap-x-1.5 text-[28px] font-extrabold text-navy">
+                <span className="whitespace-nowrap">{formatPrice(car.price)}</span>
+                <span className="whitespace-nowrap text-xs font-semibold text-muted">/ {t(car.priceUnit)}</span>
               </span>
             </p>
+            {/* Bouton sous le prix, pleine largeur : il ne déborde plus de la carte, quelle que soit la police */}
             <a
               href={whatsappLink(t("Bonjour MYLOC.DZ, je suis intéressé(e) par la {car}. Est-elle disponible ?", { car: car.name }))}
               target="_blank"
               rel="noopener noreferrer"
               aria-label={t("Réserver la {car} sur WhatsApp", { car: car.name })}
-              className="flex h-12 items-center gap-2 rounded-full bg-sky px-4 text-sm font-bold text-navy transition-colors hover:bg-sky-mid hover:text-white"
+              className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-sky px-4 text-sm font-bold text-navy transition-colors hover:bg-sky-mid hover:text-white"
             >
               <WhatsAppIcon className="h-4 w-4" />
               {t("Réserver")}
