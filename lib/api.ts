@@ -156,6 +156,8 @@ async function request<T>(
     response = await fetch(url, {
       method,
       headers,
+      // Toujours la version à jour (Safari peut sinon resservir une ancienne réponse)
+      cache: "no-store",
       body: body ? (body instanceof FormData ? body : JSON.stringify(body)) : undefined,
     });
   } catch {

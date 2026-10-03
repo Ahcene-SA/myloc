@@ -10,6 +10,8 @@ class Response
     {
         http_response_code($status);
         header('Content-Type: application/json; charset=utf-8');
+        // Données personnelles et statuts en direct : jamais gardés en cache par le navigateur
+        header('Cache-Control: no-store');
         echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         exit;
     }

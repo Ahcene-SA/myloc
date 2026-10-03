@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import type { ClientTab } from "./ClientSidebar";
 import { fetchCars, fetchMyReservations, type CarFromApi, type ReservationFromApi } from "@/lib/api";
 import { takeBookingIntent, type BookingIntent } from "@/lib/booking";
@@ -64,6 +64,11 @@ export function ClientProvider({ children }: { children: ReactNode }) {
   useEffect(() => saveNav(activeTab, preselectedCarId), [activeTab, preselectedCarId]);
   const [cars, setCars] = useState<CarFromApi[]>([]);
   const [reservations, setReservations] = useState<ReservationFromApi[]>([]);
+  // Dernière liste connue, lue par la vérification en direct pour repérer un changement de statut
+  const reservationsRef = useRef<ReservationFromApi[]>([]);
+  useEffect(() => {
+    reservationsRef.current = reservations;
+  }, [reservations]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -109,27 +114,31 @@ export function ClientProvider({ children }: { children: ReactNode }) {
       try {
         const fresh = await fetchMyReservations();
         if (cancelled) return;
-        setReservations((old) => {
-          const before = new Map(old.map((r) => [r.id, r.status]));
-          const changed = fresh.find((r) => before.has(r.id) && before.get(r.id) !== r.status && r.status !== "pending");
-          if (changed) setStatusNotice(changed);
-          return fresh;
-        });
+        const before = new Map(reservationsRef.current.map((r) => [r.id, r.status]));
+        const changed = fresh.find((r) => before.has(r.id) && before.get(r.id) !== r.status && r.status !== "pending");
+        reservationsRef.current = fresh;
+        setReservations(fresh);
+        if (changed) setStatusNotice(changed);
       } catch {
         /* réseau coupé ou session expirée : géré au prochain tour / par l'API */
       } finally {
         busy = false;
       }
     };
-    const timer = window.setInterval(check, 20_000);
+    const timer = window.setInterval(check, 15_000);
     const onVisible = () => document.visibilityState === "visible" && check();
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("focus", onVisible);
+    // Safari : page restaurée depuis le cache « précédent/suivant » ou réseau revenu
+    window.addEventListener("pageshow", onVisible);
+    window.addEventListener("online", onVisible);
     return () => {
       cancelled = true;
       window.clearInterval(timer);
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("focus", onVisible);
+      window.removeEventListener("pageshow", onVisible);
+      window.removeEventListener("online", onVisible);
     };
   }, []);
 
