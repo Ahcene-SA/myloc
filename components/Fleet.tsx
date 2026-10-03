@@ -5,7 +5,7 @@ import { CalendarCheck2, CarFront, RotateCw, X } from "lucide-react";
 import { CarCard, type Car } from "./CarCard";
 import { cn } from "@/lib/utils";
 import { fetchAvailableCars, fetchCars, fetchPricingRules, mapApiCarToCar, type AvailableCar, type PricingRules } from "@/lib/api";
-import { AVAILABILITY_EVENT, saveBookingIntent, type AvailabilitySearch } from "@/lib/booking";
+import { AVAILABILITY_EVENT, saveBookingIntent, saveReserveCar, type AvailabilitySearch } from "@/lib/booking";
 import { pageUrl } from "@/lib/routes";
 import { FILTER_EVENT, categoryInfo } from "@/lib/site";
 import { BlueBar, PalmShadow } from "./Brand";
@@ -139,7 +139,12 @@ export function Fleet() {
   const quoteRange = search ? `${shortDate(search.start)} – ${shortDate(search.end)}` : "";
 
   const book = (carId: string) => {
-    if (!search) return;
+    if (!search) {
+      // Sans dates : on ouvre « Réserver » avec cette voiture (connexion demandée si besoin)
+      saveReserveCar(Number(carId));
+      window.location.assign(pageUrl("client"));
+      return;
+    }
     saveBookingIntent({
       carId: Number(carId),
       start: search.start,

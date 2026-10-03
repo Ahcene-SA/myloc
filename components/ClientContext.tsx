@@ -3,12 +3,12 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import type { ClientTab } from "./ClientSidebar";
 import { fetchCars, fetchMyReservations, type CarFromApi, type ReservationFromApi } from "@/lib/api";
-import { takeBookingIntent, type BookingIntent } from "@/lib/booking";
+import { CLIENT_NAV_KEY, takeBookingIntent, type BookingIntent } from "@/lib/booking";
 import { t } from "@/lib/i18n";
 
 // Onglet et voiture présélectionnée, gardés pour la session de l'onglet : changer de
 // langue ré-affiche toute l'application, on retrouve ainsi l'écran où l'on était.
-const NAV_KEY = "myloc_client_nav";
+const NAV_KEY = CLIENT_NAV_KEY;
 const TABS: ClientTab[] = ["accueil", "reserver", "reservations", "paiements", "profil"];
 
 function readNav(): { tab: ClientTab; carId: number | null } | null {
