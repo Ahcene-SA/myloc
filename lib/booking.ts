@@ -44,3 +44,15 @@ export function takeBookingIntent(): BookingIntent | null {
     return null;
   }
 }
+
+/** Onglet et voiture présélectionnée de l'espace client (lu par ClientContext). */
+export const CLIENT_NAV_KEY = "myloc_client_nav";
+
+/** « Réserver » sur une carte sans dates : on ouvre l'espace client sur « Réserver » avec la voiture choisie. */
+export function saveReserveCar(carId: number) {
+  try {
+    sessionStorage.setItem(CLIENT_NAV_KEY, JSON.stringify({ tab: "reserver", carId }));
+  } catch {
+    /* navigation privée : l'espace client s'ouvre sur l'accueil */
+  }
+}

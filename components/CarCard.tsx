@@ -85,7 +85,7 @@ export function CarCard({ car, index = 0, quote, onBook }: CarCardProps) {
           </bdi>
         </h3>
 
-        <ul className="mt-4 grid grid-cols-4 divide-x divide-line rounded-2xl bg-mist py-3">
+        <ul className="mt-4 grid grid-cols-4 items-start divide-x divide-line rounded-2xl bg-mist py-3">
           {specs.map(({ icon: Icon, label }) => (
             <li key={label} className="flex flex-col items-center gap-1.5 px-1 text-center">
               <Icon className="h-[18px] w-[18px] text-navy" strokeWidth={1.8} />
@@ -95,7 +95,7 @@ export function CarCard({ car, index = 0, quote, onBook }: CarCardProps) {
         </ul>
 
         {quote ? (
-          <div className="mt-5 flex flex-col gap-3">
+          <div className="mt-auto flex flex-col gap-3 pt-5">
             <div className="rounded-2xl bg-sky-soft/70 px-4 py-3">
               <div className="flex items-baseline justify-between gap-3">
                 <span className="whitespace-nowrap text-[11px] font-bold uppercase tracking-[0.1em] text-sky-text">
@@ -149,24 +149,33 @@ export function CarCard({ car, index = 0, quote, onBook }: CarCardProps) {
             </div>
           </div>
         ) : (
-          <div className="mt-5 flex items-end justify-between gap-3">
+          <div className="mt-auto pt-5">
             <p className="leading-none">
               <span className="block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">{t("À partir de")}</span>
-              <span className="mt-1.5 block whitespace-nowrap text-[28px] font-extrabold text-navy">
-                {formatPrice(car.price)}
-                <span className="ms-1 whitespace-nowrap text-xs font-semibold text-muted">/ {t(car.priceUnit)}</span>
+              <span className="mt-1.5 flex flex-wrap items-baseline gap-x-1.5 text-[28px] font-extrabold text-navy">
+                <span className="whitespace-nowrap">{formatPrice(car.price)}</span>
+                <span className="whitespace-nowrap text-xs font-semibold text-muted">/ {t(car.priceUnit)}</span>
               </span>
             </p>
-            <a
-              href={whatsappLink(t("Bonjour MYLOC.DZ, je suis intéressé(e) par la {car}. Est-elle disponible ?", { car: car.name }))}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={t("Réserver la {car} sur WhatsApp", { car: car.name })}
-              className="flex h-12 items-center gap-2 rounded-full bg-sky px-4 text-sm font-bold text-navy transition-colors hover:bg-sky-mid hover:text-white"
-            >
-              <WhatsAppIcon className="h-4 w-4" />
-              {t("Réserver")}
-            </a>
+            {/* Bouton sous le prix, pleine largeur : il ne déborde plus de la carte, quelle que soit la police */}
+            <div className="mt-4 flex gap-2">
+              <button
+                type="button"
+                onClick={onBook}
+                className="flex h-12 flex-1 items-center justify-center rounded-full bg-navy px-4 text-sm font-bold text-white transition-colors hover:bg-navy-soft"
+              >
+                {t("Réserver")}
+              </button>
+              <a
+                href={whatsappLink(t("Bonjour MYLOC.DZ, je suis intéressé(e) par la {car}. Est-elle disponible ?", { car: car.name }))}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={t("Demander la {car} sur WhatsApp", { car: car.name })}
+                className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-sky text-navy transition-colors hover:bg-sky-mid hover:text-white"
+              >
+                <WhatsAppIcon className="h-5 w-5" />
+              </a>
+            </div>
           </div>
         )}
       </div>
