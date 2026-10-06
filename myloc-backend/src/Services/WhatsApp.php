@@ -48,7 +48,7 @@ class WhatsApp
     /** Limite Meta : chaque paramètre texte du corps de template est plafonné à 1024 caractères. */
     private const TEMPLATE_BODY_MAX = 1024;
 
-    private const FOOTER = "\n⏳ Demande en attente — à confirmer dans l'espace agence.";
+    private const FOOTER = "\n\n⏳ Demande en attente — à confirmer dans l'espace agence.";
 
     public static function newReservation(array $r): void
     {
