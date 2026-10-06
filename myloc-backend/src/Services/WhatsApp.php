@@ -10,15 +10,24 @@ namespace Myloc\Services;
  * .env :
  *   WHATSAPP_DRIVER=log    → (par défaut) le message est enregistré dans logs/whatsapp/*.txt,
  *                            rien n'est envoyé : utile pour vérifier le texte avant l'envoi réel.
- *   WHATSAPP_DRIVER=meta   → API Cloud WhatsApp officielle (Meta) : création d'un compte
- *                            Meta Business + numéro « WhatsApp Business Platform », puis
+ *   WHATSAPP_DRIVER=meta   → API Cloud WhatsApp officielle (Meta) : créer un compte
+ *                            Meta Business et un numéro « WhatsApp Business Platform », puis
  *                            WHATSAPP_TOKEN (jeton d'accès permanent) et WHATSAPP_PHONE_ID
  *                            (numéro expéditeur Meta). Un template est indispensable pour un
- *                            message initié par l'agence : créer un template « utility » dont
- *                            le corps contient une variable {{1}} (le texte complet de
- *                            l'alerte est passé comme paramètre). Nom du template :
- *                            WHATSAPP_TEMPLATE (défaut « reservation »), langue WHATSAPP_LANG
- *                            (défaut « fr »).
+ *                            message initié par l'agence : créer un template « utility » de
+ *                            nom WHATSAPP_TEMPLATE (défaut « reservation ») et de langue
+ *                            WHATSAPP_LANG (défaut « fr »), dont le corps est exactement :
+ *
+ *                            🚗 *Nouvelle réservation {{1}}*
+ *
+ *                            {{2}}
+ *
+ *                            {{1}} reçoit la référence, {{2}} le récapitulatif. La mise en
+ *                            forme (gras, etc.) ne passe que dans le texte fixe du template :
+ *                            le récapitulatif est envoyé sans astérisques. Meta plafonne à
+ *                            1024 caractères — le code rogne la note du client pour rester
+ *                            sous la limite. Le numéro Meta (expéditeur) doit être un autre
+ *                            numéro que le téléphone de l'agence (destinataire).
  *   WHATSAPP_DRIVER=callmebot → service non officiel de test rapide : sur
  *                            https://api.callmebot.com/whatsapp.php suivre la procédure avec
  *                            le numéro de l'agence, récupérer l'API key, la mettre dans
@@ -36,9 +45,13 @@ class WhatsApp
     /** Version de l'API Graph en vigueur (Meta publie une nouvelle version chaque trimestre). */
     private const GRAPH_VERSION = 'v23.0';
 
+    /** Limite Meta : chaque paramètre texte du corps de template est plafonné à 1024 caractères. */
+    private const TEMPLATE_BODY_MAX = 1024;
+
+    private const FOOTER = "\n⏳ Demande en attente — à confirmer dans l'espace agence.";
+
     public static function newReservation(array $r): void
     {
-        $message = self::reservationText($r);
         $to = self::agencyNumber();
         $driver = strtolower(trim((string) ($_ENV['WHATSAPP_DRIVER'] ?? 'log')));
         try {
@@ -46,54 +59,21 @@ class WhatsApp
                 if ($to === null) {
                     throw new \RuntimeException('WHATSAPP_TO absent (ou AGENCY_PHONE invalide) : numéro du destinataire introuvable.');
                 }
-                self::meta($to, $message);
+                [$reference, $details] = self::reservationMetaParts($r);
+                self::meta($to, $reference, $details);
             } elseif ($driver === 'callmebot') {
                 if ($to === null) {
                     throw new \RuntimeException('WHATSAPP_TO absent (ou AGENCY_PHONE invalide) : numéro du destinataire introuvable.');
                 }
-                self::callmebot($to, $message);
+                self::callmebot($to, self::reservationText($r));
             } else {
-                self::log($message);
+                self::log(self::reservationText($r));
             }
         } catch (\Throwable $e) {
             error_log('[whatsapp] Envoi à ' . ($to ?? 'destinataire non configuré') . ' impossible : ' . $e->getMessage());
             // On retombe sur le log : l'alerte n'est jamais perdue, même quand l'envoi échoue.
-            self::log($message);
+            self::log(self::reservationText($r));
         }
-    }
-
-    /** Texte de l'alerte : informations réservation + client (gras = mise en forme WhatsApp). */
-    private static function reservationText(array $r): string
-    {
-        $lines = [];
-        $lines[] = '🚗 *Nouvelle réservation ' . self::reference((int) $r['id']) . '*';
-        $lines[] = '';
-        $lines[] = 'Véhicule : *' . ($r['car_name'] ?? '-') . '*' . (isset($r['car_price_per_day']) ? ' · ' . self::money($r['car_price_per_day']) . '/j' : '');
-        $lines[] = 'Départ : ' . self::date($r['start_date'] ?? null) . (isset($r['pickup_time']) && $r['pickup_time'] ? ' à ' . substr($r['pickup_time'], 0, 5) : '')
-            . (isset($r['pickup_place']) && $r['pickup_place'] ? ' — ' . $r['pickup_place'] : '');
-        $lines[] = 'Retour : ' . self::date($r['end_date'] ?? null) . (isset($r['return_time']) && $r['return_time'] ? ' à ' . substr($r['return_time'], 0, 5) : '')
-            . (isset($r['return_place']) && $r['return_place'] ? ' — ' . $r['return_place'] : '');
-        $lines[] = 'Total : *' . self::money($r['total_price'] ?? 0) . '*';
-        if (!empty($r['payment_method'])) {
-            $labels = ['especes' => 'espèces', 'carte' => 'carte', 'virement' => 'virement'];
-            $lines[] = 'Paiement : ' . ($labels[$r['payment_method']] ?? $r['payment_method']);
-        }
-        $lines[] = '';
-        $lines[] = '👤 Client : *' . ($r['full_name'] ?? '-') . '*';
-        $lines[] = '📞 ' . ($r['phone'] ?? '');
-        if (!empty($r['email'])) {
-            $lines[] = '✉️ ' . $r['email'];
-        }
-        // Réservation faite par un visiteur (pas de compte client demandé par l'agence)
-        if (empty($r['user_id']) && !empty($r['user_email'])) {
-            $lines[] = 'Compte client : ' . $r['user_email'];
-        }
-        if (!empty($r['client_note'])) {
-            $lines[] = '📝 « ' . $r['client_note'] . ' »';
-        }
-        $lines[] = '';
-        $lines[] = '⏳ Demande en attente — à confirmer dans l\'espace agence.';
-        return implode("\n", $lines);
     }
 
     /** Numéro du destinataire en chiffres internationaux (pas de « + »), ou null. */
@@ -107,10 +87,96 @@ class WhatsApp
         return $digits !== '' ? $digits : null;
     }
 
+    // ───────────────────────── Textes ─────────────────────────
+
+    /** Texte de l'alerte complet (avec en-tête et gras) — pilotes log et callmebot. */
+    private static function reservationText(array $r): string
+    {
+        [$header, $details] = self::reservationParts($r, null, true);
+        return $header . "\n\n" . $details;
+    }
+
+    /** [référence, récapitulatif sans en-tête ni gras] pour le template Meta.
+     *  Le récapitulatif est rogné pour que le corps rendu du template (en-tête + {{2}})
+     *  tienne dans la limite Meta de 1024 caractères. */
+    private static function reservationMetaParts(array $r): array
+    {
+        $reference = self::reference((int) $r['id']);
+        [$header, $details] = self::reservationParts($r, null, false);
+        if (mb_strlen($header . "\n\n" . $details) + 2 > self::TEMPLATE_BODY_MAX) {
+            // Seule la note du client est de longueur libre : on la raccourcit pour rentrer.
+            // (+2 : les astérisques du gras, fixés autour de {{1}} dans le texte du template.)
+            $budget = self::TEMPLATE_BODY_MAX - 2 - mb_strlen($header . "\n\n");
+            [, $details] = self::reservationParts($r, $budget, false);
+        }
+        return [$reference, $details];
+    }
+
+    /** [en-tête, récapitulatif] ; $max = limite du récapitulatif (la note du client est rognée),
+     *  $markdown = astérisques de gras du texte WhatsApp (absents du template Meta : Meta
+     *  affiche littéralement le contenu des variables, la mise en forme reste au texte fixe). */
+    private static function reservationParts(array $r, ?int $max, bool $markdown): array
+    {
+        $reference = self::reference((int) $r['id']);
+        $header = '🚗 ' . self::bold('Nouvelle réservation ' . $reference, $markdown);
+
+        $lines = [];
+        $lines[] = 'Véhicule : ' . self::bold((string) ($r['car_name'] ?? '-'), $markdown) . (isset($r['car_price_per_day']) ? ' · ' . self::money($r['car_price_per_day']) . '/j' : '');
+        $lines[] = 'Départ : ' . self::date($r['start_date'] ?? null) . (isset($r['pickup_time']) && $r['pickup_time'] ? ' à ' . substr($r['pickup_time'], 0, 5) : '')
+            . (isset($r['pickup_place']) && $r['pickup_place'] ? ' — ' . $r['pickup_place'] : '');
+        $lines[] = 'Retour : ' . self::date($r['end_date'] ?? null) . (isset($r['return_time']) && $r['return_time'] ? ' à ' . substr($r['return_time'], 0, 5) : '')
+            . (isset($r['return_place']) && $r['return_place'] ? ' — ' . $r['return_place'] : '');
+        $lines[] = 'Total : ' . self::bold(self::money($r['total_price'] ?? 0), $markdown);
+        if (!empty($r['payment_method'])) {
+            $labels = ['especes' => 'espèces', 'carte' => 'carte', 'virement' => 'virement'];
+            $lines[] = 'Paiement : ' . ($labels[$r['payment_method']] ?? $r['payment_method']);
+        }
+        $lines[] = '';
+        $lines[] = '👤 Client : ' . self::bold((string) ($r['full_name'] ?? '-'), $markdown);
+        $lines[] = '📞 ' . ($r['phone'] ?? '');
+        if (!empty($r['email'])) {
+            $lines[] = '✉️ ' . $r['email'];
+        }
+        // Réservation faite par un visiteur (pas de compte client demandé par l'agence)
+        if (empty($r['user_id']) && !empty($r['user_email'])) {
+            $lines[] = 'Compte client : ' . $r['user_email'];
+        }
+        $details = implode("\n", $lines);
+
+        // La note du client en dernier : c'est la seule ligne de longueur libre, donc
+        // c'est elle qui cède si le récapitulatif dépasse le plafond Meta.
+        $note = trim((string) ($r['client_note'] ?? ''));
+        if ($note !== '') {
+            $sep = $details === '' ? '' : "\n";
+            if ($max !== null && mb_strlen($details . $sep . '📝 « ' . $note . ' »' . self::FOOTER) > $max) {
+                $budget = $max - mb_strlen($details . $sep . '📝 «  »' . self::FOOTER);
+                $note = $budget >= 30 ? self::ellipsize($note, $budget) : null;
+            }
+            if ($note !== null) {
+                $details .= $sep . '📝 « ' . $note . ' »';
+            }
+        }
+        $details .= self::FOOTER;
+        return [$header, $details];
+    }
+
+    private static function bold(string $s, bool $markdown): string
+    {
+        return $markdown ? '*' . $s . '*' : $s;
+    }
+
+    /** Coupe au mot le plus proche et ajoute une ellipse. */
+    private static function ellipsize(string $text, int $max): string
+    {
+        $cut = mb_substr($text, 0, $max - 1);
+        $space = mb_strrpos($cut, ' ');
+        return ($space !== false ? mb_substr($cut, 0, $space) : $cut) . '…';
+    }
+
     // ───────────────────────── Pilotes ─────────────────────────
 
-    /** Pilote meta : envoi du template avec le texte comme paramètre du corps. */
-    private static function meta(string $to, string $message): void
+    /** Pilote meta : envoi du template {{1}} = référence, {{2}} = récapitulatif. */
+    private static function meta(string $to, string $reference, string $details): void
     {
         $token = trim((string) ($_ENV['WHATSAPP_TOKEN'] ?? ''));
         $phoneId = trim((string) ($_ENV['WHATSAPP_PHONE_ID'] ?? ''));
@@ -126,7 +192,10 @@ class WhatsApp
                 'language' => ['code' => trim((string) ($_ENV['WHATSAPP_LANG'] ?? 'fr')) ?: 'fr'],
                 'components' => [[
                     'type' => 'body',
-                    'parameters' => [['type' => 'text', 'text' => $message]],
+                    'parameters' => [
+                        ['type' => 'text', 'text' => $reference],
+                        ['type' => 'text', 'text' => $details],
+                    ],
                 ]],
             ],
         ], $token);

@@ -65,12 +65,17 @@ Stack complète : site statique (Nginx) + API PHP (Apache) + MariaDB, avec donn�
     avec la permission `whatsapp_business_messaging` (jeton permanent d'où `WHATSAPP_TOKEN`),
     puis relever l'identifiant du numéro (`WHATSAPP_PHONE_ID`). Les messages initiés par
     l'agence doivent passer par un **template** : dans l'espace Meta, créer un template
-    « utilitaire » dont le corps contient une variable `{{1}}` (le texte complet de l'alerte
-    est passé dedans), l'approuver, puis mettre son nom dans `WHATSAPP_TEMPLATE` (défaut
-    `reservation`) et sa langue dans `WHATSAPP_LANG` (défaut `fr`). Le destinataire
+    « utilitaire », langue `fr`, nom `WHATSAPP_TEMPLATE` (défaut `reservation`), dont le
+    corps est exactement :
+    `🚗 *Nouvelle réservation {{1}}*
+    {{2}}`
+    (`{{1}}` reçoit la référence, `{{2}}` le récapitulatif. La mise en gras ne passe que
+    dans le texte fixe du template — le contenu des variables est affiché tel quel — et le
+    code rogne la note du client pour rester sous la limite Meta de 1024 caractères.)
+    Le destinataire
     `WHATSAPP_TO` est le **numéro personnel de l'agence** (le numéro de l'équipe qui doit
-    recevoir les alertes, format international sans `+`, ex. `213560550590`) — il doit être un
-    **autre** numéro que celui déclaré chez Meta, sinon on s'enverrait un message à soi-même.
+    recevoir les alertes, format international sans `+`, ex. `213560550590`) — il doit être
+    un **autre** numéro que celui déclaré chez Meta, sinon on s'enverrait un message à soi-même.
   - **CallMeBot (test rapide, non officiel)** — `WHATSAPP_DRIVER=callmebot` + `WHATSAPP_APIKEY`
     obtenue sur api.callmebot.com avec le numéro destinataire. Simple, mais service tiers
     non garanti : à employer pour tester, pas pour la production.
