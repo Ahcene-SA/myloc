@@ -84,7 +84,19 @@ if (function_exists('posix_isatty') && @posix_isatty(STDIN)) {
     $echoed = true;
 }
 $password = trim((string) fgets(STDIN));
-if ($echoed) {
+if ($password !== '') {
+    // Saisie unique et cachée : on la fait confirmer, une coquille sinon verrouille le compte.
+    fwrite(STDOUT, "Confirmation du mot de passe : ");
+    $confirm = trim((string) fgets(STDIN));
+    if ($echoed) {
+        exec('stty echo');
+        echo "\n";
+    }
+    if ($confirm !== $password) {
+        fwrite(STDERR, "Les deux saisies ne concordent pas : rien n'a été modifié.\n");
+        exit(1);
+    }
+} elseif ($echoed) {
     exec('stty echo');
     echo "\n";
 }
