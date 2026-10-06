@@ -53,7 +53,17 @@ while ($who === null) {
             fwrite(STDERR, "Il y a " . count($owners) . " comptes propriétaires : précisez un id.\n");
         }
     } else {
-        $who = $byId[(int) $line] ?? null;
+        // « #1 » dans la liste : on accepte « 1 » comme « #1 » (ainsi que l'email complet).
+        $idOrEmail = ltrim($line, '#');
+        $who = $byId[(int) $idOrEmail] ?? null;
+        if ($who === null) {
+            foreach ($byId as $u) {
+                if (strcasecmp($u['email'], $idOrEmail) === 0) {
+                    $who = $u;
+                    break;
+                }
+            }
+        }
         if ($who === null) {
             echo "Id inconnu. Choix possibles : " . implode(', ', array_map(fn($u) => '#' . $u['id'], $byId)) . "\n";
         }
