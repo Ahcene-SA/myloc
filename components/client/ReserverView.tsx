@@ -39,6 +39,7 @@ import {
   secondaryBtn,
   splitCarName,
   todayIso,
+  whatsappRecap,
 } from "./shared";
 
 // Valeur envoyée au serveur (en français) : seul l'affichage est traduit avec t(HOME).
@@ -132,6 +133,8 @@ export function ReserverView() {
   const [stepError, setStepError] = useState("");
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState<ReservationFromApi | null>(null);
+  // Écran intermédiaire : avant l'envoi de la demande, le récapitulatif passe d'abord par WhatsApp
+  const [confirmWa, setConfirmWa] = useState(false);
 
   const [form, setForm] = useState<FormState>(() => draft?.form ?? {
     pickupPlace: bookingPrefill?.pickupPlace || site.agencies[0],
@@ -262,10 +265,21 @@ export function ReserverView() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  /** « Envoyer ma demande » : le formulaire est validé, puis on passe par l'écran
+   *  WhatsApp — la réservation ne part vers le serveur qu'après (voir submit). */
+  const requestWhatsApp = () => {
+    const err = validate(4);
+    if (err) return setStepError(err);
+    setStepError("");
+    setConfirmWa(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const submit = async () => {
     const err = validate(4);
     if (err) return setStepError(err);
     if (!car) return;
+    if (!confirmWa) return requestWhatsApp();
     setSending(true);
     setStepError("");
     const returnPlace = form.differentReturn ? form.returnPlace : form.pickupPlace;
@@ -297,6 +311,7 @@ export function ReserverView() {
       };
       upsertReservation(saved);
       clearDraft();
+      setConfirmWa(false);
       setDone(saved);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (e) {
@@ -340,6 +355,61 @@ export function ReserverView() {
               {t("Prévenir l'agence sur WhatsApp")}
             </a>
           </div>
+        </Card>
+      </div>
+    );
+  }
+
+  /* ─────────── Écran intermédiaire : WhatsApp avant l'envoi ─────────── */
+  if (confirmWa && car && !done) {
+    const returnPlace = form.differentReturn ? form.returnPlace : form.pickupPlace;
+    const returnAddress = form.differentReturn ? form.returnAddress : form.pickupAddress;
+    const waLink = whatsappRecap({
+      id: null,
+      car_name: car.name,
+      car_price_per_day: car.price_per_day,
+      start_date: form.pickupDate,
+      pickup_time: form.pickupTime,
+      pickup_place: form.pickupPlace === HOME ? `${HOME} : ${form.pickupAddress.trim()}` : form.pickupPlace,
+      end_date: form.returnDate,
+      return_time: form.returnTime,
+      return_place: returnPlace === HOME ? `${HOME_PICKUP_PREFIX}${returnAddress.trim()}`.slice(0, 150) : returnPlace,
+      total_price: quote?.total_price ?? null,
+      payment_method: form.payment,
+      full_name: form.fullName.trim(),
+      phone: form.phone.trim(),
+      email: form.email.trim(),
+      client_note: form.note.trim() || null,
+    }, "⏳ Réservation en cours — le client finalise sa demande sur mylocdz.com.");
+    return (
+      <div className="mx-auto max-w-2xl">
+        <Card className="flex flex-col items-center gap-3 px-6 py-10 text-center sm:px-12">
+          <WhatsAppIcon className="h-10 w-10 text-whatsapp" />
+          <p className="text-sm font-medium text-slate-500">{t("Avant l'envoi de votre demande")}</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{t("Envoyez le récapitulatif sur WhatsApp")}</h1>
+          <p className="max-w-md text-sm leading-relaxed text-slate-600">
+            {t(
+              "Votre demande n'est pas encore envoyée : ouvrez WhatsApp avec le bouton — le récapitulatif complet (véhicule, dates, coordonnées) est déjà rédigé, il ne reste qu'à l'envoyer à l'agence. Revenez ensuite ici pour terminer."
+            )}
+          </p>
+          <a href={waLink} target="_blank" rel="noopener noreferrer" className={cn(primaryBtn, "flex-1 sm:flex-none")}>
+            <WhatsAppIcon className="h-4 w-4" />
+            {t("Envoyer le récapitulatif sur WhatsApp")}
+          </a>
+          <p className="max-w-md text-xs text-slate-500">{t("La réservation n'est enregistrée qu'à l'étape suivante : rien n'a encore été envoyé à l'agence.")}</p>
+          {stepError && (
+            <p role="alert" className="mt-1 rounded-md border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
+              {stepError}
+            </p>
+          )}
+          <button type="button" onClick={submit} disabled={sending || quoting} className={primaryBtn}>
+            {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+            {t("J'ai envoyé le message — terminer ma réservation")}
+          </button>
+          <button type="button" onClick={() => { setConfirmWa(false); setStepError(""); window.scrollTo({ top: 0, behavior: "smooth" }); }} className={secondaryBtn}>
+            <ArrowLeft className="flip-rtl h-4 w-4" />
+            {t("Modifier ma demande")}
+          </button>
         </Card>
       </div>
     );
@@ -766,7 +836,7 @@ export function ReserverView() {
               ) : (
                 <button
                   type="button"
-                  onClick={submit}
+                  onClick={requestWhatsApp}
                   // Pas d'envoi pendant le calcul du devis (le code promo doit être vérifié)
                   disabled={sending || quoting}
                   className={cn(primaryBtn, "flex-1 sm:flex-none")}

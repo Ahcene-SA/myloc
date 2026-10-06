@@ -126,37 +126,66 @@ export function canCancel(r: ReservationFromApi): boolean {
   return (r.status === "pending" || r.status === "confirmed") && !!r.start_date && r.start_date > todayIso();
 }
 
-/** Message prérempli pour l'agence : le récapitulatif complet (réservation + client),
- *  identique à ce que l'API envoie à l'agence en alerte WhatsApp. */
-export function reservationWhatsApp(r: ReservationFromApi): string {
+/** Champs utilisés dans le récapitulatif WhatsApp : une réservation enregistrée
+ *  (ReservationFromApi et id → référence MYL) ou bien la demande en cours dans le
+ *  formulaire, pas encore enregistrée (id absent, pas de référence). */
+export interface WhatsAppRecapFields {
+  id?: number | null;
+  car_name?: string | null;
+  car_price_per_day?: string | number | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  pickup_time?: string | null;
+  return_time?: string | null;
+  pickup_place?: string | null;
+  return_place?: string | null;
+  total_price?: string | number | null;
+  payment_method?: string | null;
+  full_name?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  client_note?: string | null;
+}
+
+/** Récapitulatif complet (réservation + client), identique à ce que l'API envoie
+ *  à l'agence en alerte WhatsApp ; footer adaptable (réservation enregistrée ou
+ *  pas encore envoyée). */
+export function whatsappRecap(f: WhatsAppRecapFields, footer = "⏳ Demande en attente — à confirmer dans l'espace agence."): string {
   const time = (v?: string | null) => (v ? ` à ${v.slice(0, 5)}` : "");
   const place = (v?: string | null) => (v ? ` — ${placeLabel(v)}` : "");
   const payment: Partial<Record<PaymentMethod, string>> = { especes: "espèces", carte: "carte", virement: "virement" };
   const lines = [
-    t("🚗 Nouvelle réservation {ref}", { ref: reservationRef(r.id) }),
+    f.id != null ? t("🚗 Nouvelle réservation {ref}", { ref: reservationRef(f.id) }) : t("🚗 Nouvelle réservation"),
     "",
-    t("Véhicule : {car} · {price}/j", { car: r.car_name || "—", price: formatPrice(r.car_price_per_day) }),
-    t("Départ : {day}{hour}{place}", { day: formatDate(r.start_date), hour: time(r.pickup_time), place: place(r.pickup_place) }),
-    t("Retour : {day}{hour}{place}", { day: formatDate(r.end_date), hour: time(r.return_time), place: place(r.return_place) }),
-    t("Total : {price}", { price: formatPrice(r.total_price) }),
+    t("Véhicule : {car} · {price}/j", { car: f.car_name || "—", price: formatPrice(f.car_price_per_day) }),
+    t("Départ : {day}{hour}{place}", { day: formatDate(f.start_date), hour: time(f.pickup_time), place: place(f.pickup_place) }),
+    t("Retour : {day}{hour}{place}", { day: formatDate(f.end_date), hour: time(f.return_time), place: place(f.return_place) }),
   ];
-  if (r.payment_method != null) {
-    lines.push(t("Paiement : {method}", { method: t(payment[r.payment_method] ?? r.payment_method) }));
+  if (f.total_price != null) {
+    lines.push(t("Total : {price}", { price: formatPrice(f.total_price) }));
+  }
+  if (f.payment_method != null) {
+    lines.push(t("Paiement : {method}", { method: t(payment[f.payment_method as PaymentMethod] ?? f.payment_method) }));
   }
   lines.push("");
-  lines.push(t("👤 Client : {name}", { name: r.full_name || "—" }));
-  if (r.phone) {
-    lines.push(t("📞 {phone}", { phone: r.phone }));
+  lines.push(t("👤 Client : {name}", { name: f.full_name || "—" }));
+  if (f.phone) {
+    lines.push(t("📞 {phone}", { phone: f.phone }));
   }
-  if (r.email) {
-    lines.push(t("✉️ {email}", { email: r.email }));
+  if (f.email) {
+    lines.push(t("✉️ {email}", { email: f.email }));
   }
-  if (r.client_note) {
-    lines.push(t("📝 « {note} »", { note: r.client_note }));
+  if (f.client_note) {
+    lines.push(t("📝 « {note} »", { note: f.client_note }));
   }
   lines.push("");
-  lines.push(t("⏳ Demande en attente — à confirmer dans l'espace agence."));
+  lines.push(t(footer));
   return whatsappLink(lines.join("\n"));
+}
+
+/** Message prérempli pour l'agence à partir d'une réservation enregistrée. */
+export function reservationWhatsApp(r: ReservationFromApi): string {
+  return whatsappRecap(r);
 }
 
 /* ─────────────── Blocs d'interface ─────────────── */
