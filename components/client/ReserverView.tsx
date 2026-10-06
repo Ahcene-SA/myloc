@@ -135,6 +135,8 @@ export function ReserverView() {
   const [done, setDone] = useState<ReservationFromApi | null>(null);
   // Écran intermédiaire : avant l'envoi de la demande, le récapitulatif passe d'abord par WhatsApp
   const [confirmWa, setConfirmWa] = useState(false);
+  // Le bouton « terminer » ne s'active qu'après un appui sur le bouton WhatsApp
+  const [waSent, setWaSent] = useState(false);
 
   const [form, setForm] = useState<FormState>(() => draft?.form ?? {
     pickupPlace: bookingPrefill?.pickupPlace || site.agencies[0],
@@ -271,6 +273,7 @@ export function ReserverView() {
     const err = validate(4);
     if (err) return setStepError(err);
     setStepError("");
+    setWaSent(false);
     setConfirmWa(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -392,7 +395,13 @@ export function ReserverView() {
               "Votre demande n'est pas encore envoyée : ouvrez WhatsApp avec le bouton — le récapitulatif complet (véhicule, dates, coordonnées) est déjà rédigé, il ne reste qu'à l'envoyer à l'agence. Revenez ensuite ici pour terminer."
             )}
           </p>
-          <a href={waLink} target="_blank" rel="noopener noreferrer" className={cn(primaryBtn, "flex-1 sm:flex-none")}>
+          <a
+            href={waLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => setWaSent(true)}
+            className={cn(primaryBtn, "flex-1 sm:flex-none")}
+          >
             <WhatsAppIcon className="h-4 w-4" />
             {t("Envoyer le récapitulatif sur WhatsApp")}
           </a>
@@ -402,10 +411,11 @@ export function ReserverView() {
               {stepError}
             </p>
           )}
-          <button type="button" onClick={submit} disabled={sending || quoting} className={primaryBtn}>
+          <button type="button" onClick={submit} disabled={sending || !waSent} className={primaryBtn}>
             {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
             {t("J'ai envoyé le message — terminer ma réservation")}
           </button>
+          {!waSent && !sending && <p className="max-w-md text-xs text-slate-500">{t("Ce bouton s'activera une fois le message envoyé sur WhatsApp.")}</p>}
           <button type="button" onClick={() => { setConfirmWa(false); setStepError(""); window.scrollTo({ top: 0, behavior: "smooth" }); }} className={secondaryBtn}>
             <ArrowLeft className="flip-rtl h-4 w-4" />
             {t("Modifier ma demande")}
