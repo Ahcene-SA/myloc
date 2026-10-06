@@ -126,15 +126,37 @@ export function canCancel(r: ReservationFromApi): boolean {
   return (r.status === "pending" || r.status === "confirmed") && !!r.start_date && r.start_date > todayIso();
 }
 
+/** Message prérempli pour l'agence : le récapitulatif complet (réservation + client),
+ *  identique à ce que l'API envoie à l'agence en alerte WhatsApp. */
 export function reservationWhatsApp(r: ReservationFromApi): string {
-  return whatsappLink(
-    t("Bonjour MYLOC.DZ, au sujet de ma réservation {ref} ({car}, du {start} au {end}).", {
-      ref: reservationRef(r.id),
-      car: r.car_name || "",
-      start: formatDate(r.start_date),
-      end: formatDate(r.end_date),
-    })
-  );
+  const time = (v?: string | null) => (v ? ` à ${v.slice(0, 5)}` : "");
+  const place = (v?: string | null) => (v ? ` — ${placeLabel(v)}` : "");
+  const payment: Partial<Record<PaymentMethod, string>> = { especes: "espèces", carte: "carte", virement: "virement" };
+  const lines = [
+    t("🚗 Nouvelle réservation {ref}", { ref: reservationRef(r.id) }),
+    "",
+    t("Véhicule : {car} · {price}/j", { car: r.car_name || "—", price: formatPrice(r.car_price_per_day) }),
+    t("Départ : {day}{hour}{place}", { day: formatDate(r.start_date), hour: time(r.pickup_time), place: place(r.pickup_place) }),
+    t("Retour : {day}{hour}{place}", { day: formatDate(r.end_date), hour: time(r.return_time), place: place(r.return_place) }),
+    t("Total : {price}", { price: formatPrice(r.total_price) }),
+  ];
+  if (r.payment_method != null) {
+    lines.push(t("Paiement : {method}", { method: t(payment[r.payment_method] ?? r.payment_method) }));
+  }
+  lines.push("");
+  lines.push(t("👤 Client : {name}", { name: r.full_name || "—" }));
+  if (r.phone) {
+    lines.push(t("📞 {phone}", { phone: r.phone }));
+  }
+  if (r.email) {
+    lines.push(t("✉️ {email}", { email: r.email }));
+  }
+  if (r.client_note) {
+    lines.push(t("📝 « {note} »", { note: r.client_note }));
+  }
+  lines.push("");
+  lines.push(t("⏳ Demande en attente — à confirmer dans l'espace agence."));
+  return whatsappLink(lines.join("\n"));
 }
 
 /* ─────────────── Blocs d'interface ─────────────── */
