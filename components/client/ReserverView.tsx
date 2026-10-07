@@ -350,10 +350,10 @@ export function ReserverView() {
           </p>
           <p className="text-xl font-semibold tabular-nums text-slate-900">{formatPrice(done.total_price)}</p>
           <div className="mt-2 flex flex-col gap-2 sm:flex-row">
-            <button type="button" onClick={() => setActiveTab("reservations")} className={primaryBtn}>
+            <button type="button" onClick={() => setActiveTab("reservations")} className={cn(primaryBtn, "w-full sm:w-auto")}>
               {t("Voir mes réservations")}
             </button>
-            <a href={reservationWhatsApp(done)} target="_blank" rel="noopener noreferrer" className={secondaryBtn}>
+            <a href={reservationWhatsApp(done)} target="_blank" rel="noopener noreferrer" className={cn(secondaryBtn, "w-full sm:w-auto")}>
               <WhatsAppIcon className="h-4 w-4 text-whatsapp" />
               {t("Prévenir l'agence sur WhatsApp")}
             </a>
@@ -400,7 +400,7 @@ export function ReserverView() {
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => setWaSent(true)}
-            className={cn(primaryBtn, "flex-1 sm:flex-none")}
+            className={cn(primaryBtn, "h-auto w-full whitespace-normal py-2 sm:h-9 sm:w-auto sm:whitespace-nowrap")}
           >
             <WhatsAppIcon className="h-4 w-4" />
             {t("Envoyer le récapitulatif sur WhatsApp")}
@@ -411,7 +411,7 @@ export function ReserverView() {
               {stepError}
             </p>
           )}
-          <button type="button" onClick={submit} disabled={sending || !waSent} className={primaryBtn}>
+          <button type="button" onClick={submit} disabled={sending || !waSent} className={cn(primaryBtn, "h-auto w-full whitespace-normal py-2 sm:h-9 sm:w-auto sm:whitespace-nowrap")}>
             {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
             {t("J'ai envoyé le message — terminer ma réservation")}
           </button>

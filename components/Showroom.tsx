@@ -250,7 +250,7 @@ function Slide({ car, i, n, dir, progress }: { car: ShowCar; i: number; n: numbe
             </li>
           </ul>
         </div>
-        <div className="flex items-center gap-5">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
           <p className="leading-none">
             <span className="block text-[11px] font-semibold uppercase tracking-[0.16em] text-white/50">{t("À partir de")}</span>
             <span className="mt-1 block whitespace-nowrap text-4xl font-extrabold">

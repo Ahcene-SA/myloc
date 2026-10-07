@@ -20,7 +20,7 @@ interface AuthShellProps {
 export function AuthShell({ eyebrow, title, subtitle, image, imageAlt, children }: AuthShellProps) {
   const { t, lang } = useLang();
   return (
-    <div className="flex min-h-screen bg-white">
+    <div className="flex min-h-dvh bg-white">
       {/* Panneau visuel (desktop), style des posts Instagram */}
       <aside className="bg-brand-mist relative hidden w-[46%] max-w-[680px] flex-col justify-between overflow-hidden border-e border-line p-10 lg:flex">
         <PalmShadow className="-left-24 -top-10 w-[520px] opacity-25" />

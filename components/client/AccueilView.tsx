@@ -67,7 +67,7 @@ export function AccueilView() {
               <span className="truncate text-sm font-medium text-slate-500">{label}</span>
               <Icon className="h-4 w-4 flex-shrink-0 text-slate-400" />
             </div>
-            <p className="mt-2 truncate text-2xl font-semibold tabular-nums text-slate-900">{value}</p>
+            <p className="mt-2 truncate text-xl font-semibold tabular-nums text-slate-900 sm:text-2xl">{value}</p>
           </Card>
         ))}
       </div>

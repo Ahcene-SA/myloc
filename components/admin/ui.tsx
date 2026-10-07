@@ -192,7 +192,7 @@ export function Modal({
       <div className="absolute inset-0 bg-slate-900/30" onClick={onClose} />
       <div
         className={cn(
-          "relative flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-lg border border-slate-200 bg-white shadow-xl sm:rounded-lg",
+          "relative flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-lg border border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] shadow-xl sm:rounded-lg sm:pb-0",
           wide ? "sm:max-w-3xl" : "sm:max-w-lg"
         )}
       >

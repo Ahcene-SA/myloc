@@ -97,11 +97,11 @@ export function CarCard({ car, index = 0, quote, onBook }: CarCardProps) {
         {quote ? (
           <div className="mt-auto flex flex-col gap-3 pt-5">
             <div className="rounded-2xl bg-sky-soft/70 px-4 py-3">
-              <div className="flex items-baseline justify-between gap-3">
-                <span className="whitespace-nowrap text-[11px] font-bold uppercase tracking-[0.1em] text-sky-text">
+              <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                <span className="whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.1em] text-sky-text sm:text-[11px]">
                   {t(quote.days > 1 ? "Total · {days} jours" : "Total · {days} jour", { days: quote.days })}
                 </span>
-                <span className="whitespace-nowrap text-[11px] font-semibold text-muted">
+                <span className="whitespace-nowrap text-[10px] font-semibold text-muted sm:text-[11px]">
                   {formatPrice(car.price)}/{t("jour")}
                 </span>
               </div>

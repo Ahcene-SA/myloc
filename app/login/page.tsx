@@ -109,7 +109,7 @@ export default function LoginPage() {
           trailing={eye}
         />
 
-        <div className="flex items-center justify-between text-sm">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-sm">
           <label className="flex cursor-pointer items-center gap-2 font-semibold text-ink-soft">
             <input type="checkbox" className="h-4 w-4 accent-sky" />
             {t("Se souvenir de moi")}

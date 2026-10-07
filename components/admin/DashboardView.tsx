@@ -143,7 +143,7 @@ export function DashboardView() {
               <span className="truncate text-sm font-medium text-slate-500">{label}</span>
               <Icon className={cn("h-4 w-4 flex-shrink-0", alert ? "text-amber-600" : "text-slate-400")} />
             </div>
-            <p className="mt-2 truncate text-2xl font-semibold tabular-nums tracking-tight text-slate-900">{value}</p>
+            <p className="mt-2 truncate text-xl font-semibold tabular-nums tracking-tight text-slate-900 sm:text-2xl">{value}</p>
             <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-slate-500">
               <span className="truncate">{hint}</span>
               <ArrowRight className="h-3 w-3 flex-shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />

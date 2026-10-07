@@ -144,8 +144,8 @@ const FINAL_NOTICE =
 function Line({ label, value, narrow }: { label: string; value?: string | number | null; narrow?: boolean }) {
   return (
     <div className="flex gap-2 border-b border-dotted border-slate-300 py-1.5 text-[12.5px]">
-      <span className={`${narrow ? "w-20" : "w-36"} flex-shrink-0 text-slate-500`}>{label}</span>
-      <span className="min-h-[1.2em] flex-1 font-semibold text-navy">{value || ""}</span>
+      <span className={`${narrow ? "w-20" : "w-20 sm:w-36"} flex-shrink-0 text-slate-500`}>{label}</span>
+      <span className="min-h-[1.2em] min-w-0 flex-1 break-words font-semibold text-navy">{value || ""}</span>
     </div>
   );
 }
@@ -182,7 +182,7 @@ function InspectionBlock({ title, i, compare }: { title: string; i?: Inspection;
 /** Contrat impossible à afficher : message clair et retour vers l'espace agence. */
 function ContractError({ message }: { message: string }) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4">
+    <div className="flex min-h-dvh items-center justify-center bg-slate-100 px-4">
       <div role="alert" className="flex w-full max-w-md flex-col items-center gap-4 rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-xl">
         <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-800">
           <FileWarning className="h-6 w-6" />
@@ -247,7 +247,7 @@ export function ContractView() {
   const today = new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 
   return (
-    <div className="min-h-screen bg-slate-100 py-8 print:bg-white print:py-0">
+    <div className="min-h-dvh bg-slate-100 py-8 print:bg-white print:py-0">
       <style>{`@page { size: A4; margin: 10mm; } @media print { .no-print { display: none !important; } }`}</style>
 
       <div className="no-print mx-auto mb-4 flex max-w-[210mm] items-center justify-between gap-3 px-4">
@@ -261,7 +261,7 @@ export function ContractView() {
         </button>
       </div>
 
-      <article className="mx-auto flex max-w-[210mm] flex-col gap-4 bg-white p-[12mm] text-navy shadow-xl print:max-w-none print:p-0 print:shadow-none">
+      <article className="mx-auto flex max-w-[210mm] flex-col gap-4 bg-white p-6 text-navy shadow-xl sm:p-[12mm] print:max-w-none print:p-0 print:shadow-none">
         <header className="flex items-start justify-between gap-6 border-b-2 border-navy pb-4">
           <div>
             <Logo />
@@ -280,7 +280,7 @@ export function ContractView() {
           </div>
         </header>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Box title="Le locataire">
             <Line label="Nom et prénom" value={r.full_name} />
             <Line label="Adresse" />
@@ -303,7 +303,7 @@ export function ContractView() {
         </div>
 
         <Box title="Période de location">
-          <div className="grid grid-cols-2 gap-x-6">
+          <div className="grid grid-cols-1 gap-x-6 sm:grid-cols-2">
             <div>
               <Line label="Début de location" value={`${formatDate(r.start_date, true)}${r.pickup_time ? ` à ${formatTime(r.pickup_time)}` : ""}`} />
               <Line label="Lieu de remise" value={[r.pickup_place, r.delivery_address && `(${r.delivery_address})`].filter(Boolean).join(" ") || undefined} />
@@ -317,7 +317,7 @@ export function ContractView() {
         </Box>
 
         <Box title="Règlement">
-          <div className="grid grid-cols-2 gap-x-6">
+          <div className="grid grid-cols-1 gap-x-6 sm:grid-cols-2">
             <div>
               <Line label="Prix par jour" value={r.car_price_per_day ? formatPrice(r.car_price_per_day) : ""} />
               {discount > 0 && <Line label="Prix de base" value={formatPrice(r.base_price)} />}
@@ -335,7 +335,7 @@ export function ContractView() {
         </Box>
 
         <Box title="État des lieux">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <InspectionBlock title="Au départ" i={insp.depart} />
             <InspectionBlock title="Au retour" i={insp.retour} compare={insp.depart} />
           </div>
@@ -343,7 +343,7 @@ export function ContractView() {
 
         <section className="break-before-page rounded-xl border border-slate-300 p-4 print:break-before-page">
           <h2 className="mb-3 text-center text-[13px] font-extrabold uppercase tracking-[0.14em] text-navy">Conditions générales du contrat</h2>
-          <div className="columns-2 gap-6 text-[10.5px] leading-snug text-slate-700">
+          <div className="gap-6 text-[10.5px] leading-snug text-slate-700 sm:columns-2">
             {conditions.map((c) => (
               <div key={c.title} className="mb-2.5 break-inside-avoid">
                 <h3 className="mb-0.5 text-[10px] font-extrabold uppercase tracking-[0.06em] text-navy underline underline-offset-2">{c.title}</h3>
@@ -368,7 +368,7 @@ export function ContractView() {
           <p className="mt-2 rounded-lg bg-slate-50 p-3 text-[10px] font-semibold leading-snug text-slate-700">{FINAL_NOTICE}</p>
         </section>
 
-        <div className="grid grid-cols-2 gap-4 break-inside-avoid">
+        <div className="grid grid-cols-1 gap-4 break-inside-avoid sm:grid-cols-2">
           {["Signature de la société (MYLOC.DZ)", "Date et signature du locataire (« lu et approuvé »)"].map((who) => (
             <div key={who} className="rounded-xl border border-slate-300 p-4">
               <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-slate-500">{who}</p>

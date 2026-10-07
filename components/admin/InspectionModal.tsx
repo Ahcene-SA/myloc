@@ -148,7 +148,7 @@ export function InspectionModal({
                     <li key={d.zone} className="flex items-center gap-2">
                       <span
                         className={cn(
-                          "w-36 flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset",
+                          "w-28 flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset sm:w-36",
                           newZones.includes(d.zone) ? "bg-amber-50 text-amber-800 ring-amber-600/20" : "bg-red-50 text-red-700 ring-red-600/20"
                         )}
                       >

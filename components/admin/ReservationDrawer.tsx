@@ -298,7 +298,7 @@ function DrawerBody({ r, onClose }: { r: ReservationFromApi; onClose: () => void
       </div>
 
       {/* Actions */}
-      <div className="sticky bottom-0 border-t border-slate-200 bg-slate-50 px-5 py-3.5">
+      <div className="sticky bottom-0 border-t border-slate-200 bg-slate-50 px-5 pb-[calc(env(safe-area-inset-bottom)+0.875rem)] pt-3.5">
         {asking ? (
           <div className="flex flex-col gap-3">
             <p className="text-sm text-slate-900">
