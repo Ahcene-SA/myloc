@@ -40,7 +40,9 @@ export function Contact() {
                   <span className="flex min-w-0 flex-col gap-0.5">
                     <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted">{t(label)}</span>
                     {label === "Adresse" ? (
-                      <span className="truncate text-[15px] font-bold text-navy">{t(value)}</span>
+                      // break-words (et non truncate) : une adresse tronquée est inutilisable,
+                      // et truncate/nowrap ferait déborder la grille sur téléphone
+                      <span className="break-words text-[15px] font-bold leading-snug text-navy">{t(value)}</span>
                     ) : (
                       // Téléphone / email : isolés en LTR, alignés comme le reste du texte
                       <span className="truncate text-start text-[15px] font-bold text-navy">
@@ -50,7 +52,7 @@ export function Contact() {
                   </span>
                 </>
               );
-              const cls = "flex items-center gap-4 rounded-2xl border border-line bg-white p-4";
+              const cls = "flex min-w-0 items-center gap-4 rounded-2xl border border-line bg-white p-4";
               return href ? (
                 <a
                   key={label}
