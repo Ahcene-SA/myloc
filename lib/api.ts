@@ -281,15 +281,9 @@ export interface PricingQuote {
   discount_amount: number;
   total_price: number;
   discount_label: string | null;
-  discount_source: "duration" | "loyalty" | "promo" | null;
+  discount_source: "promo" | null;
   promo_code: string | null;
   promo: { valid: boolean; message: string } | null;
-  loyalty: { rentals: number; needed: number; percent: number } | null;
-}
-
-export interface PricingRules {
-  duration: { min_days: number; percent: number }[];
-  loyalty: { enabled: boolean; min_rentals: number; percent: number };
 }
 
 export interface PromoCode {
@@ -307,7 +301,7 @@ export interface PromoCode {
   created_at?: string;
 }
 
-/** Devis avec la meilleure remise (le jeton est envoyé s'il existe, pour la fidélité). */
+/** Devis : le total et la vérification d'un code promo saisi par le client. */
 export async function fetchQuote(carId: number, start: string, end: string, promoCode?: string): Promise<PricingQuote> {
   const res = await request<{ success: boolean; quote: PricingQuote }>(
     "POST",
@@ -316,16 +310,6 @@ export async function fetchQuote(carId: number, start: string, end: string, prom
     true
   );
   return res.quote;
-}
-
-export async function fetchPricingRules(): Promise<PricingRules> {
-  const res = await request<{ success: boolean; rules: PricingRules }>("GET", "/pricing/rules");
-  return res.rules;
-}
-
-export async function updatePricingRules(rules: PricingRules): Promise<PricingRules> {
-  const res = await request<{ success: boolean; rules: PricingRules }>("PUT", "/admin/pricing-rules", rules, true);
-  return res.rules;
 }
 
 export async function fetchPromos(): Promise<PromoCode[]> {

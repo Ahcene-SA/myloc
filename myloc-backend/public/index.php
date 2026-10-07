@@ -113,7 +113,6 @@ $router->get('/api/agency/updates', fn() => $reservationController->updatesSince
 // Administration
 $router->get('/api/admin/cars', fn() => $carController->adminIndex(), 'admin');
 $router->post('/api/admin/reservations', fn() => $reservationController->adminCreate(), 'admin');
-$router->put('/api/admin/pricing-rules', fn() => $pricingController->updateRules(), 'owner');
 $router->get('/api/admin/promos', fn() => $pricingController->listPromos(), 'owner');
 $router->post('/api/admin/promos', fn() => $pricingController->createPromo(), 'owner');
 $router->put('/api/admin/promos/{id}', fn(array $p) => $pricingController->updatePromo($p), 'owner');
@@ -124,7 +123,6 @@ $router->get('/api/reservations/{id}/inspections', fn(array $p) => $inspectionCo
 
 // Prix et remises (public)
 $router->post('/api/pricing/quote', fn() => $pricingController->quote());
-$router->get('/api/pricing/rules', fn() => $pricingController->publicRules());
 
 // Public car routes
 $router->get('/api/cars', fn() => $carController->index());

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CalendarCheck2, CarFront, RotateCw, X } from "lucide-react";
 import { CarCard, type Car } from "./CarCard";
 import { cn } from "@/lib/utils";
-import { fetchAvailableCars, fetchCars, fetchPricingRules, mapApiCarToCar, type AvailableCar, type PricingRules } from "@/lib/api";
+import { fetchAvailableCars, fetchCars, mapApiCarToCar, type AvailableCar } from "@/lib/api";
 import { AVAILABILITY_EVENT, saveBookingIntent, saveReserveCar, type AvailabilitySearch } from "@/lib/booking";
 import { pageUrl } from "@/lib/routes";
 import { FILTER_EVENT, categoryInfo } from "@/lib/site";
@@ -21,17 +21,6 @@ export function Fleet() {
   const [free, setFree] = useState<AvailableCar[] | null>(null);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
-  const [rules, setRules] = useState<PricingRules | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetchPricingRules()
-      .then((r) => !cancelled && setRules(r))
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   // Erreur de chargement de la flotte : état honnête + bouton « Réessayer » (pas de flotte fictive)
   const [loadError, setLoadError] = useState(false);
@@ -204,29 +193,6 @@ export function Fleet() {
             {active ? t(active.tagline) : t("Citadines, compactes et SUV récents, entretenus avant chaque location")}
           </p>
         </div>
-
-        {rules && rules.duration.length > 0 && (
-          <p className="mx-auto mt-6 flex w-fit max-w-full items-center gap-2.5 rounded-2xl bg-emerald-50 py-2 pe-4 ps-2 text-start text-xs font-bold uppercase tracking-wide text-emerald-800 sm:rounded-full">
-            {/* Pastille « % » : ne passe jamais seule à la ligne */}
-            <span
-              aria-hidden="true"
-              className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-emerald-600 text-[11px] text-white"
-            >
-              %
-            </span>
-            <span className="min-w-0">
-              {t("Remise automatique :")}{" "}
-              {rules.duration
-                .map((r) =>
-                  t("-{percent} % dès {days} jours", {
-                    percent: r.percent,
-                    days: r.min_days,
-                  }),
-                )
-                .join(" · ")}
-            </span>
-          </p>
-        )}
 
         {search && (
           <div className="mx-auto mt-10 flex max-w-3xl flex-col items-center justify-between gap-3 rounded-3xl border-2 border-sky bg-sky-soft/60 px-5 py-4 text-navy sm:flex-row">

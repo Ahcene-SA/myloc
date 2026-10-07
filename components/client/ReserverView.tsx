@@ -175,7 +175,7 @@ export function ReserverView() {
 
   const days = daysBetween(form.pickupDate, form.returnDate);
 
-  // Devis serveur : remise durée / fidélité / code promo (la plus avantageuse)
+  // Devis serveur : remise code promo (créée et choisie par l'agence)
   const [promoInput, setPromoInput] = useState(draft?.promoInput ?? "");
   const [appliedCode, setAppliedCode] = useState(draft?.appliedCode ?? "");
   const quoteKey = car && days > 0 ? `${car.id}|${form.pickupDate}|${form.returnDate}|${appliedCode}` : "";
@@ -920,16 +920,6 @@ export function ReserverView() {
                   <span className={cn("text-2xl font-semibold tabular-nums text-slate-900 transition-opacity", quoting && "opacity-40")}>{totalLabel}</span>
                 )}
               </div>
-              {quote?.loyalty && quote.loyalty.rentals < quote.loyalty.needed && (
-                <p className="rounded-md border border-sky/30 bg-sky-soft/40 px-3 py-2 text-xs text-slate-700">
-                  {t(
-                    quote.loyalty.needed - quote.loyalty.rentals > 1
-                      ? "Fidélité : encore {n} locations terminées pour profiter de -{percent} % sur vos prochaines réservations."
-                      : "Fidélité : encore {n} location terminée pour profiter de -{percent} % sur vos prochaines réservations.",
-                    { n: quote.loyalty.needed - quote.loyalty.rentals, percent: quote.loyalty.percent }
-                  )}
-                </p>
-              )}
               <p className="text-xs leading-relaxed text-slate-500">{t("Prix final, assurance et assistance incluses. Réglé à la remise des clés.")}</p>
             </div>
           </Card>

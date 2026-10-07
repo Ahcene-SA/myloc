@@ -4,11 +4,8 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Copy, Loader2, Pencil, Plus, PlusCircle, Trash2, X } from "lucide-react";
 import {
   deletePromo,
-  fetchPricingRules,
   fetchPromos,
   savePromo,
-  updatePricingRules,
-  type PricingRules,
   type PromoCode,
 } from "@/lib/api";
 import { site } from "@/lib/site";
@@ -31,7 +28,6 @@ function promoState(p: PromoCode): { label: string; cls: string } {
 }
 
 export function PromosView() {
-  const [rules, setRules] = useState<PricingRules | null>(null);
   const [promos, setPromos] = useState<PromoCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -40,10 +36,9 @@ export function PromosView() {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([fetchPricingRules(), fetchPromos()])
-      .then(([r, p]) => {
+    fetchPromos()
+      .then((p) => {
         if (cancelled) return;
-        setRules(r);
         setPromos(p);
         setError("");
       })
@@ -55,10 +50,10 @@ export function PromosView() {
   }, [reloadKey]);
 
   if (loading) return <LoadingBlock />;
-  if (error || !rules)
+  if (error)
     return (
       <ErrorBlock
-        message={error || "Chargement impossible."}
+        message={error}
         onRetry={() => {
           setLoading(true);
           setReloadKey((k) => k + 1);
@@ -70,16 +65,18 @@ export function PromosView() {
 
   return (
     <div>
-      <PageTitle kicker="Tarifs" title="Promos & remises">
+      <PageTitle kicker="Tarifs" title="Codes promo">
         <button type="button" onClick={() => setEditing("new")} className={primaryBtn}>
           <PlusCircle className="h-4 w-4" />
           Créer un code promo
         </button>
       </PageTitle>
 
-      <RulesCard initial={rules} onSaved={setRules} />
+      <p className="mb-4 text-sm text-slate-500">
+        Les remises ne s&apos;appliquent que par un code promo que vous créez et partagez : jamais automatiquement.
+      </p>
 
-      <Card className="mt-6 overflow-hidden">
+      <Card className="overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-3.5">
           <div>
             <p className="text-sm font-semibold text-slate-900">Codes promo</p>
@@ -113,152 +110,6 @@ export function PromosView() {
   );
 }
 
-function RulesCard({ initial, onSaved }: { initial: PricingRules; onSaved: (r: PricingRules) => void }) {
-  const [r, setR] = useState<PricingRules>(initial);
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState("");
-  const [err, setErr] = useState("");
-
-  const setTier = (i: number, key: "min_days" | "percent", v: string) =>
-    setR((x) => ({ ...x, duration: x.duration.map((t, k) => (k === i ? { ...t, [key]: Number(v) } : t)) }));
-
-  const save = async (e: FormEvent) => {
-    e.preventDefault();
-    setBusy(true);
-    setErr("");
-    setMsg("");
-    try {
-      const saved = await updatePricingRules(r);
-      setR(saved);
-      onSaved(saved);
-      setMsg("Enregistré. Les nouveaux prix s'appliquent tout de suite sur le site.");
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : "Enregistrement impossible.");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <Card className="p-5">
-      <form onSubmit={save} className="grid gap-8 lg:grid-cols-2">
-        <div>
-          <p className="text-sm font-semibold text-slate-900">Remise selon la durée</p>
-          <p className="mb-4 text-sm text-slate-500">Appliquée automatiquement, affichée sur l&apos;accueil.</p>
-          <div className="flex flex-col gap-3">
-            {r.duration.map((t, i) => (
-              // Deux groupes insécables : sur mobile, la remise passe à la ligne d'un seul bloc
-              <div
-                key={i}
-                className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-slate-200 p-3 text-sm text-slate-700 sm:flex-nowrap sm:border-0 sm:p-0"
-              >
-                <span className="flex items-center gap-2 whitespace-nowrap">
-                  <span className="w-8 sm:w-auto">Dès</span>
-                  <input
-                    type="number"
-                    min={1}
-                    value={t.min_days}
-                    onChange={(e) => setTier(i, "min_days", e.target.value)}
-                    aria-label="Nombre de jours minimum"
-                    className={cn(inputClass, "h-9 w-20 flex-shrink-0 px-3")}
-                  />
-                  <span>jours :</span>
-                </span>
-                <span className="flex items-center gap-2 whitespace-nowrap">
-                  <span className="w-8 text-slate-500 sm:w-auto">-</span>
-                  <input
-                    type="number"
-                    min={1}
-                    max={90}
-                    step="0.5"
-                    value={t.percent}
-                    onChange={(e) => setTier(i, "percent", e.target.value)}
-                    aria-label="Pourcentage de remise"
-                    className={cn(inputClass, "h-9 w-20 flex-shrink-0 px-3")}
-                  />
-                  <span>%</span>
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setR((x) => ({ ...x, duration: x.duration.filter((_, k) => k !== i) }))}
-                  aria-label="Supprimer cette tranche"
-                  className="ms-auto flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-red-600"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            ))}
-            <button
-              type="button"
-              onClick={() =>
-                setR((x) => ({ ...x, duration: [...x.duration, { min_days: (x.duration.at(-1)?.min_days ?? 3) + 7, percent: 5 }] }))
-              }
-              className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-sky-text hover:underline"
-            >
-              <Plus className="h-4 w-4" /> Ajouter une tranche
-            </button>
-          </div>
-        </div>
-
-        <div>
-          <p className="text-sm font-semibold text-slate-900">Programme fidélité</p>
-          <p className="mb-4 text-sm text-slate-500">Pour les clients avec un compte, calculé sur leurs locations terminées.</p>
-          <label className="mb-4 flex cursor-pointer items-center gap-3 text-sm font-medium text-slate-700">
-            <input
-              type="checkbox"
-              checked={r.loyalty.enabled}
-              onChange={(e) => setR((x) => ({ ...x, loyalty: { ...x.loyalty, enabled: e.target.checked } }))}
-              className="h-4 w-4 accent-sky"
-            />
-            Activer la remise fidélité
-          </label>
-          <div className={cn("flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-slate-700", !r.loyalty.enabled && "opacity-50")}>
-            <span className="flex items-center gap-2 whitespace-nowrap">
-              <span>À partir de</span>
-              <input
-                type="number"
-                min={1}
-                value={r.loyalty.min_rentals}
-                disabled={!r.loyalty.enabled}
-                onChange={(e) => setR((x) => ({ ...x, loyalty: { ...x.loyalty, min_rentals: Number(e.target.value) } }))}
-                aria-label="Nombre de locations"
-                className={cn(inputClass, "h-9 w-20 flex-shrink-0 px-3")}
-              />
-              <span>locations :</span>
-            </span>
-            <span className="flex items-center gap-2 whitespace-nowrap">
-              <span>-</span>
-              <input
-                type="number"
-                min={0}
-                max={90}
-                step="0.5"
-                value={r.loyalty.percent}
-                disabled={!r.loyalty.enabled}
-                onChange={(e) => setR((x) => ({ ...x, loyalty: { ...x.loyalty, percent: Number(e.target.value) } }))}
-                aria-label="Pourcentage fidélité"
-                className={cn(inputClass, "h-9 w-20 flex-shrink-0 px-3")}
-              />
-              <span>%</span>
-            </span>
-          </div>
-          <p className="mt-4 rounded-md border border-sky/30 bg-sky-soft/40 px-3 py-2 text-xs text-slate-700">
-            Les remises ne se cumulent pas : le client obtient automatiquement la plus avantageuse (durée, fidélité ou code promo).
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-3 lg:col-span-2">
-          <FormError message={err} />
-          {msg && <p className="rounded-md border border-emerald-600/20 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-800">{msg}</p>}
-          <button type="submit" disabled={busy} className={cn(primaryBtn, "w-fit")}>
-            {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-            Enregistrer les remises
-          </button>
-        </div>
-      </form>
-    </Card>
-  );
-}
 
 function PromoRow({
   p,

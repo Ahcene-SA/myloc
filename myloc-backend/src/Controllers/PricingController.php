@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Myloc\Controllers;
 
 use Myloc\Config\Database;
-use Myloc\Middleware\AuthMiddleware;
 use Myloc\Models\Car;
 use Myloc\Models\Promo;
 use Myloc\Services\Pricing;
@@ -48,8 +47,6 @@ class PricingController
         if ($end <= $start || $days < 1) {
             Response::error('La date de retour doit être après la date de départ.', 422);
         }
-        $user = AuthMiddleware::optionalUser();
-        $userId = $user && $user['role'] === 'client' ? $user['user_id'] : null;
         $code = isset($input['promo_code']) ? Validator::sanitizeString($input['promo_code']) : null;
 
         // Brute force de codes promo par un visiteur sans compte : chaque essai de code
@@ -63,44 +60,7 @@ class PricingController
             $this->promoLimiter->recordFailure($key);
         }
 
-        Response::success('Devis calculé.', ['quote' => $this->pricing->quote((float) $car['price_per_day'], $days, $userId, $code)]);
-    }
-
-    /** Public : règles actuelles (pour afficher « -10 % dès 7 jours » sur le site). */
-    public function publicRules(): void
-    {
-        $rules = $this->pricing->rules();
-        Response::success('Règles.', ['rules' => $rules]);
-    }
-
-    public function updateRules(): void
-    {
-        $input = $this->json();
-        $duration = [];
-        foreach ((array) ($input['duration'] ?? []) as $tier) {
-            $min = filter_var($tier['min_days'] ?? null, FILTER_VALIDATE_INT);
-            $pct = filter_var($tier['percent'] ?? null, FILTER_VALIDATE_FLOAT);
-            if ($min === false || $min < 1 || $pct === false || $pct <= 0 || $pct > 90) {
-                Response::error('Remise durée invalide : nombre de jours ≥ 1 et pourcentage entre 1 et 90.', 422);
-            }
-            $duration[] = ['min_days' => $min, 'percent' => round((float) $pct, 2)];
-        }
-        usort($duration, fn($a, $b) => $a['min_days'] <=> $b['min_days']);
-
-        $l = (array) ($input['loyalty'] ?? []);
-        $min = filter_var($l['min_rentals'] ?? 3, FILTER_VALIDATE_INT);
-        $pct = filter_var($l['percent'] ?? 0, FILTER_VALIDATE_FLOAT);
-        if ($min === false || $min < 1 || $pct === false || $pct < 0 || $pct > 90) {
-            Response::error('Remise fidélité invalide.', 422);
-        }
-        $rules = [
-            'duration' => $duration,
-            'loyalty' => ['enabled' => !empty($l['enabled']), 'min_rentals' => $min, 'percent' => round((float) $pct, 2)],
-        ];
-        $before = $this->pricing->rules();
-        $this->pricing->saveRules($rules);
-        Audit::log('pricing_rules_updated', 'settings', null, ['before' => $before, 'after' => $rules]);
-        Response::success('Règles de remise enregistrées.', ['rules' => $rules]);
+        Response::success('Devis calculé.', ['quote' => $this->pricing->quote((float) $car['price_per_day'], $days, null, $code)]);
     }
 
     public function listPromos(): void
