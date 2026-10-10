@@ -133,6 +133,9 @@ class WhatsApp
         }
         $lines[] = '';
         $lines[] = '👤 Client : ' . self::bold((string) ($r['full_name'] ?? '-'), $markdown);
+        if (!empty($r['birth_date'])) {
+            $lines[] = '🎂 Né(e) le : ' . self::date($r['birth_date']);
+        }
         $lines[] = '📞 ' . ($r['phone'] ?? '');
         if (!empty($r['email'])) {
             $lines[] = '✉️ ' . $r['email'];

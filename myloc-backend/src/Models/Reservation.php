@@ -45,16 +45,17 @@ class Reservation
 
     /**
      * @param array<string, mixed> $details pickup_place, pickup_time, return_place, return_time,
-     *                                      delivery_address, license_number, payment_method, client_note
+     *                                      delivery_address, birth_date, license_number,
+     *                                      payment_method, client_note
      * @param array{status?: string, source?: string, admin_note?: ?string, pricing?: array} $options
      */
     public function create(?int $userId, int $carId, string $startDate, string $endDate, string $fullName, ?string $email, string $phone, float $totalPrice, array $details = [], array $options = []): int
     {
         $stmt = $this->pdo->prepare("
             INSERT INTO reservations (user_id, car_id, start_date, end_date, full_name, email, phone, status, source, admin_note, total_price, base_price, discount_amount, discount_label, promo_code,
-                pickup_place, pickup_time, return_place, return_time, delivery_address, license_number, payment_method, client_note)
+                pickup_place, pickup_time, return_place, return_time, delivery_address, birth_date, license_number, payment_method, client_note)
             VALUES (:user_id, :car_id, :start_date, :end_date, :full_name, :email, :phone, :status, :source, :admin_note, :total_price, :base_price, :discount_amount, :discount_label, :promo_code,
-                :pickup_place, :pickup_time, :return_place, :return_time, :delivery_address, :license_number, :payment_method, :client_note)
+                :pickup_place, :pickup_time, :return_place, :return_time, :delivery_address, :birth_date, :license_number, :payment_method, :client_note)
         ");
         $stmt->execute([
             ':user_id' => $userId,
@@ -77,6 +78,7 @@ class Reservation
             ':return_place' => $details['return_place'] ?? null,
             ':return_time' => $details['return_time'] ?? null,
             ':delivery_address' => $details['delivery_address'] ?? null,
+            ':birth_date' => $details['birth_date'] ?? null,
             ':license_number' => $details['license_number'] ?? null,
             ':payment_method' => $details['payment_method'] ?? null,
             ':client_note' => $details['client_note'] ?? null,

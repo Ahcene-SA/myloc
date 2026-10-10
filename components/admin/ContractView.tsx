@@ -286,7 +286,7 @@ export function ContractView() {
             <Line label="Adresse" />
             <Line label="Téléphone" value={r.phone} />
             <Line label="Email" value={r.email || r.user_email} />
-            <Line label="Date et lieu de naissance" />
+            <Line label="Date et lieu de naissance" value={r.birth_date ? formatDate(r.birth_date) : ""} />
             <Line label="N° de passeport / pièce" />
             <Line label="N° de permis" value={r.license_number} />
             <Line label="2ᵉ conducteur" />

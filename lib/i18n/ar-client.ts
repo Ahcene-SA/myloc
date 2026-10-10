@@ -23,6 +23,32 @@ export const arClient: Record<string, string> = {
   "Bonjour MYLOC.DZ, au sujet de ma réservation {ref} ({car}, du {start} au {end}).":
     "مرحبًا MYLOC.DZ، بخصوص حجزي {ref} ({car}، من {start} إلى {end}).",
 
+  // Réservation : date de naissance du conducteur
+  "Date de naissance du conducteur": "تاريخ ميلاد السائق",
+  "Jour": "اليوم",
+  "Jour de naissance": "اليوم",
+  "Mois": "الشهر",
+  "Mois de naissance": "الشهر",
+  "Année": "السنة",
+  "Année de naissance": "السنة",
+  "Né(e) le {date}": "تاريخ الميلاد: {date}",
+  "🎂 Né(e) le : {date}": "🎂 تاريخ الميلاد: {date}",
+  "Indiquez la date de naissance du conducteur.": "أدخل تاريخ ميلاد السائق.",
+  "Cette date de naissance n'existe pas.": "هذا التاريخ غير موجود.",
+  "Le conducteur doit avoir au moins {age} ans.": "عمر السائق {age} سنة على الأقل.",
+  "Janvier": "جانفي",
+  "Février": "فيفري",
+  "Mars": "مارس",
+  "Avril": "أفريل",
+  "Mai": "ماي",
+  "Juin": "جوان",
+  "Juillet": "جويلية",
+  "Août": "أوت",
+  "Septembre": "سبتمبر",
+  "Octobre": "أكتوبر",
+  "Novembre": "نوفمبر",
+  "Décembre": "ديسمبر",
+
   // Accueil
   "Locations à venir": "الكراءات القادمة",
   "En attente de confirmation": "في انتظار التأكيد",

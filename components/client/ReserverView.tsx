@@ -52,6 +52,10 @@ const HOURS = Array.from({ length: 25 }, (_, i) => {
 // Libellés traduits au rendu
 const STEPS = ["Véhicule", "Dates & lieux", "Conducteur", "Confirmation"];
 const MAX_DAYS = 90;
+/** Âge minimum du conducteur (contrôlé aussi côté serveur). */
+const MIN_DRIVER_AGE = 18;
+/** Mois affichés dans les listes de naissance (traduits par t()). */
+const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 
 interface FormState {
   pickupPlace: string;
@@ -66,6 +70,9 @@ interface FormState {
   fullName: string;
   email: string;
   phone: string;
+  birthDay: string;
+  birthMonth: string;
+  birthYear: string;
   license: string;
   licenseConfirmed: boolean;
   note: string;
@@ -138,28 +145,51 @@ export function ReserverView() {
   // Le bouton « terminer » ne s'active qu'après un appui sur le bouton WhatsApp
   const [waSent, setWaSent] = useState(false);
 
-  const [form, setForm] = useState<FormState>(() => draft?.form ?? {
-    pickupPlace: bookingPrefill?.pickupPlace || site.agencies[0],
-    pickupAddress: bookingPrefill?.pickupAddress || "",
-    pickupDate: bookingPrefill?.start || "",
-    pickupTime: "10:00",
-    differentReturn: !!bookingPrefill?.returnPlace && bookingPrefill.returnPlace !== bookingPrefill.pickupPlace,
-    returnPlace: bookingPrefill?.returnPlace || site.agencies[0],
-    returnAddress: bookingPrefill?.returnAddress || "",
-    returnDate: bookingPrefill?.end || "",
-    returnTime: "10:00",
-    fullName: user?.full_name || "",
-    email: user?.email || "",
-    phone: user?.phone || "",
-    license: "",
-    licenseConfirmed: false,
-    note: "",
-    payment: "especes",
-    accepted: false,
+  const [form, setForm] = useState<FormState>(() => {
+    if (draft?.form) {
+      // Brouillon antérieur à l'ajout de la date de naissance : les champs manquants sont créés
+      const legacy = draft.form;
+      return {
+        ...legacy,
+        birthDay: legacy.birthDay ?? "",
+        birthMonth: legacy.birthMonth ?? "",
+        birthYear: legacy.birthYear ?? "",
+      };
+    }
+    return {
+      pickupPlace: bookingPrefill?.pickupPlace || site.agencies[0],
+      pickupAddress: bookingPrefill?.pickupAddress || "",
+      pickupDate: bookingPrefill?.start || "",
+      pickupTime: "10:00",
+      differentReturn: !!bookingPrefill?.returnPlace && bookingPrefill.returnPlace !== bookingPrefill.pickupPlace,
+      returnPlace: bookingPrefill?.returnPlace || site.agencies[0],
+      returnAddress: bookingPrefill?.returnAddress || "",
+      returnDate: bookingPrefill?.end || "",
+      returnTime: "10:00",
+      fullName: user?.full_name || "",
+      email: user?.email || "",
+      phone: user?.phone || "",
+      birthDay: "",
+      birthMonth: "",
+      birthYear: "",
+      license: "",
+      licenseConfirmed: false,
+      note: "",
+      payment: "especes",
+      accepted: false,
+    };
   });
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => setForm((f) => ({ ...f, [key]: value }));
 
   const car = cars.find((c) => c.id === carId) || null;
+
+  /** Date de naissance reconstruite (AAAA-MM-JJ), vide si incomplète. */
+  const birthIso =
+    form.birthDay && form.birthMonth && form.birthYear
+      ? `${form.birthYear}-${form.birthMonth.padStart(2, "0")}-${form.birthDay.padStart(2, "0")}`
+      : "";
+  // Années proposées : de la plus récente autorisée (18 ans) vers le passé
+  const birthYears = Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - MIN_DRIVER_AGE - i);
 
   useEffect(() => {
     if (!carId) return;
@@ -246,6 +276,12 @@ export function ReserverView() {
       if (form.fullName.trim().length < 2) return t("Indiquez le nom du conducteur.");
       if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) return t("Adresse email invalide.");
       if (form.phone.trim().length < 5) return t("Indiquez un numéro de téléphone.");
+      if (!birthIso) return t("Indiquez la date de naissance du conducteur.");
+      if (Number(form.birthDay) > new Date(Number(form.birthYear), Number(form.birthMonth), 0).getDate())
+        return t("Cette date de naissance n'existe pas.");
+      // Date d'anniversaire des 18 ans : si elle est à venir, le conducteur est trop jeune
+      if (`${Number(form.birthYear) + MIN_DRIVER_AGE}-${form.birthMonth.padStart(2, "0")}-${form.birthDay.padStart(2, "0")}` > todayIso())
+        return t("Le conducteur doit avoir au moins {age} ans.", { age: MIN_DRIVER_AGE });
       if (form.license.trim().length < 4) return t("Indiquez le numéro de permis de conduire.");
       if (!form.licenseConfirmed) return t("Confirmez que le conducteur a un permis valide.");
     }
@@ -295,6 +331,7 @@ export function ReserverView() {
         full_name: form.fullName.trim(),
         email: form.email.trim(),
         phone: form.phone.trim(),
+        birth_date: birthIso,
         pickup_place: form.pickupPlace,
         pickup_time: form.pickupTime,
         return_place: returnPlace === HOME ? `${HOME_PICKUP_PREFIX}${returnAddress.trim()}`.slice(0, 150) : returnPlace,
@@ -380,6 +417,7 @@ export function ReserverView() {
       total_price: quote?.total_price ?? null,
       payment_method: form.payment,
       full_name: form.fullName.trim(),
+      birth_date: birthIso || null,
       phone: form.phone.trim(),
       email: form.email.trim(),
       client_note: form.note.trim() || null,
@@ -665,6 +703,29 @@ export function ReserverView() {
                 <span className={labelClass}>{t("Nom et prénom du conducteur")}</span>
                 <input className={inputClass} value={form.fullName} onChange={(e) => set("fullName", e.target.value)} autoComplete="name" />
               </label>
+              <label className="sm:col-span-2">
+                <span className={labelClass}>{t("Date de naissance du conducteur")}</span>
+                <div className="grid grid-cols-[0.6fr_1.1fr_0.8fr] gap-2">
+                  <select aria-label={t("Jour de naissance")} className={inputClass} value={form.birthDay} onChange={(e) => set("birthDay", e.target.value)}>
+                    <option value="">{t("Jour")}</option>
+                    {Array.from({ length: 31 }, (_, i) => (
+                      <option key={i + 1} value={String(i + 1)}>{i + 1}</option>
+                    ))}
+                  </select>
+                  <select aria-label={t("Mois de naissance")} className={inputClass} value={form.birthMonth} onChange={(e) => set("birthMonth", e.target.value)}>
+                    <option value="">{t("Mois")}</option>
+                    {MONTHS.map((m, i) => (
+                      <option key={m} value={String(i + 1)}>{t(m)}</option>
+                    ))}
+                  </select>
+                  <select aria-label={t("Année de naissance")} className={inputClass} value={form.birthYear} onChange={(e) => set("birthYear", e.target.value)}>
+                    <option value="">{t("Année")}</option>
+                    {birthYears.map((y) => (
+                      <option key={y} value={String(y)}>{y}</option>
+                    ))}
+                  </select>
+                </div>
+              </label>
               <label>
                 <span className={labelClass}>{t("Email")}</span>
                 <input type="email" className={inputClass} value={form.email} onChange={(e) => set("email", e.target.value)} autoComplete="email" />
@@ -767,7 +828,14 @@ export function ReserverView() {
               <dl className="grid gap-4 rounded-md border border-slate-200 bg-slate-50 p-4 text-sm sm:grid-cols-2">
                 <div>
                   <dt className="text-slate-500">{t("Conducteur")}</dt>
-                  <dd className="font-medium text-slate-900">{form.fullName}</dd>
+                  <dd className="font-medium text-slate-900">
+                    {form.fullName}
+                    {birthIso && (
+                      <span className="block text-sm font-normal text-slate-500">
+                        {t("Né(e) le {date}", { date: formatDate(birthIso) })}
+                      </span>
+                    )}
+                  </dd>
                 </div>
                 <div>
                   <dt className="text-slate-500">{t("Contact")}</dt>

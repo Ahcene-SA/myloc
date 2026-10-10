@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS reservations (
     full_name VARCHAR(100) NOT NULL,
     email VARCHAR(255) NULL,
     phone VARCHAR(20) NOT NULL,
+    birth_date DATE NULL,
     status ENUM('pending', 'confirmed', 'rejected', 'cancelled') NOT NULL DEFAULT 'pending',
     source VARCHAR(20) NOT NULL DEFAULT 'site',
     admin_note TEXT NULL,

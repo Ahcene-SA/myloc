@@ -61,7 +61,7 @@ class ReservationController
             Response::error('Trop de demandes de réservation depuis cette connexion. Réessayez demain.', 429);
         }
 
-        $required = Validator::required($input, ['car_id', 'start_date', 'end_date', 'full_name', 'email', 'phone']);
+        $required = Validator::required($input, ['car_id', 'start_date', 'end_date', 'full_name', 'email', 'phone', 'birth_date']);
         if (!empty($required)) {
             Response::error('Champs obligatoires manquants.', 422, ['missing' => $required]);
         }
@@ -514,6 +514,20 @@ class ReservationController
         $payment = $text('payment_method', 30);
         if ($payment !== null && !in_array($payment, self::PAYMENT_METHODS, true)) {
             Response::error('Moyen de paiement invalide.', 422);
+        }
+
+        // Naissance du conducteur (facultative à la saisie agence, obligatoire depuis le site) :
+        // date réelle du passé, conducteur d'au moins 18 ans et de moins de 120 ans.
+        $birth = $text('birth_date', 10);
+        if ($birth !== null) {
+            if (!Validator::date($birth)) {
+                Response::error('Date de naissance invalide (format AAAA-MM-JJ).', 422);
+            }
+            $birthDate = \DateTimeImmutable::createFromFormat('!Y-m-d', $birth);
+            $today = new \DateTimeImmutable('today');
+            if ($birthDate > $today->modify('-18 years') || $birthDate < $today->modify('-120 years')) {
+                Response::error('La date de naissance doit correspondre à un conducteur de 18 à 120 ans.', 422);
+            }
         }
 
         return [

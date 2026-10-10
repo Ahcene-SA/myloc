@@ -42,6 +42,7 @@ try {
         'return_place'     => 'VARCHAR(150) NULL',
         'return_time'      => 'TIME NULL',
         'delivery_address' => 'VARCHAR(255) NULL',
+        'birth_date'       => 'DATE NULL',
         'license_number'   => 'VARCHAR(50) NULL',
         'payment_method'   => 'VARCHAR(30) NULL',
         'client_note'      => 'TEXT NULL',

@@ -404,6 +404,8 @@ export interface ReservationInput {
   full_name: string;
   email: string;
   phone: string;
+  /** Date de naissance du conducteur (AAAA-MM-JJ) */
+  birth_date?: string;
   pickup_place?: string;
   pickup_time?: string;
   return_place?: string;
@@ -446,6 +448,7 @@ export interface ReservationFromApi {
   return_place?: string | null;
   return_time?: string | null;
   delivery_address?: string | null;
+  birth_date?: string | null;
   license_number?: string | null;
   payment_method?: PaymentMethod | null;
   client_note?: string | null;

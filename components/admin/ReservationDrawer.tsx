@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import {
+  Cake,
   CalendarDays,
   Check,
   ClipboardCheck,
@@ -180,6 +181,11 @@ function DrawerBody({ r, onClose }: { r: ReservationFromApi; onClose: () => void
                 <a href={`mailto:${email}`} className="flex items-center gap-2 break-all text-slate-900 hover:text-sky-text">
                   <Mail className="h-4 w-4 flex-shrink-0 text-slate-400" /> {email}
                 </a>
+              )}
+              {r.birth_date && (
+                <p className="flex items-center gap-2 text-slate-600">
+                  <Cake className="h-4 w-4 text-slate-400" /> Né(e) le {formatDate(r.birth_date)}
+                </p>
               )}
               {r.license_number && (
                 <p className="flex items-center gap-2 text-slate-600">

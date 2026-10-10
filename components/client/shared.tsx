@@ -142,6 +142,7 @@ export interface WhatsAppRecapFields {
   total_price?: string | number | null;
   payment_method?: string | null;
   full_name?: string | null;
+  birth_date?: string | null;
   phone?: string | null;
   email?: string | null;
   client_note?: string | null;
@@ -169,6 +170,9 @@ export function whatsappRecap(f: WhatsAppRecapFields, footer = "⏳ Demande en a
   }
   lines.push("");
   lines.push(t("👤 Client : {name}", { name: f.full_name || "—" }));
+  if (f.birth_date) {
+    lines.push(t("🎂 Né(e) le : {date}", { date: formatDate(f.birth_date) }));
+  }
   if (f.phone) {
     lines.push(t("📞 {phone}", { phone: f.phone }));
   }
