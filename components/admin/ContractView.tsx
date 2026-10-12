@@ -143,7 +143,8 @@ const FINAL_NOTICE =
 
 function Line({ label, value, narrow }: { label: string; value?: string | number | null; narrow?: boolean }) {
   return (
-    <div className="flex gap-2 border-b border-dotted border-slate-300 py-1.5 text-[12.5px]">
+    // break-inside-avoid : une ligne ne doit jamais être coupée en deux par un saut de page
+    <div className="flex break-inside-avoid gap-2 border-b border-dotted border-slate-300 py-1.5 text-[12.5px]">
       <span className={`${narrow ? "w-20" : "w-20 sm:w-36"} flex-shrink-0 text-slate-500`}>{label}</span>
       <span className="min-h-[1.2em] min-w-0 flex-1 break-words font-semibold text-navy">{value || ""}</span>
     </div>
@@ -169,6 +170,7 @@ function InspectionBlock({ title, i, compare }: { title: string; i?: Inspection;
         <Line narrow label="Kilométrage" value={i?.mileage != null ? `${i.mileage.toLocaleString("fr-FR")} km` : ""} />
         <Line narrow label="Carburant" value={i?.fuel_level != null ? `${i.fuel_level}/8` : ""} />
         <Line
+          narrow
           label="Dommages"
           value={i ? (i.damages.length ? i.damages.map((d) => zoneLabels[d.zone] + (d.note ? ` (${d.note})` : "")).join(" ; ") : "Aucun") : ""}
         />
@@ -248,7 +250,7 @@ export function ContractView() {
 
   return (
     <div className="min-h-dvh bg-slate-100 py-8 print:bg-white print:py-0">
-      <style>{`@page { size: A4; margin: 10mm; } @media print { .no-print { display: none !important; } }`}</style>
+      <style>{`@page { size: A4; margin: 10mm; } @media print { .no-print { display: none !important; } article p, article li { orphans: 2; widows: 2; } article h2, article h3 { break-after: avoid; } }`}</style>
 
       <div className="no-print mx-auto mb-4 flex max-w-[210mm] items-center justify-between gap-3 px-4">
         <p className="text-sm text-slate-600">Vérifiez le contrat puis imprimez-le ou enregistrez-le en PDF.</p>
@@ -262,7 +264,8 @@ export function ContractView() {
       </div>
 
       <article className="mx-auto flex max-w-[210mm] flex-col gap-4 bg-white p-6 text-navy shadow-xl sm:p-[12mm] print:max-w-none print:p-0 print:shadow-none">
-        <header className="flex items-start justify-between gap-6 border-b-2 border-navy pb-4">
+        {/* break-inside-avoid : l'en-tête (logo + référence) reste entier sur une page */}
+      <header className="break-inside-avoid flex items-start justify-between gap-6 border-b-2 border-navy pb-4">
           <div>
             <Logo />
             <p className="mt-2 text-[11px] leading-relaxed text-slate-600">
@@ -341,7 +344,9 @@ export function ContractView() {
           </div>
         </Box>
 
-        <section className="break-before-page rounded-xl border border-slate-300 p-4 print:break-before-page">
+        {/* En impression, pas de bordure géante autour d'un bloc qui s'étale sur
+            plusieurs pages : elle serait coupée en plein milieu du papier. */}
+        <section className="rounded-xl border border-slate-300 p-4 print:rounded-none print:border-0 print:p-0">
           <h2 className="mb-3 text-center text-[13px] font-extrabold uppercase tracking-[0.14em] text-navy">Conditions générales du contrat</h2>
           <div className="gap-6 text-[10.5px] leading-snug text-slate-700 sm:columns-2">
             {conditions.map((c) => (
@@ -362,15 +367,15 @@ export function ContractView() {
               </div>
             ))}
           </div>
-          <p className="mt-3 text-center text-[11px] font-extrabold uppercase text-navy">
+          <p className="mt-3 break-inside-avoid text-center text-[11px] font-extrabold uppercase text-navy">
             Lisez bien les conditions générales de location avant de signer le contrat, et suivez nos consignes à la lettre. Merci.
           </p>
-          <p className="mt-2 rounded-lg bg-slate-50 p-3 text-[10px] font-semibold leading-snug text-slate-700">{FINAL_NOTICE}</p>
+          <p className="mt-2 break-inside-avoid rounded-lg bg-slate-50 p-3 text-[10px] font-semibold leading-snug text-slate-700 print:bg-transparent">{FINAL_NOTICE}</p>
         </section>
 
         <div className="grid grid-cols-1 gap-4 break-inside-avoid sm:grid-cols-2">
           {["Signature de la société (MYLOC.DZ)", "Date et signature du locataire (« lu et approuvé »)"].map((who) => (
-            <div key={who} className="rounded-xl border border-slate-300 p-4">
+            <div key={who} className="break-inside-avoid rounded-xl border border-slate-300 p-4">
               <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-slate-500">{who}</p>
               <div className="mt-2 grid grid-cols-2 gap-3 text-[11px] text-slate-500">
                 <div>
@@ -386,7 +391,7 @@ export function ContractView() {
           ))}
         </div>
 
-        <footer className="flex items-end justify-between border-t border-slate-200 pt-3 text-[10.5px] text-slate-600">
+        <footer className="break-inside-avoid flex items-end justify-between border-t border-slate-200 pt-3 text-[10.5px] text-slate-600">
           <p>
             Tél. : {site.phoneDisplay} · WhatsApp : {site.phoneDisplay}
             <br />
