@@ -250,7 +250,7 @@ export function ContractView() {
 
   return (
     <div className="min-h-dvh bg-slate-100 py-8 print:bg-white print:py-0">
-      <style>{`@page { size: A4; margin: 10mm; } @media print { .no-print { display: none !important; } article p, article li { orphans: 2; widows: 2; } article h2, article h3 { break-after: avoid; } }`}</style>
+      <style>{`@page { size: A4; margin: 10mm; } @media print { .no-print { display: none !important; } html, body { width: 190mm; background: #fff; } article { margin: 0 !important; max-width: none !important; padding: 0 !important; box-shadow: none !important; transform: none !important; } article p, article li { orphans: 2; widows: 2; } article h2, article h3 { break-after: avoid; } }`}</style>
 
       <div className="no-print mx-auto mb-4 flex max-w-[210mm] items-center justify-between gap-3 px-4">
         <p className="text-sm text-slate-600">Vérifiez le contrat puis imprimez-le ou enregistrez-le en PDF.</p>
