@@ -412,6 +412,8 @@ export interface ReservationInput {
   return_time?: string;
   delivery_address?: string;
   license_number?: string;
+  passport_number?: string;
+  client_car_plate?: string;
   payment_method?: PaymentMethod;
   client_note?: string;
   promo_code?: string;
@@ -450,6 +452,8 @@ export interface ReservationFromApi {
   delivery_address?: string | null;
   birth_date?: string | null;
   license_number?: string | null;
+  passport_number?: string | null;
+  client_car_plate?: string | null;
   payment_method?: PaymentMethod | null;
   client_note?: string | null;
   base_price?: string | number | null;

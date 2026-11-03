@@ -143,6 +143,8 @@ export interface WhatsAppRecapFields {
   payment_method?: string | null;
   full_name?: string | null;
   birth_date?: string | null;
+  passport_number?: string | null;
+  client_car_plate?: string | null;
   phone?: string | null;
   email?: string | null;
   client_note?: string | null;
@@ -172,6 +174,12 @@ export function whatsappRecap(f: WhatsAppRecapFields, footer = "⏳ Demande en a
   lines.push(t("👤 Client : {name}", { name: f.full_name || "—" }));
   if (f.birth_date) {
     lines.push(t("🎂 Né(e) le : {date}", { date: formatDate(f.birth_date) }));
+  }
+  if (f.passport_number) {
+    lines.push(t("🛂 Passeport : {no}", { no: f.passport_number }));
+  }
+  if (f.client_car_plate) {
+    lines.push(t("🚘 Matricule : {plate}", { plate: f.client_car_plate }));
   }
   if (f.phone) {
     lines.push(t("📞 {phone}", { phone: f.phone }));

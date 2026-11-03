@@ -136,6 +136,12 @@ class WhatsApp
         if (!empty($r['birth_date'])) {
             $lines[] = '🎂 Né(e) le : ' . self::date($r['birth_date']);
         }
+        if (!empty($r['passport_number'])) {
+            $lines[] = '🛂 Passeport : ' . $r['passport_number'];
+        }
+        if (!empty($r['client_car_plate'])) {
+            $lines[] = '🚘 Matricule : ' . $r['client_car_plate'];
+        }
         $lines[] = '📞 ' . ($r['phone'] ?? '');
         if (!empty($r['email'])) {
             $lines[] = '✉️ ' . $r['email'];
