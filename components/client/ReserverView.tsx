@@ -44,6 +44,8 @@ import {
 
 // Valeur envoyée au serveur (en français) : seul l'affichage est traduit avec t(HOME).
 const HOME = "Livraison à domicile";
+// Choix « autre lieu » : le client saisit lui-même le lieu (envoyé tel quel au serveur).
+const AUTRE = "Autre";
 const HOURS = Array.from({ length: 25 }, (_, i) => {
   const h = 8 + Math.floor(i / 2);
   return `${String(h).padStart(2, "0")}:${i % 2 ? "30" : "00"}`;
@@ -59,11 +61,13 @@ const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet"
 
 interface FormState {
   pickupPlace: string;
+  pickupOther: string;
   pickupAddress: string;
   pickupDate: string;
   pickupTime: string;
   differentReturn: boolean;
   returnPlace: string;
+  returnOther: string;
   returnAddress: string;
   returnDate: string;
   returnTime: string;
@@ -153,6 +157,8 @@ export function ReserverView() {
       const legacy = draft.form;
       return {
         ...legacy,
+        pickupOther: legacy.pickupOther ?? "",
+        returnOther: legacy.returnOther ?? "",
         birthDay: legacy.birthDay ?? "",
         birthMonth: legacy.birthMonth ?? "",
         birthYear: legacy.birthYear ?? "",
@@ -162,11 +168,13 @@ export function ReserverView() {
     }
     return {
       pickupPlace: bookingPrefill?.pickupPlace || site.agencies[0],
+      pickupOther: "",
       pickupAddress: bookingPrefill?.pickupAddress || "",
       pickupDate: bookingPrefill?.start || "",
       pickupTime: "10:00",
       differentReturn: !!bookingPrefill?.returnPlace && bookingPrefill.returnPlace !== bookingPrefill.pickupPlace,
       returnPlace: bookingPrefill?.returnPlace || site.agencies[0],
+      returnOther: "",
       returnAddress: bookingPrefill?.returnAddress || "",
       returnDate: bookingPrefill?.end || "",
       returnTime: "10:00",
@@ -275,8 +283,11 @@ export function ReserverView() {
       if (days > MAX_DAYS) return t("La location en ligne est limitée à {max} jours. Contactez-nous pour une longue durée.", { max: MAX_DAYS });
       if (conflict) return t("Ce véhicule est déjà réservé sur une partie de ces dates.");
       if (form.pickupPlace === HOME && form.pickupAddress.trim().length < 5) return t("Indiquez l'adresse de livraison.");
+      if (form.pickupPlace === AUTRE && form.pickupOther.trim().length < 2) return t("Indiquez le lieu de retrait.");
       if (form.differentReturn && form.returnPlace === HOME && form.returnAddress.trim().length < 5)
         return t("Indiquez l'adresse de récupération.");
+      if (form.differentReturn && form.returnPlace === AUTRE && form.returnOther.trim().length < 2)
+        return t("Indiquez le lieu de retour.");
     }
     if (s === 3) {
       if (form.fullName.trim().length < 2) return t("Indiquez le nom du conducteur.");
@@ -331,6 +342,7 @@ export function ReserverView() {
     setStepError("");
     const returnPlace = form.differentReturn ? form.returnPlace : form.pickupPlace;
     const returnAddress = form.differentReturn ? form.returnAddress : form.pickupAddress;
+    const returnOther = form.differentReturn ? form.returnOther : form.pickupOther;
     try {
       const res = await createReservation({
         car_id: car.id,
@@ -340,9 +352,14 @@ export function ReserverView() {
         email: form.email.trim(),
         phone: form.phone.trim(),
         birth_date: birthIso,
-        pickup_place: form.pickupPlace,
+        pickup_place: form.pickupPlace === AUTRE ? form.pickupOther.trim().slice(0, 150) : form.pickupPlace,
         pickup_time: form.pickupTime,
-        return_place: returnPlace === HOME ? `${HOME_PICKUP_PREFIX}${returnAddress.trim()}`.slice(0, 150) : returnPlace,
+        return_place:
+          returnPlace === HOME
+            ? `${HOME_PICKUP_PREFIX}${returnAddress.trim()}`.slice(0, 150)
+            : returnPlace === AUTRE
+              ? returnOther.trim().slice(0, 150)
+              : returnPlace,
         return_time: form.returnTime,
         delivery_address: form.pickupPlace === HOME ? form.pickupAddress.trim() : undefined,
         license_number: form.license.trim(),
@@ -414,16 +431,23 @@ export function ReserverView() {
   if (confirmWa && car && !done) {
     const returnPlace = form.differentReturn ? form.returnPlace : form.pickupPlace;
     const returnAddress = form.differentReturn ? form.returnAddress : form.pickupAddress;
+    const returnOther = form.differentReturn ? form.returnOther : form.pickupOther;
     const waLink = whatsappRecap({
       id: null,
       car_name: car.name,
       car_price_per_day: car.price_per_day,
       start_date: form.pickupDate,
       pickup_time: form.pickupTime,
-      pickup_place: form.pickupPlace === HOME ? `${HOME} : ${form.pickupAddress.trim()}` : form.pickupPlace,
+      pickup_place:
+        form.pickupPlace === HOME ? `${HOME} : ${form.pickupAddress.trim()}` : form.pickupPlace === AUTRE ? form.pickupOther.trim() : form.pickupPlace,
       end_date: form.returnDate,
       return_time: form.returnTime,
-      return_place: returnPlace === HOME ? `${HOME_PICKUP_PREFIX}${returnAddress.trim()}`.slice(0, 150) : returnPlace,
+      return_place:
+        returnPlace === HOME
+          ? `${HOME_PICKUP_PREFIX}${returnAddress.trim()}`.slice(0, 150)
+          : returnPlace === AUTRE
+            ? returnOther.trim()
+            : returnPlace,
       total_price: quote?.total_price ?? null,
       payment_method: form.payment,
       full_name: form.fullName.trim(),
@@ -615,6 +639,7 @@ export function ReserverView() {
                       </option>
                     ))}
                     <option value={HOME}>{t(HOME)}</option>
+                    <option value={AUTRE}>{t(AUTRE)}</option>
                   </select>
                 </label>
                 <label>
@@ -635,6 +660,12 @@ export function ReserverView() {
                     <input className={inputClass} value={form.pickupAddress} onChange={(e) => set("pickupAddress", e.target.value)} placeholder={t("Rue, commune, wilaya")} />
                   </label>
                 )}
+                {form.pickupPlace === AUTRE && (
+                  <label className="sm:col-span-3">
+                    <span className={labelClass}>{t("Lieu de retrait (précisez)")}</span>
+                    <input className={inputClass} value={form.pickupOther} maxLength={150} onChange={(e) => set("pickupOther", e.target.value)} placeholder={t("Ville, commune, adresse…")} />
+                  </label>
+                )}
               </fieldset>
 
               <fieldset className="grid gap-4 border-t border-slate-200 pt-6 sm:grid-cols-[1.4fr_1fr_0.8fr]">
@@ -653,6 +684,7 @@ export function ReserverView() {
                         </option>
                       ))}
                       <option value={HOME}>{t(HOME)}</option>
+                      <option value={AUTRE}>{t(AUTRE)}</option>
                     </select>
                   </label>
                 ) : (
@@ -660,7 +692,11 @@ export function ReserverView() {
                     <span className={labelClass}>{t("Lieu de retour")}</span>
                     <p className="flex h-9 items-center gap-2 text-sm text-slate-900">
                       <MapPin className="h-4 w-4 text-slate-400" />
-                      {form.pickupPlace === HOME ? t("Récupération à domicile") : t(form.pickupPlace)}
+                      {form.pickupPlace === HOME
+                        ? t("Récupération à domicile")
+                        : form.pickupPlace === AUTRE
+                          ? form.pickupOther.trim() || t("À préciser")
+                          : t(form.pickupPlace)}
                     </p>
                   </div>
                 )}
@@ -686,6 +722,12 @@ export function ReserverView() {
                   <label className="sm:col-span-3">
                     <span className={labelClass}>{t("Adresse de récupération")}</span>
                     <input className={inputClass} value={form.returnAddress} onChange={(e) => set("returnAddress", e.target.value)} placeholder={t("Rue, commune, wilaya")} />
+                  </label>
+                )}
+                {form.differentReturn && form.returnPlace === AUTRE && (
+                  <label className="sm:col-span-3">
+                    <span className={labelClass}>{t("Lieu de retour (précisez)")}</span>
+                    <input className={inputClass} value={form.returnOther} maxLength={150} onChange={(e) => set("returnOther", e.target.value)} placeholder={t("Ville, commune, adresse…")} />
                   </label>
                 )}
               </fieldset>
@@ -868,7 +910,11 @@ export function ReserverView() {
                   <dd className="font-medium text-slate-900">
                     {t("{date} à {time}", { date: formatDate(form.pickupDate, true), time: form.pickupTime })}
                     <br />
-                    {form.pickupPlace === HOME ? t("Livraison : {address}", { address: form.pickupAddress }) : t(form.pickupPlace)}
+                    {form.pickupPlace === HOME
+                      ? t("Livraison : {address}", { address: form.pickupAddress })
+                      : form.pickupPlace === AUTRE
+                        ? form.pickupOther
+                        : t(form.pickupPlace)}
                   </dd>
                 </div>
                 <div>
@@ -879,10 +925,14 @@ export function ReserverView() {
                     {form.differentReturn
                       ? form.returnPlace === HOME
                         ? t("Récupération : {address}", { address: form.returnAddress })
-                        : t(form.returnPlace)
+                        : form.returnPlace === AUTRE
+                          ? form.returnOther
+                          : t(form.returnPlace)
                       : form.pickupPlace === HOME
                         ? t("Récupération à domicile")
-                        : t(form.pickupPlace)}
+                        : form.pickupPlace === AUTRE
+                          ? form.pickupOther
+                          : t(form.pickupPlace)}
                   </dd>
                 </div>
               </dl>
