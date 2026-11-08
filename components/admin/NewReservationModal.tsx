@@ -24,7 +24,7 @@ export function NewReservationModal() {
 }
 
 function Form({ prefill, onClose }: { prefill: NewReservationPrefill; onClose: () => void }) {
-  const { cars, clients, reservations, upsertReservation, openReservation } = useAdmin();
+  const { cars, reservations, upsertReservation, openReservation } = useAdmin();
   const today = todayIso();
   const start0 = prefill.startDate || today;
 
@@ -41,7 +41,6 @@ function Form({ prefill, onClose }: { prefill: NewReservationPrefill; onClose: (
     pickupOther: "",
     returnOther: "",
     address: "",
-    clientId: "",
     fullName: "",
     phone: "",
     email: "",
@@ -93,17 +92,6 @@ function Form({ prefill, onClose }: { prefill: NewReservationPrefill; onClose: (
     [reservations, f.carId, f.start, f.end]
   );
 
-  const pickClient = (id: string) => {
-    const c = clients.find((x) => String(x.id) === id);
-    setF((p) => ({
-      ...p,
-      clientId: id,
-      fullName: c ? c.full_name : p.fullName,
-      phone: c ? c.phone : p.phone,
-      email: c ? c.email : p.email,
-    }));
-  };
-
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setErr("");
@@ -130,7 +118,6 @@ function Form({ prefill, onClose }: { prefill: NewReservationPrefill; onClose: (
         full_name: f.fullName.trim(),
         phone: f.phone.trim(),
         email: f.email.trim() || undefined,
-        user_id: f.clientId ? Number(f.clientId) : undefined,
         license_number: f.license.trim() || undefined,
         passport_number: f.passport.trim() || undefined,
         birth_date: f.birthDate,
@@ -278,21 +265,6 @@ function Form({ prefill, onClose }: { prefill: NewReservationPrefill; onClose: (
         {/* Client */}
         <fieldset className="grid gap-4 sm:grid-cols-2">
           <legend className="mb-3 w-full border-b border-slate-200 pb-2 text-sm font-semibold text-slate-900">Client</legend>
-          {clients.length > 0 && (
-            <div className="sm:col-span-2">
-              <label htmlFor="nr-client" className={labelClass}>
-                Client déjà inscrit (facultatif)
-              </label>
-              <select id="nr-client" value={f.clientId} onChange={(e) => pickClient(e.target.value)} className={inputClass}>
-                <option value="">— Nouveau client, sans compte —</option>
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.full_name} · {c.phone}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
           <div>
             <label htmlFor="nr-name" className={labelClass}>
               Nom complet
