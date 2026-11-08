@@ -61,7 +61,7 @@ class ReservationController
             Response::error('Trop de demandes de réservation depuis cette connexion. Réessayez demain.', 429);
         }
 
-        $required = Validator::required($input, ['car_id', 'start_date', 'end_date', 'full_name', 'email', 'phone', 'birth_date', 'passport_number', 'client_car_plate']);
+        $required = Validator::required($input, ['car_id', 'start_date', 'end_date', 'full_name', 'email', 'phone', 'birth_date', 'passport_number']);
         if (!empty($required)) {
             Response::error('Champs obligatoires manquants.', 422, ['missing' => $required]);
         }
@@ -109,12 +109,9 @@ class ReservationController
 
         $details = $this->readDetails($input);
 
-        // Passeport et matricule de la voiture du client : obligatoires sur le site (imprimés sur le contrat)
+        // Passeport : obligatoire sur le site (imprimé sur le contrat)
         if ($details['passport_number'] === null || mb_strlen($details['passport_number']) < 3) {
             Response::error('Numéro de passeport invalide (3 à 30 caractères).', 422);
-        }
-        if ($details['client_car_plate'] === null || mb_strlen($details['client_car_plate']) < 3) {
-            Response::error('Immatriculation invalide (3 à 30 caractères).', 422);
         }
 
         $car = $this->carModel->findById($carId);

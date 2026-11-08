@@ -79,7 +79,6 @@ interface FormState {
   birthYear: string;
   license: string;
   passport: string;
-  carPlate: string;
   licenseConfirmed: boolean;
   note: string;
   payment: PaymentMethod;
@@ -163,7 +162,6 @@ export function ReserverView() {
         birthMonth: legacy.birthMonth ?? "",
         birthYear: legacy.birthYear ?? "",
         passport: legacy.passport ?? "",
-        carPlate: legacy.carPlate ?? "",
       };
     }
     return {
@@ -186,7 +184,6 @@ export function ReserverView() {
       birthYear: "",
       license: "",
       passport: "",
-      carPlate: "",
       licenseConfirmed: false,
       note: "",
       payment: "especes",
@@ -301,7 +298,6 @@ export function ReserverView() {
         return t("Le conducteur doit avoir au moins {age} ans.", { age: MIN_DRIVER_AGE });
       if (form.license.trim().length < 4) return t("Indiquez le numéro de permis de conduire.");
       if (form.passport.trim().length < 3) return t("Indiquez le numéro de passeport.");
-      if (form.carPlate.trim().length < 3) return t("Indiquez l'immatriculation de votre voiture.");
       if (!form.licenseConfirmed) return t("Confirmez que le conducteur a un permis valide.");
     }
     if (s === 4 && !form.accepted) return t("Cochez la case de confirmation pour envoyer la demande.");
@@ -364,7 +360,6 @@ export function ReserverView() {
         delivery_address: form.pickupPlace === HOME ? form.pickupAddress.trim() : undefined,
         license_number: form.license.trim(),
         passport_number: form.passport.trim(),
-        client_car_plate: form.carPlate.trim(),
         payment_method: form.payment,
         client_note: form.note.trim() || undefined,
         // Le code saisi est envoyé tel quel : le serveur recalcule la meilleure remise
@@ -453,7 +448,6 @@ export function ReserverView() {
       full_name: form.fullName.trim(),
       birth_date: birthIso || null,
       passport_number: form.passport.trim() || null,
-      client_car_plate: form.carPlate.trim() || null,
       phone: form.phone.trim(),
       email: form.email.trim(),
       client_note: form.note.trim() || null,
@@ -795,10 +789,6 @@ export function ReserverView() {
               <label>
                 <span className={labelClass}>{t("Numéro de passeport / pièce d'identité")}</span>
                 <input className={inputClass} value={form.passport} maxLength={30} onChange={(e) => set("passport", e.target.value)} />
-              </label>
-              <label>
-                <span className={labelClass}>{t("Immatriculation de votre voiture")}</span>
-                <input className={inputClass} value={form.carPlate} maxLength={30} onChange={(e) => set("carPlate", e.target.value)} />
               </label>
               <label className="sm:col-span-2">
                 <span className={labelClass}>{t("Message pour l'agence (facultatif)")}</span>

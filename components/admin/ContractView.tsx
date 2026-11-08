@@ -294,7 +294,6 @@ export function ContractView() {
               value={[r.birth_date ? formatDate(r.birth_date) : "", r.birth_place ?? ""].filter(Boolean).join(" à ")}
             />
             <Line label="N° de passeport / pièce" value={r.passport_number} />
-            <Line label="Matricule voiture du locataire" value={r.client_car_plate} />
             <Line label="N° de permis" value={r.license_number} />
             <Line label="2ᵉ conducteur" />
           </Box>

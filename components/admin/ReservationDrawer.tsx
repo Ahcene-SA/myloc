@@ -198,11 +198,6 @@ function DrawerBody({ r, onClose }: { r: ReservationFromApi; onClose: () => void
                   <IdCard className="h-4 w-4 text-slate-400" /> Passeport n° {r.passport_number}
                 </p>
               )}
-              {r.client_car_plate && (
-                <p className="flex items-center gap-2 text-slate-600">
-                  <IdCard className="h-4 w-4 text-slate-400" /> Matricule voiture : {r.client_car_plate}
-                </p>
-              )}
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
               <a

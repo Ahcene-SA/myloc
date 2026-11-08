@@ -29,7 +29,9 @@ function Form({ prefill, onClose }: { prefill: NewReservationPrefill; onClose: (
   const start0 = prefill.startDate || today;
 
   const [f, setF] = useState({
-    carId: prefill.carId ? String(prefill.carId) : String(cars.find((c) => c.status === "available")?.id ?? ""),
+    // Pas de véhicule présélectionné : l'agence choisit d'abord le véhicule voulu par le client,
+    // et le prix calculé ensuite dépend de ce choix.
+    carId: prefill.carId ? String(prefill.carId) : "",
     start: start0,
     end: addDays(start0, 3),
     pickupTime: "10:00",
@@ -166,6 +168,8 @@ function Form({ prefill, onClose }: { prefill: NewReservationPrefill; onClose: (
               Véhicule
             </label>
             <select id="nr-car" value={f.carId} onChange={(e) => set("carId", e.target.value)} className={inputClass} required>
+              <option value="">— Choisir un véhicule —</option>
+              {!cars.length && <option value="" disabled>Aucun véhicule</option>}
               {cars.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name} · {formatPrice(c.price_per_day)}/jour{c.status !== "available" ? " (retiré du site)" : ""}
