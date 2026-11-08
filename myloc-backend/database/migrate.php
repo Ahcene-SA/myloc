@@ -43,6 +43,7 @@ try {
         'return_time'      => 'TIME NULL',
         'delivery_address' => 'VARCHAR(255) NULL',
         'birth_date'       => 'DATE NULL',
+        'birth_place'      => 'VARCHAR(100) NULL',
         'passport_number'  => 'VARCHAR(30) NULL',
         'client_car_plate' => 'VARCHAR(30) NULL',
         'license_number'   => 'VARCHAR(50) NULL',

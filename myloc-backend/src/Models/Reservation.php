@@ -54,9 +54,9 @@ class Reservation
     {
         $stmt = $this->pdo->prepare("
             INSERT INTO reservations (user_id, car_id, start_date, end_date, full_name, email, phone, status, source, admin_note, total_price, base_price, discount_amount, discount_label, promo_code,
-                pickup_place, pickup_time, return_place, return_time, delivery_address, birth_date, license_number, passport_number, client_car_plate, payment_method, client_note)
+                pickup_place, pickup_time, return_place, return_time, delivery_address, birth_date, birth_place, license_number, passport_number, client_car_plate, payment_method, client_note)
             VALUES (:user_id, :car_id, :start_date, :end_date, :full_name, :email, :phone, :status, :source, :admin_note, :total_price, :base_price, :discount_amount, :discount_label, :promo_code,
-                :pickup_place, :pickup_time, :return_place, :return_time, :delivery_address, :birth_date, :license_number, :passport_number, :client_car_plate, :payment_method, :client_note)
+                :pickup_place, :pickup_time, :return_place, :return_time, :delivery_address, :birth_date, :birth_place, :license_number, :passport_number, :client_car_plate, :payment_method, :client_note)
         ");
         $stmt->execute([
             ':user_id' => $userId,
@@ -80,6 +80,7 @@ class Reservation
             ':return_time' => $details['return_time'] ?? null,
             ':delivery_address' => $details['delivery_address'] ?? null,
             ':birth_date' => $details['birth_date'] ?? null,
+            ':birth_place' => $details['birth_place'] ?? null,
             ':license_number' => $details['license_number'] ?? null,
             ':passport_number' => $details['passport_number'] ?? null,
             ':client_car_plate' => $details['client_car_plate'] ?? null,

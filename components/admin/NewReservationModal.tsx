@@ -10,6 +10,8 @@ import { daysBetween, formatDate, formatPrice, inputClass, labelClass, primaryBt
 import { FormError, Modal, addDays } from "./ui";
 
 const HOME = "Livraison à domicile";
+// Choix « autre lieu » : l'agence saisit le lieu librement (envoyé tel quel au serveur).
+const AUTRE = "Autre";
 const HOURS = Array.from({ length: 25 }, (_, i) => {
   const h = 8 + Math.floor(i / 2);
   return `${String(h).padStart(2, "0")}:${i % 2 ? "30" : "00"}`;
@@ -34,12 +36,17 @@ function Form({ prefill, onClose }: { prefill: NewReservationPrefill; onClose: (
     returnTime: "10:00",
     pickupPlace: site.agencies[0] as string,
     returnPlace: site.agencies[0] as string,
+    pickupOther: "",
+    returnOther: "",
     address: "",
     clientId: "",
     fullName: "",
     phone: "",
     email: "",
     license: "",
+    passport: "",
+    birthDate: "",
+    birthPlace: "",
     payment: "especes" as PaymentMethod,
     status: "confirmed" as "confirmed" | "pending",
     customPrice: false,
@@ -101,6 +108,12 @@ function Form({ prefill, onClose }: { prefill: NewReservationPrefill; onClose: (
     if (!car) return setErr("Choisissez un véhicule.");
     if (days <= 0) return setErr("La date de retour doit être après la date de départ.");
     if (f.pickupPlace === HOME && !f.address.trim()) return setErr("Indiquez l'adresse de livraison.");
+    if (f.pickupPlace === AUTRE && f.pickupOther.trim().length < 2) return setErr("Indiquez le lieu de retrait.");
+    if (f.returnPlace === AUTRE && f.returnOther.trim().length < 2) return setErr("Indiquez le lieu de retour.");
+    if (f.license.trim().length < 4) return setErr("Indiquez le numéro de permis de conduire.");
+    if (f.passport.trim().length < 3) return setErr("Indiquez le numéro de passeport.");
+    if (!f.birthDate) return setErr("Indiquez la date de naissance du conducteur.");
+    if (f.birthPlace.trim().length < 2) return setErr("Indiquez le lieu de naissance.");
     setBusy(true);
     try {
       const created = await adminCreateReservation({
@@ -109,14 +122,17 @@ function Form({ prefill, onClose }: { prefill: NewReservationPrefill; onClose: (
         end_date: f.end,
         pickup_time: f.pickupTime,
         return_time: f.returnTime,
-        pickup_place: f.pickupPlace,
-        return_place: f.returnPlace,
+        pickup_place: f.pickupPlace === AUTRE ? f.pickupOther.trim().slice(0, 150) : f.pickupPlace,
+        return_place: f.returnPlace === AUTRE ? f.returnOther.trim().slice(0, 150) : f.returnPlace,
         delivery_address: f.pickupPlace === HOME ? f.address.trim() : undefined,
         full_name: f.fullName.trim(),
         phone: f.phone.trim(),
         email: f.email.trim() || undefined,
         user_id: f.clientId ? Number(f.clientId) : undefined,
         license_number: f.license.trim() || undefined,
+        passport_number: f.passport.trim() || undefined,
+        birth_date: f.birthDate,
+        birth_place: f.birthPlace.trim() || undefined,
         payment_method: f.payment,
         status: f.status,
         total_price: f.customPrice && f.price !== "" ? f.price : undefined,
@@ -133,7 +149,7 @@ function Form({ prefill, onClose }: { prefill: NewReservationPrefill; onClose: (
     }
   };
 
-  const places = [...site.agencies, HOME];
+  const places = [...site.agencies, HOME, AUTRE];
 
   return (
     <Modal title="Nouvelle réservation" onClose={onClose} wide>
@@ -211,6 +227,14 @@ function Form({ prefill, onClose }: { prefill: NewReservationPrefill; onClose: (
               ))}
             </select>
           </div>
+          {f.pickupPlace === AUTRE && (
+            <div className="sm:col-span-2">
+              <label htmlFor="nr-pickup-other" className={labelClass}>
+                Lieu de retrait (précisez)
+              </label>
+              <input id="nr-pickup-other" value={f.pickupOther} onChange={(e) => set("pickupOther", e.target.value)} className={inputClass} required minLength={2} maxLength={150} />
+            </div>
+          )}
           <div>
             <label htmlFor="nr-return" className={labelClass}>
               Retour à
@@ -219,8 +243,17 @@ function Form({ prefill, onClose }: { prefill: NewReservationPrefill; onClose: (
               {site.agencies.map((p) => (
                 <option key={p}>{p}</option>
               ))}
+              <option value={AUTRE}>Autre</option>
             </select>
           </div>
+          {f.returnPlace === AUTRE && (
+            <div className="sm:col-span-2">
+              <label htmlFor="nr-return-other" className={labelClass}>
+                Lieu de retour (précisez)
+              </label>
+              <input id="nr-return-other" value={f.returnOther} onChange={(e) => set("returnOther", e.target.value)} className={inputClass} required minLength={2} maxLength={150} />
+            </div>
+          )}
           {f.pickupPlace === HOME && (
             <div className="sm:col-span-2">
               <label htmlFor="nr-address" className={labelClass}>
@@ -276,9 +309,27 @@ function Form({ prefill, onClose }: { prefill: NewReservationPrefill; onClose: (
           </div>
           <div>
             <label htmlFor="nr-license" className={labelClass}>
-              N° de permis (facultatif)
+              Numéro de permis de conduire
             </label>
-            <input id="nr-license" value={f.license} onChange={(e) => set("license", e.target.value)} className={inputClass} maxLength={50} />
+            <input id="nr-license" value={f.license} onChange={(e) => set("license", e.target.value)} className={inputClass} required minLength={4} maxLength={50} />
+          </div>
+          <div>
+            <label htmlFor="nr-passport" className={labelClass}>
+              N° de passeport / pièce
+            </label>
+            <input id="nr-passport" value={f.passport} onChange={(e) => set("passport", e.target.value)} className={inputClass} required minLength={3} maxLength={30} />
+          </div>
+          <div>
+            <label htmlFor="nr-birth" className={labelClass}>
+              Né(e) le
+            </label>
+            <input id="nr-birth" type="date" value={f.birthDate} onChange={(e) => set("birthDate", e.target.value)} className={inputClass} required />
+          </div>
+          <div>
+            <label htmlFor="nr-birth-place" className={labelClass}>
+              Lieu de naissance
+            </label>
+            <input id="nr-birth-place" value={f.birthPlace} onChange={(e) => set("birthPlace", e.target.value)} className={inputClass} required minLength={2} maxLength={100} />
           </div>
         </fieldset>
 

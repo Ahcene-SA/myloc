@@ -545,6 +545,7 @@ class ReservationController
             'return_time' => $time('return_time'),
             'delivery_address' => $text('delivery_address', 255),
             'birth_date' => $birth,
+            'birth_place' => $text('birth_place', 100),
             'license_number' => $text('license_number', 50),
             'passport_number' => $text('passport_number', 30),
             'client_car_plate' => $text('client_car_plate', 30),

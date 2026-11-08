@@ -289,7 +289,10 @@ export function ContractView() {
             <Line label="Adresse" />
             <Line label="Téléphone" value={r.phone} />
             <Line label="Email" value={r.email || r.user_email} />
-            <Line label="Date et lieu de naissance" value={r.birth_date ? formatDate(r.birth_date) : ""} />
+            <Line
+              label="Date et lieu de naissance"
+              value={[r.birth_date ? formatDate(r.birth_date) : "", r.birth_place ?? ""].filter(Boolean).join(" à ")}
+            />
             <Line label="N° de passeport / pièce" value={r.passport_number} />
             <Line label="Matricule voiture du locataire" value={r.client_car_plate} />
             <Line label="N° de permis" value={r.license_number} />

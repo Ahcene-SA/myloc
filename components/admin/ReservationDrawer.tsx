@@ -185,6 +185,7 @@ function DrawerBody({ r, onClose }: { r: ReservationFromApi; onClose: () => void
               {r.birth_date && (
                 <p className="flex items-center gap-2 text-slate-600">
                   <Cake className="h-4 w-4 text-slate-400" /> Né(e) le {formatDate(r.birth_date)}
+                  {r.birth_place ? ` à ${r.birth_place}` : ""}
                 </p>
               )}
               {r.license_number && (
