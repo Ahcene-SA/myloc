@@ -263,7 +263,9 @@ export function ContractView() {
         </button>
       </div>
 
-      <article className="mx-auto flex max-w-[210mm] flex-col gap-4 bg-white p-6 text-navy shadow-xl sm:p-[12mm] print:max-w-none print:p-0 print:shadow-none">
+      {/* En impression, bloc + marges au lieu de flex/gap : WebKit (Safari) ignore
+          break-inside-avoid sur les items flex et coupait l'état des lieux en deux. */}
+      <article className="mx-auto flex max-w-[210mm] flex-col gap-4 bg-white p-6 text-navy shadow-xl sm:p-[12mm] print:block print:max-w-none print:space-y-4 print:p-0 print:shadow-none">
         {/* break-inside-avoid : l'en-tête (logo + référence) reste entier sur une page */}
       <header className="break-inside-avoid flex items-start justify-between gap-6 border-b-2 border-navy pb-4">
           <div>
