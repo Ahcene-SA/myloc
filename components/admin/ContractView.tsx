@@ -360,9 +360,12 @@ export function ContractView() {
             commencé en bas d'une page avec une partie de la boîte coupée. */}
         <section className="rounded-xl border border-slate-300 p-4 print:rounded-none print:border-0 print:break-before-page print:p-0">
           <h2 className="mb-3 text-center text-[13px] font-extrabold uppercase tracking-[0.14em] text-navy">Conditions générales du contrat</h2>
+          {/* Pas de break-inside-avoid sur chaque clause : une clause peut se couper entre
+              deux items / paragraphes (ceux-ci sont protégés par le CSS print) — sinon
+              Safari laisse de grands vides à chaque bas de page. */}
           <div className="cond-cols gap-6 text-[10.5px] leading-snug text-slate-700 sm:columns-2">
             {conditions.map((c) => (
-              <div key={c.title} className="mb-2.5 break-inside-avoid">
+              <div key={c.title} className="mb-2.5">
                 <h3 className="mb-0.5 text-[10px] font-extrabold uppercase tracking-[0.06em] text-navy underline underline-offset-2">{c.title}</h3>
                 {c.text?.map((p) => (
                   <p key={p} className="mb-1">
@@ -385,8 +388,7 @@ export function ContractView() {
           <p className="mt-2 break-inside-avoid rounded-lg bg-slate-50 p-3 text-[10px] font-semibold leading-snug text-slate-700 print:bg-transparent">{FINAL_NOTICE}</p>
         </section>
 
-        {/* Page de signatures à part : elles ne tombent jamais au milieu d'un bloc précédent. */}
-        <div className="grid grid-cols-1 gap-4 break-inside-avoid sm:grid-cols-2 print:break-before-page">
+        <div className="grid grid-cols-1 gap-4 break-inside-avoid sm:grid-cols-2">
           {["Signature de la société (MYLOC.DZ)", "Date et signature du locataire (« lu et approuvé »)"].map((who) => (
             <div key={who} className="break-inside-avoid rounded-xl border border-slate-300 p-4">
               <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-slate-500">{who}</p>
