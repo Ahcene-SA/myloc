@@ -249,8 +249,13 @@ export function ContractView() {
   const today = new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 
   return (
-    <div className="min-h-dvh bg-slate-100 py-8 print:bg-white print:py-0">
-      <style>{`@page { size: A4; margin: 10mm; } @media print { .no-print { display: none !important; } html, body { width: 190mm; background: #fff; } article { margin: 0 !important; max-width: none !important; padding: 0 !important; box-shadow: none !important; transform: none !important; } article p, article li { orphans: 2; widows: 2; } article h2, article h3 { break-after: avoid; } }`}</style>
+    <div className="min-h-dvh bg-slate-100 py-8 print:min-h-0 print:bg-white print:py-0">
+      {/* Safari ne respecte pas @page margin (marges prises dans le dialogue d'impression)
+          et découpe les colonnes CSS en deux au passage de page : d'où les lignes coupées
+          entre deux pages et le contenu décalé quand les en-têtes/pieds de page sont activés.
+          En impression, on protège donc chaque bloc feuille et on imprime les conditions
+          générales en une seule colonne. */}
+      <style>{`@page { size: A4; margin: 10mm; } @media print { .no-print { display: none !important; } html, body { width: 190mm; background: #fff; } article { margin: 0 !important; max-width: none !important; padding: 0 !important; box-shadow: none !important; transform: none !important; } article p, article li, article h2, article h3 { break-inside: avoid; orphans: 2; widows: 2; } article h2, article h3 { break-after: avoid; } .cond-cols { columns: 1 !important; } }`}</style>
 
       <div className="no-print mx-auto mb-4 flex max-w-[210mm] items-center justify-between gap-3 px-4">
         <p className="text-sm text-slate-600">Vérifiez le contrat puis imprimez-le ou enregistrez-le en PDF.</p>
@@ -351,9 +356,11 @@ export function ContractView() {
 
         {/* En impression, pas de bordure géante autour d'un bloc qui s'étale sur
             plusieurs pages : elle serait coupée en plein milieu du papier. */}
-        <section className="rounded-xl border border-slate-300 p-4 print:rounded-none print:border-0 print:p-0">
+        {/* Saute à une nouvelle page en impression : les conditions ne sont jamais
+            commencé en bas d'une page avec une partie de la boîte coupée. */}
+        <section className="rounded-xl border border-slate-300 p-4 print:rounded-none print:border-0 print:break-before-page print:p-0">
           <h2 className="mb-3 text-center text-[13px] font-extrabold uppercase tracking-[0.14em] text-navy">Conditions générales du contrat</h2>
-          <div className="gap-6 text-[10.5px] leading-snug text-slate-700 sm:columns-2">
+          <div className="cond-cols gap-6 text-[10.5px] leading-snug text-slate-700 sm:columns-2">
             {conditions.map((c) => (
               <div key={c.title} className="mb-2.5 break-inside-avoid">
                 <h3 className="mb-0.5 text-[10px] font-extrabold uppercase tracking-[0.06em] text-navy underline underline-offset-2">{c.title}</h3>
@@ -378,7 +385,8 @@ export function ContractView() {
           <p className="mt-2 break-inside-avoid rounded-lg bg-slate-50 p-3 text-[10px] font-semibold leading-snug text-slate-700 print:bg-transparent">{FINAL_NOTICE}</p>
         </section>
 
-        <div className="grid grid-cols-1 gap-4 break-inside-avoid sm:grid-cols-2">
+        {/* Page de signatures à part : elles ne tombent jamais au milieu d'un bloc précédent. */}
+        <div className="grid grid-cols-1 gap-4 break-inside-avoid sm:grid-cols-2 print:break-before-page">
           {["Signature de la société (MYLOC.DZ)", "Date et signature du locataire (« lu et approuvé »)"].map((who) => (
             <div key={who} className="break-inside-avoid rounded-xl border border-slate-300 p-4">
               <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-slate-500">{who}</p>
