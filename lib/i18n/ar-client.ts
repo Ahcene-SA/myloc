@@ -298,8 +298,7 @@ export const arClient: Record<string, string> = {
   "Formats acceptés : JPG, PNG, WEBP ou PDF (5 Mo maximum). Ces documents ne sont visibles que par l'agence.":
     "الصيغ المقبولة: JPG أو PNG أو WEBP أو PDF (5 ميغابايت كحد أقصى). لا يطّلع على هذه الوثائق إلا الوكالة.",
   "Avant de réserver, ajoutez votre passeport et votre permis de conduire dans « Mon profil » (mes documents).":
-    "قبل الحجز، أضف جواز سفرك ورخصة السياقة في «ملفك الشخصي» (وثائقي).",
-  "Document enregistré.": "تم حفظ الوثيقة.",
+    "قبل الحجز، أضف جواز سفرك ورخصة السياقة في «ملفك الشخصي» (وثائقي).",  "Document enregistré.": "تم حفظ الوثيقة.",
   "Type de document invalide.": "نوع وثيقة غير صالح.",
   "Aucun fichier reçu.": "لم يتم استلام أي ملف.",
   "Fichier trop lourd (5 Mo maximum).": "الملف ثقيل جدًا (5 ميغابايت كحد أقصى).",
@@ -308,6 +307,8 @@ export const arClient: Record<string, string> = {
   "Document introuvable.": "الوثيقة غير موجودة.",
   "Document indisponible.": "الوثيقة غير متوفرة.",
   "Envoi impossible, réessayez.": "تعذّر الرفع، حاول مرة أخرى.",
+  "Toute livraison ou retour en dehors de la wilaya d'Alger est facturé par l'agence.":
+    "يُحتسب رسم لأي توصيل أو إرجاع خارج ولاية الجزائر.",
   "Votre réservation est confirmée !": "تم تأكيد حجزك!",
   "Votre demande n'a pas pu être acceptée": "تعذّر قبول طلبك",
   "Votre réservation a été annulée": "تم إلغاء حجزك",

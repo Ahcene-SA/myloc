@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight, Check, CalendarX2, CheckCircle2, Cog, Armchair, Loader2, MapPin, Tag, TriangleAlert } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, CalendarX2, CheckCircle2, Cog, Armchair, Info, Loader2, MapPin, Tag, TriangleAlert } from "lucide-react";
 import { useAuth } from "../AuthContext";
 import { useClient } from "../ClientContext";
 import { WhatsAppIcon } from "../FloatingWhatsApp";
@@ -131,6 +131,19 @@ function clearDraft() {
 function transmissionLabel(t?: string) {
   const v = (t || "").toLowerCase();
   return v.startsWith("auto") ? "Automatique" : v.startsWith("manu") ? "Manuelle" : t || "";
+}
+
+/** Notice affichée quand le client saisit un lieu de livraison/retrait/retour libre
+ *  (à domicile ou « Autre ») : tout déplacement hors de la wilaya d'Alger est facturé.
+ *  Uniquement du texte : aucun prix n'est affiché, et rien n'en est imprimé sur le contrat. */
+function OutOfWilayaNotice() {
+  const { t } = useLang();
+  return (
+    <div className="flex gap-2.5 rounded-md border border-amber-600/20 bg-amber-50 px-3 py-2.5 text-sm text-amber-900 sm:col-span-3">
+      <Info className="mt-0.5 h-4 w-4 flex-shrink-0" />
+      <span>{t("Toute livraison ou retour en dehors de la wilaya d'Alger est facturé par l'agence.")}</span>
+    </div>
+  );
 }
 
 export function ReserverView() {
@@ -707,12 +720,14 @@ export function ReserverView() {
                     <input className={inputClass} value={form.pickupAddress} onChange={(e) => set("pickupAddress", e.target.value)} placeholder={t("Rue, commune, wilaya")} />
                   </label>
                 )}
+                {form.pickupPlace === HOME && <OutOfWilayaNotice />}
                 {form.pickupPlace === AUTRE && (
                   <label className="sm:col-span-3">
                     <span className={labelClass}>{t("Lieu de retrait (précisez)")}</span>
                     <input className={inputClass} value={form.pickupOther} maxLength={150} onChange={(e) => set("pickupOther", e.target.value)} placeholder={t("Ville, commune, adresse…")} />
                   </label>
                 )}
+                {form.pickupPlace === AUTRE && <OutOfWilayaNotice />}
               </fieldset>
 
               <fieldset className="grid gap-4 border-t border-slate-200 pt-6 sm:grid-cols-[1.4fr_1fr_0.8fr]">
@@ -771,12 +786,14 @@ export function ReserverView() {
                     <input className={inputClass} value={form.returnAddress} onChange={(e) => set("returnAddress", e.target.value)} placeholder={t("Rue, commune, wilaya")} />
                   </label>
                 )}
+                {form.differentReturn && form.returnPlace === HOME && <OutOfWilayaNotice />}
                 {form.differentReturn && form.returnPlace === AUTRE && (
                   <label className="sm:col-span-3">
                     <span className={labelClass}>{t("Lieu de retour (précisez)")}</span>
                     <input className={inputClass} value={form.returnOther} maxLength={150} onChange={(e) => set("returnOther", e.target.value)} placeholder={t("Ville, commune, adresse…")} />
                   </label>
                 )}
+                {form.differentReturn && form.returnPlace === AUTRE && <OutOfWilayaNotice />}
               </fieldset>
 
               {booked.length > 0 && (
