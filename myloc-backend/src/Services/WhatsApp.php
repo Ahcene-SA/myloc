@@ -127,6 +127,12 @@ class WhatsApp
         $lines[] = 'Retour : ' . self::date($r['end_date'] ?? null) . (isset($r['return_time']) && $r['return_time'] ? ' à ' . substr($r['return_time'], 0, 5) : '')
             . (isset($r['return_place']) && $r['return_place'] ? ' — ' . $r['return_place'] : '');
         $lines[] = 'Total : ' . self::bold(self::money($r['total_price'] ?? 0), $markdown);
+        // Dépôt de garantie : acompte enregistré par l'agence s'il existe, sinon la règle des 10 % du total.
+        $acompteRaw = $r['acompte_amount'] ?? null;
+        $acompte = ($acompteRaw !== null && $acompteRaw !== '') ? (float) $acompteRaw : round((float) ($r['total_price'] ?? 0) * 0.10);
+        if ($acompte > 0) {
+            $lines[] = 'Acompte (dépôt de garantie) : ' . self::bold(self::money($acompte), $markdown);
+        }
         if (!empty($r['payment_method'])) {
             $labels = ['especes' => 'espèces', 'carte' => 'carte', 'virement' => 'virement'];
             $lines[] = 'Paiement : ' . ($labels[$r['payment_method']] ?? $r['payment_method']);

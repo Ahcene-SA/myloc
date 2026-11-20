@@ -46,6 +46,13 @@ export function daysLabel(n: number): string {
   return `${n} ${t(n > 1 ? "jours" : "jour")}`;
 }
 
+/** Dépôt de garantie (acompte) : 10 % du total de la location, arrondi au dinar.
+ *  Même règle et même arrondi côté serveur (myloc-backend/src/Services/WhatsApp.php). */
+export function acompteDue(total: number | string | null | undefined): number {
+  const n = typeof total === "string" ? parseFloat(total) : (total ?? 0);
+  return Math.round((Number.isFinite(n) ? n : 0) * 0.1);
+}
+
 /** Référence lisible d'une réservation : MYL-000042 */
 export function reservationRef(id: number): string {
   return `MYL-${String(id).padStart(6, "0")}`;
@@ -148,6 +155,8 @@ export interface WhatsAppRecapFields {
   phone?: string | null;
   email?: string | null;
   client_note?: string | null;
+  /** Acompte enregistré par l'agence ; absent → règle des 10 % du total. */
+  acompte_amount?: string | number | null;
 }
 
 /** Récapitulatif complet (réservation + client), identique à ce que l'API envoie
@@ -169,6 +178,18 @@ export function whatsappRecap(f: WhatsAppRecapFields, footer = "⏳ Demande en a
   }
   if (f.payment_method != null) {
     lines.push(t("Paiement : {method}", { method: t(payment[f.payment_method as PaymentMethod] ?? f.payment_method) }));
+  }
+  // Acompte affiché au client : montant enregistré par l'agence s'il existe,
+  // sinon la règle des 10 % du total (demande pas encore confirmée).
+  const acompteNum = Number(f.acompte_amount);
+  const acompte =
+    f.acompte_amount !== undefined && f.acompte_amount !== null && f.acompte_amount !== "" && Number.isFinite(acompteNum) && acompteNum > 0
+      ? acompteNum
+      : f.total_price != null
+        ? acompteDue(f.total_price)
+        : null;
+  if (acompte != null) {
+    lines.push(t("Acompte (dépôt de garantie) : {price}", { price: formatPrice(acompte) }));
   }
   lines.push("");
   lines.push(t("👤 Client : {name}", { name: f.full_name || "—" }));

@@ -274,6 +274,29 @@ class ReservationController
             }
         }
 
+        // Acompte (dépôt de garantie) : montant encaissé par l'agence, en DA.
+        // Champ absent → on ne touche pas à la valeur ; « "" » ou 0 → aucun acompte.
+        $acompteProvided = false;
+        $acompte = null;
+        if (array_key_exists('acompte_amount', $input)) {
+            $acompteProvided = true;
+            $raw = is_scalar($input['acompte_amount']) ? trim((string) $input['acompte_amount']) : '';
+            if ($raw !== '') {
+                if (!is_numeric($raw)) {
+                    Response::error('Montant de l\'acompte invalide.', 422);
+                }
+                $acompte = round((float) $raw, 2);
+                if ($acompte <= 0) {
+                    $acompte = null;
+                } else {
+                    $total = (float) $existing['total_price'];
+                    if ($total > 0 && $acompte > $total) {
+                        Response::error('L\'acompte ne peut pas dépasser le montant total de la location.', 422);
+                    }
+                }
+            }
+        }
+
         // Un employé qui annule une location déjà confirmée doit en donner la raison
         if ($actor['role'] !== 'owner' && $status === 'cancelled' && $existing['status'] === 'confirmed'
             && trim((string) ($adminNote ?? $existing['admin_note'] ?? '')) === '') {
@@ -296,6 +319,9 @@ class ReservationController
             }
 
             $this->reservationModel->updateStatus($id, $status, $adminNote);
+            if ($acompteProvided) {
+                $this->reservationModel->setAcompte($id, $acompte);
+            }
 
             // Code promo : rendu si la réservation est refusée / annulée, recompté si elle est réactivée
             if ($wasBlocking && !$isBlocking) {
@@ -320,6 +346,13 @@ class ReservationController
             ]);
         } elseif ($adminNote !== null && $adminNote !== (string) $existing['admin_note']) {
             Audit::log('reservation_note', 'reservation', $id, ['client' => $existing['full_name'], 'note' => $adminNote]);
+        }
+        if ($acompteProvided && (float) ($acompte ?? 0) !== (float) ($existing['acompte_amount'] ?? 0)) {
+            Audit::log('reservation_acompte', 'reservation', $id, [
+                'client' => $existing['full_name'],
+                'acompte' => $acompte,
+                'from' => $existing['acompte_amount'],
+            ]);
         }
         Response::success('Statut mis à jour.', [
             'admin_note' => $adminNote,

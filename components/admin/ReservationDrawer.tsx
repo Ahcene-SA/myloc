@@ -6,6 +6,7 @@ import {
   CalendarDays,
   Check,
   ClipboardCheck,
+  Coins,
   FileText,
   CreditCard,
   IdCard,
@@ -40,6 +41,7 @@ import { cn } from "@/lib/utils";
 import {
   DiscountLine,
   StatusBadge,
+  acompteDue,
   categoryLabel,
   daysBetween,
   formatDate,
@@ -61,8 +63,10 @@ function whatsappText(r: ReservationFromApi, status: Status, note: string) {
   const first = (r.full_name || "").split(" ")[0];
   const what = `votre réservation ${reservationRef(r.id)} (${r.car_name}, du ${formatDate(r.start_date)} au ${formatDate(r.end_date)})`;
   const extra = note.trim() ? `\n\n${note.trim()}` : "";
+  const acompte = parseFloat(String(r.acompte_amount ?? 0)) || 0;
+  const acompteLine = acompte > 0 ? ` Acompte (dépôt de garantie) : ${formatPrice(acompte)}.` : "";
   if (status === "confirmed")
-    return `Bonjour ${first}, c'est MYLOC.DZ. Bonne nouvelle : ${what} est confirmée ✅. Montant : ${formatPrice(r.total_price)}.${extra}\n\nÀ bientôt !`;
+    return `Bonjour ${first}, c'est MYLOC.DZ. Bonne nouvelle : ${what} est confirmée ✅. Montant : ${formatPrice(r.total_price)}.${acompteLine}${extra}\n\nÀ bientôt !`;
   if (status === "rejected")
     return `Bonjour ${first}, c'est MYLOC.DZ. Nous sommes désolés, ${what} ne peut pas être acceptée.${extra}\n\nN'hésitez pas à nous écrire pour trouver une autre solution.`;
   if (status === "cancelled") return `Bonjour ${first}, c'est MYLOC.DZ. ${what[0].toUpperCase()}${what.slice(1)} a été annulée.${extra}`;
@@ -92,12 +96,27 @@ function DrawerBody({ r, onClose }: { r: ReservationFromApi; onClose: () => void
   const phase = phaseOf(r, todayIso());
   const email = r.email || r.user_email;
 
+  // Acompte (dépôt de garantie) : pré-rempli à 10 % du total (règle de l'agence), modifiable par l'agent.
+  const suggestedAcompte = acompteDue(r.total_price);
+  const [acompteInput, setAcompteInput] = useState(
+    r.acompte_amount != null && Number(r.acompte_amount) > 0 ? String(r.acompte_amount) : suggestedAcompte > 0 ? String(suggestedAcompte) : ""
+  );
+  const acompteNum = (() => {
+    const raw = acompteInput.trim();
+    if (raw === "") return null;
+    const n = Number(raw.replace(/,/g, "."));
+    return Number.isFinite(n) && n >= 0 ? n : NaN;
+  })();
+
   const act = async (status: Status, onlyNote = false) => {
     setBusy(onlyNote ? "note" : status);
     setErr("");
     try {
-      const updated = await updateReservationStatus(r.id, status, note.trim());
-      upsertReservation({ ...r, ...(updated || {}), status, admin_note: note.trim() || null });
+      if (Number.isNaN(acompteNum)) {
+        throw new Error("Montant de l'acompte invalide : entrez un montant en dinars ou laissez le champ vide.");
+      }
+      const updated = await updateReservationStatus(r.id, status, note.trim(), acompteNum);
+      upsertReservation({ ...r, ...(updated || {}), status, admin_note: note.trim() || null, acompte_amount: acompteNum ?? null });
       setAsking(null);
       setDone(onlyNote ? null : status);
     } catch (e) {
@@ -108,6 +127,10 @@ function DrawerBody({ r, onClose }: { r: ReservationFromApi; onClose: () => void
   };
 
   const noteChanged = note.trim() !== (r.admin_note || "").trim();
+  // Acompte différent de ce qui est déjà enregistré (vide compté comme « aucun »)
+  const acompteChanged =
+    !Number.isNaN(acompteNum ?? 0) &&
+    (acompteInput.trim() === "" ? Number(r.acompte_amount ?? 0) > 0 : Number(String(r.acompte_amount ?? "")) !== acompteNum);
 
   return (
     <Drawer
@@ -265,6 +288,43 @@ function DrawerBody({ r, onClose }: { r: ReservationFromApi; onClose: () => void
           </div>
         </section>
 
+        {/* Acompte / dépôt de garantie : encaissé par l'agence, souvent convenu sur WhatsApp */}
+        <section>
+          <p className={sectionLabel}>Acompte (dépôt de garantie)</p>
+          <div className="flex flex-col gap-3 rounded-lg border border-slate-200 p-4 text-sm">
+            <div className="flex flex-wrap items-center gap-3">
+              <Coins className="h-4 w-4 flex-shrink-0 text-slate-400" />
+              <label className="flex flex-1 flex-wrap items-center gap-2">
+                <span className="text-slate-600">Acompte versé (DA) :</span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  step={1}
+                  value={acompteInput}
+                  onChange={(e) => setAcompteInput(e.target.value)}
+                  className={cn(inputClass, "tabular-nums w-32")}
+                  aria-label="Acompte versé en dinars"
+                />
+              </label>
+              {suggestedAcompte > 0 && (
+                <span className="text-xs text-slate-500">Règle de l'agence : 10 % du total = {formatPrice(suggestedAcompte)}</span>
+              )}
+            </div>
+            <p className="flex flex-wrap items-center gap-1.5 text-slate-900">
+              <span className="text-slate-600">Reste à payer :</span>
+              <span className="font-semibold tabular-nums">
+                {acompteNum != null && !Number.isNaN(acompteNum) && Number(r.total_price) > 0
+                  ? formatPrice(Math.max(Number(r.total_price) - acompteNum, 0))
+                  : formatPrice(r.total_price)}
+              </span>
+            </p>
+            <p className="text-xs text-slate-500">
+              Vide = aucun acompte. Enregistré au moment de confirmer, ou avec « Enregistrer le message » plus tard ; visible sur le contrat.
+            </p>
+          </div>
+        </section>
+
         {(r.status === "confirmed" || r.status === "pending") && <InspectionSection r={r} />}
 
         {r.client_note && (
@@ -291,7 +351,7 @@ function DrawerBody({ r, onClose }: { r: ReservationFromApi; onClose: () => void
           <p className="mt-1.5 flex items-center gap-1.5 text-xs text-slate-500">
             <MessageSquareText className="h-3.5 w-3.5" /> Visible par le client dans son espace.
           </p>
-          {noteChanged && (
+          {(noteChanged || acompteChanged) && (
             <button
               type="button"
               onClick={() => act(r.status || "pending", true)}
@@ -299,7 +359,7 @@ function DrawerBody({ r, onClose }: { r: ReservationFromApi; onClose: () => void
               className={cn(secondaryBtn, "mt-2")}
             >
               {busy === "note" && <Loader2 className="h-4 w-4 animate-spin" />}
-              Enregistrer le message
+              {noteChanged ? "Enregistrer le message" : "Enregistrer l'acompte"}
             </button>
           )}
         </section>

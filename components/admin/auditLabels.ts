@@ -23,6 +23,7 @@ export const auditActions: Record<string, { label: string; tone: Tone; group: st
   reservation_pending: { label: "Réservation remise en attente", tone: "warn", group: "reservation" },
   reservation_created: { label: "Réservation saisie par l'agence", tone: "good", group: "reservation" },
   reservation_note: { label: "Message envoyé au client", tone: "neutral", group: "reservation" },
+  reservation_acompte: { label: "Acompte (dépôt de garantie) enregistré", tone: "neutral", group: "reservation" },
   inspection_depart: { label: "État des lieux de départ", tone: "neutral", group: "reservation" },
   inspection_retour: { label: "État des lieux de retour", tone: "neutral", group: "reservation" },
 
@@ -89,7 +90,12 @@ export function auditDetail(e: AuditEntry): string {
   if (typeof d.name === "string") parts.push(d.name);
   if (typeof d.code === "string") parts.push(d.code);
   if (typeof d.car === "string") parts.push(d.car);
-  if (typeof d.from === "string" && e.action.startsWith("reservation_")) parts.push(`avant : ${statusLabel[d.from] ?? d.from}`);
+  if (typeof d.from === "string" && e.action.startsWith("reservation_") && e.action !== "reservation_acompte") parts.push(`avant : ${statusLabel[d.from] ?? d.from}`);
+  if (e.action === "reservation_acompte") {
+    const from = d.from === null || d.from === "" ? "aucun" : d.from;
+    const to = d.acompte === null || d.acompte === undefined || d.acompte === "" ? "aucun" : `${d.acompte} DA`;
+    parts.push(`${from} → ${to}`);
+  }
   if (e.action === "member_role_changed") parts.push(`${roleLabel(d.from)} → ${roleLabel(d.to)}`);
   if (d.changes && typeof d.changes === "object") {
     const ch = d.changes as Record<string, [unknown, unknown]>;

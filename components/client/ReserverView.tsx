@@ -25,6 +25,7 @@ import {
   HOME_PICKUP_PREFIX,
   LoadingBlock,
   PageTitle,
+  acompteDue,
   categoryLabel,
   daysBetween,
   daysLabel,
@@ -463,6 +464,14 @@ export function ReserverView() {
               "Votre demande n'est pas encore envoyée : ouvrez WhatsApp avec le bouton — le récapitulatif complet (véhicule, dates, coordonnées) est déjà rédigé, il ne reste qu'à l'envoyer à l'agence. Revenez ensuite ici pour terminer."
             )}
           </p>
+          {quote?.total_price != null && quote.total_price > 0 && (
+            <p className="w-full max-w-md rounded-md border border-sky/30 bg-sky-soft/50 px-3 py-2.5 text-sm text-slate-700">
+              {t(
+                "Acompte (dépôt de garantie) : {amount} — soit 10 % du total, à régler à l'agence pour valider la réservation.",
+                { amount: formatPrice(acompteDue(quote.total_price)) }
+              )}
+            </p>
+          )}
           <a
             href={waLink}
             target="_blank"
@@ -1048,6 +1057,11 @@ export function ReserverView() {
                   <span className={cn("text-2xl font-semibold tabular-nums text-slate-900 transition-opacity", quoting && "opacity-40")}>{totalLabel}</span>
                 )}
               </div>
+              {quote?.total_price != null && (
+                <p className="text-sm text-slate-600">
+                  {t("dont acompte (dépôt de garantie) : {price}", { price: formatPrice(acompteDue(quote.total_price)) })}
+                </p>
+              )}
               <p className="text-xs leading-relaxed text-slate-500">{t("Prix final, assurance et assistance incluses. Réglé à la remise des clés.")}</p>
             </div>
           </Card>

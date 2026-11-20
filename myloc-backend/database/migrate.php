@@ -49,6 +49,7 @@ try {
         'license_number'   => 'VARCHAR(50) NULL',
         'payment_method'   => 'VARCHAR(30) NULL',
         'client_note'      => 'TEXT NULL',
+        'acompte_amount'   => 'DECIMAL(10, 2) NULL',
         'updated_at'       => 'TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP',
     ];
     foreach ($reservationColumns as $column => $definition) {

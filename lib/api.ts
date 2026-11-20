@@ -463,6 +463,8 @@ export interface ReservationFromApi {
   discount_amount?: string | number | null;
   discount_label?: string | null;
   promo_code?: string | null;
+  /** Acompte (dépôt de garantie) enregistré par l'agence ; absent = non encaissé. */
+  acompte_amount?: string | number | null;
 }
 
 export interface BookedRange {
@@ -561,10 +563,13 @@ export async function fetchAllReservations(): Promise<ReservationFromApi[]> {
 export async function updateReservationStatus(
   id: number,
   status: "pending" | "confirmed" | "rejected" | "cancelled",
-  adminNote?: string
+  adminNote?: string,
+  /** Acompte (dépôt de garantie) : nombre = montant en DA, null = aucun. undefined = ne pas toucher. */
+  acompteAmount?: number | null
 ): Promise<ReservationFromApi | undefined> {
   const body: Record<string, string> = { status };
   if (adminNote !== undefined) body.admin_note = adminNote;
+  if (acompteAmount !== undefined) body.acompte_amount = acompteAmount === null ? "" : String(acompteAmount);
   const res = await request<{ success: boolean; reservation?: ReservationFromApi }>(
     "PATCH",
     `/reservations/${id}/status`,

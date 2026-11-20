@@ -246,6 +246,9 @@ export function ContractView() {
 
   const days = daysBetween(r.start_date || "", r.end_date || "");
   const discount = parseFloat(String(r.discount_amount ?? 0)) || 0;
+  // Acompte (dépôt de garantie) enregistré par l'agence : laissé à la main s'il n'est pas enregistré.
+  const acompte = parseFloat(String(r.acompte_amount ?? 0)) || 0;
+  const totalNum = parseFloat(String(r.total_price ?? 0)) || 0;
   const today = new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 
   return (
@@ -336,8 +339,8 @@ export function ContractView() {
               {discount > 0 && <Line label="Prix de base" value={formatPrice(r.base_price)} />}
               {discount > 0 && <Line label="Remise" value={`-${formatPrice(discount)} · ${r.discount_label ?? ""}`} />}
               <Line label="Somme à payer" value={formatPrice(r.total_price)} />
-              <Line label="Acompte versé" />
-              <Line label="Reste à payer" />
+              <Line label="Acompte versé" value={acompte > 0 ? formatPrice(acompte) : ""} />
+              <Line label="Reste à payer" value={acompte > 0 ? formatPrice(Math.max(totalNum - acompte, 0)) : ""} />
             </div>
             <div>
               <Line label="Moyen de paiement" value={r.payment_method ? paymentLabels[r.payment_method] : ""} />

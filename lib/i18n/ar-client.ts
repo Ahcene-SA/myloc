@@ -274,6 +274,9 @@ export const arClient: Record<string, string> = {
     "لديك بالفعل 3 طلبات قيد الانتظار: انتظر رد الوكالة قبل تقديم طلب آخر.",
   "À prévoir le jour du départ : passeport, permis de conduire et caution de {amount} (espèces ou virement), restituée au retour du véhicule.":
     "يوم الانطلاق، يُرجى إحضار: جواز السفر، رخصة السياقة، وضمان بقيمة {amount} (نقدًا أو بتحويل بنكي)، يُعاد عند إرجاع السيارة.",
+  "dont acompte (dépôt de garantie) : {price}": "منها العربون (وديعة الضمان) : {price}",
+  "Acompte (dépôt de garantie) : {amount} — soit 10 % du total, à régler à l'agence pour valider la réservation.":
+    "العربون (وديعة الضمان) : {amount} — أي 10% من المجموع، يُدفع لدى الوكالة لإتمام الحجز.",
   "Votre réservation est confirmée !": "تم تأكيد حجزك!",
   "Votre demande n'a pas pu être acceptée": "تعذّر قبول طلبك",
   "Votre réservation a été annulée": "تم إلغاء حجزك",

@@ -202,4 +202,12 @@ class Reservation
         $stmt->execute($params);
         return $stmt->rowCount() > 0;
     }
+
+    /** Acompte (dépôt de garantie) enregistré par l'agence ; null = aucun / non encaissé. */
+    public function setAcompte(int $id, ?float $amount): bool
+    {
+        $stmt = $this->pdo->prepare("UPDATE reservations SET acompte_amount = :acompte WHERE id = :id");
+        $stmt->execute([':acompte' => $amount, ':id' => $id]);
+        return true;
+    }
 }
