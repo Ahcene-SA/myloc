@@ -10,8 +10,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends libzip-dev defa
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # php.ini durci : les erreurs vont dans les journaux (jamais dans la réponse HTTP) et
-# l'en-tête X-Powered-By disparaît.
-RUN printf 'display_errors=Off\nlog_errors=On\nerror_log=/var/www/html/logs/php-errors.log\nexpose_php=Off\n' \
+# l'en-tête X-Powered-By disparaît. Uploads : PDF ou scans jusqu'à 5 Mo (plafond du code),
+# avec marge sur le multipart (client_max_body_size de Nginx : 8 Mo).
+RUN printf 'display_errors=Off\nlog_errors=On\nerror_log=/var/www/html/logs/php-errors.log\nexpose_php=Off\nupload_max_filesize=6M\npost_max_size=8M\n' \
     > /usr/local/etc/php/conf.d/zz-myloc.ini
 
 # Composer pour les dépendances (phpdotenv, php-jwt)
@@ -20,8 +21,8 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 COPY myloc-backend /var/www/html/
 WORKDIR /var/www/html
 RUN composer install --no-dev --optimize-autoloader --no-interaction \
-    && mkdir -p public/images/cars logs \
-    && chown -R www-data:www-data public/images logs
+    && mkdir -p public/images/cars logs documents \
+    && chown -R www-data:www-data public/images logs documents
 
 # Apache doit servir public/ (le routeur unique index.php s'occupe de tout)
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public

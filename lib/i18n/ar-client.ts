@@ -277,6 +277,37 @@ export const arClient: Record<string, string> = {
   "dont acompte (dépôt de garantie) : {price}": "منها العربون (وديعة الضمان) : {price}",
   "Acompte (dépôt de garantie) : {amount} — soit 10 % du total, à régler à l'agence pour valider la réservation.":
     "العربون (وديعة الضمان) : {amount} — أي 10% من المجموع، يُدفع لدى الوكالة لإتمام الحجز.",
+  "Documents requis": "الوثائق المطلوبة",
+  "Documents manquants : ajoutez votre passeport et votre permis de conduire dans « Mon profil » pour réserver.":
+    "وثائق ناقصة: أضف جواز سفرك ورخصة السياقة في «ملفك الشخصي» للتمكن من الحجز.",
+  "Avant d'envoyer une réservation, ajoutez votre passeport et votre permis de conduire dans votre profil.":
+    "قبل إرسال الحجز، أضف جواز سفرك ورخصة السياقة في ملفك الشخصي.",
+  "Passeport et permis de conduire : obligatoires avant d'envoyer une réservation.":
+    "جواز السفر ورخصة السياقة: وثيقتان إلزاميتان قبل إرسال الحجز.",
+  "Aller à mes documents": "اذهب إلى وثائقي",
+  "Plus tard": "لاحقًا",
+  "Passeport": "جواز السفر",
+  "Permis de conduire": "رخصة السياقة",
+  "Manquant": "ناقصة",
+  "Ajouter": "إضافة",
+  "Remplacer": "استبدال",
+  "Voir": "عرض",
+  "Télécharger": "تنزيل",
+  "Envoyé le {date}": "أُرسلت في {date}",
+  "Documents requis — à téléverser dans votre profil": "الوثائق المطلوبة — يُرجى رفعها في ملفك الشخصي",
+  "Formats acceptés : JPG, PNG, WEBP ou PDF (5 Mo maximum). Ces documents ne sont visibles que par l'agence.":
+    "الصيغ المقبولة: JPG أو PNG أو WEBP أو PDF (5 ميغابايت كحد أقصى). لا يطّلع على هذه الوثائق إلا الوكالة.",
+  "Avant de réserver, ajoutez votre passeport et votre permis de conduire dans « Mon profil » (mes documents).":
+    "قبل الحجز، أضف جواز سفرك ورخصة السياقة في «ملفك الشخصي» (وثائقي).",
+  "Document enregistré.": "تم حفظ الوثيقة.",
+  "Type de document invalide.": "نوع وثيقة غير صالح.",
+  "Aucun fichier reçu.": "لم يتم استلام أي ملف.",
+  "Fichier trop lourd (5 Mo maximum).": "الملف ثقيل جدًا (5 ميغابايت كحد أقصى).",
+  "Format non accepté (JPG, PNG, WEBP ou PDF).": "صيغة غير مقبولة (JPG أو PNG أو WEBP أو PDF).",
+  "Le serveur n'a pas pu enregistrer le document.": "لم يتمكن الخادم من حفظ الوثيقة.",
+  "Document introuvable.": "الوثيقة غير موجودة.",
+  "Document indisponible.": "الوثيقة غير متوفرة.",
+  "Envoi impossible, réessayez.": "تعذّر الرفع، حاول مرة أخرى.",
   "Votre réservation est confirmée !": "تم تأكيد حجزك!",
   "Votre demande n'a pas pu être acceptée": "تعذّر قبول طلبك",
   "Votre réservation a été annulée": "تم إلغاء حجزك",

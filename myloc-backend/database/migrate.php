@@ -248,6 +248,25 @@ try {
         $changes++;
     }
 
+    // 9. Documents des clients (passeport, permis) : obligatoires avant toute réservation en ligne.
+    // Fichiers privés stockés hors du docroot, servis uniquement par l'API authentifiée.
+    if (!$hasTable('user_documents')) {
+        $pdo->exec("CREATE TABLE user_documents (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            type ENUM('passeport', 'permis') NOT NULL,
+            filename VARCHAR(120) NOT NULL,
+            original_name VARCHAR(160) NULL,
+            mime VARCHAR(60) NOT NULL,
+            size_bytes INT NOT NULL,
+            uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY uniq_user_type (user_id, type),
+            CONSTRAINT fk_documents_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        echo "✓ table user_documents créée\n";
+        $changes++;
+    }
+
     echo $changes === 0 ? "Schéma déjà à jour.\n" : "Schéma mis à jour ({$changes} changement(s)).\n";
 } catch (Throwable $e) {
     fwrite(STDERR, 'Migration error: ' . $e->getMessage() . "\n");

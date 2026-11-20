@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight, Check, CalendarX2, CheckCircle2, Cog, Armchair, Loader2, MapPin, Tag } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, CalendarX2, CheckCircle2, Cog, Armchair, Loader2, MapPin, Tag, TriangleAlert } from "lucide-react";
 import { useAuth } from "../AuthContext";
 import { useClient } from "../ClientContext";
 import { WhatsAppIcon } from "../FloatingWhatsApp";
@@ -9,14 +9,17 @@ import {
   apiImageUrl,
   createReservation,
   fetchBookedRanges,
+  fetchMyDocuments,
   fetchQuote,
   type BookedRange,
+  type ClientDocument,
   type PricingQuote,
   type PaymentMethod,
   type ReservationFromApi,
 } from "@/lib/api";
 import { categoryInfo, site } from "@/lib/site";
 import { cn } from "@/lib/utils";
+import { Modal } from "../admin/ui";
 import { dateLocale, useLang } from "@/lib/i18n";
 import {
   Card,
@@ -151,8 +154,22 @@ export function ReserverView() {
   // Le bouton « terminer » ne s'active qu'après un appui sur le bouton WhatsApp
   const [waSent, setWaSent] = useState(false);
 
-  const [form, setForm] = useState<FormState>(() => {
-    if (draft?.form) {
+  // Passeport + permis : obligatoires avant de réserver (pop-up + bandeau ; le serveur vérifie aussi).
+  const [docs, setDocs] = useState<ClientDocument[] | null>(null);
+  const [docsNotice, setDocsNotice] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    fetchMyDocuments()
+      .then((d) => !cancelled && setDocs(d))
+      .catch(() => !cancelled && setDocs(null)); // échec réseau : pas de blocage, le serveur garde la main
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+  const docsMissing =
+    docs !== null && (!docs.some((d) => d.type === "passeport") || !docs.some((d) => d.type === "permis"));
+
+  const [form, setForm] = useState<FormState>(() => {    if (draft?.form) {
       // Brouillon antérieur à l'ajout de la date de naissance : les champs manquants sont créés
       const legacy = draft.form;
       return {
@@ -306,6 +323,12 @@ export function ReserverView() {
   };
 
   const goTo = (target: number) => {
+    // Documents manquants : pop-up dès que le client veut avancer (étape conducteur/envoi).
+    if (target >= 3 && docsMissing) {
+      setStepError("");
+      setDocsNotice(true);
+      return;
+    }
     for (let s = 1; s < target; s++) {
       const err = validate(s);
       if (err) {
@@ -322,6 +345,10 @@ export function ReserverView() {
   /** « Envoyer ma demande » : le formulaire est validé, puis on passe par l'écran
    *  WhatsApp — la réservation ne part vers le serveur qu'après (voir submit). */
   const requestWhatsApp = () => {
+    if (docsMissing) {
+      setDocsNotice(true);
+      return;
+    }
     const err = validate(4);
     if (err) return setStepError(err);
     setStepError("");
@@ -331,6 +358,10 @@ export function ReserverView() {
   };
 
   const submit = async () => {
+    if (docsMissing) {
+      setDocsNotice(true);
+      return;
+    }
     const err = validate(4);
     if (err) return setStepError(err);
     if (!car) return;
@@ -505,6 +536,19 @@ export function ReserverView() {
   return (
     <div>
       <PageTitle kicker={t("Nouvelle réservation")} title={t("Réserver un véhicule")} />
+
+      {/* Passeport + permis manquants : blocage visible à toutes les étapes */}
+      {docsMissing && (
+        <div className="mb-6 flex flex-wrap items-center gap-3 rounded-md border border-amber-600/20 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
+          <TriangleAlert className="h-4 w-4 flex-shrink-0 text-amber-600" />
+          <span className="min-w-0 flex-1">
+            {t("Documents manquants : ajoutez votre passeport et votre permis de conduire dans « Mon profil » pour réserver.")}
+          </span>
+          <button type="button" onClick={() => setActiveTab("profil")} className={cn(secondaryBtn, "shrink-0")}>
+            {t("Aller à mes documents")}
+          </button>
+        </div>
+      )}
 
       {/* Étapes */}
       <p className="mb-2 text-sm font-medium text-slate-900 sm:hidden" aria-live="polite">
@@ -1067,6 +1111,22 @@ export function ReserverView() {
           </Card>
         </aside>
       </div>
+
+      {docsNotice && (
+        <Modal title={t("Documents requis")} onClose={() => setDocsNotice(false)}>
+          <div className="flex flex-col gap-4 px-5 pb-5 text-sm text-slate-600">
+            <p>{t("Avant d'envoyer une réservation, ajoutez votre passeport et votre permis de conduire dans votre profil.")}</p>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" onClick={() => setActiveTab("profil")} className={primaryBtn}>
+                {t("Aller à mes documents")}
+              </button>
+              <button type="button" onClick={() => setDocsNotice(false)} className={secondaryBtn}>
+                {t("Plus tard")}
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

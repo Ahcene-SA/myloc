@@ -61,6 +61,14 @@ class ReservationController
             Response::error('Trop de demandes de réservation depuis cette connexion. Réessayez demain.', 429);
         }
 
+        // Documents obligatoires : passeport + permis téléversés avant toute réservation en ligne.
+        $stmt = $this->pdo->prepare('SELECT type FROM user_documents WHERE user_id = :id');
+        $stmt->execute([':id' => $user['user_id']]);
+        $missing = array_values(array_diff(['passeport', 'permis'], (array) $stmt->fetchAll(\PDO::FETCH_COLUMN)));
+        if (!empty($missing)) {
+            Response::error('Avant de réserver, ajoutez votre passeport et votre permis de conduire dans « Mon profil » (mes documents).', 403, ['code' => 'DOCUMENTS_REQUIRED', 'missing' => $missing]);
+        }
+
         $required = Validator::required($input, ['car_id', 'start_date', 'end_date', 'full_name', 'email', 'phone', 'birth_date', 'passport_number']);
         if (!empty($required)) {
             Response::error('Champs obligatoires manquants.', 422, ['missing' => $required]);

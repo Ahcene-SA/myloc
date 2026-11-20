@@ -5,6 +5,7 @@ import {
   Cake,
   CalendarDays,
   Check,
+  CheckCircle2,
   ClipboardCheck,
   Coins,
   FileText,
@@ -18,17 +19,22 @@ import {
   RotateCcw,
   UserRound,
   X,
+  XCircle,
 } from "lucide-react";
 import { useAdmin } from "../AdminContext";
 import { WhatsAppIcon } from "../FloatingWhatsApp";
 import { useAuth } from "../AuthContext";
+import { Modal } from "./ui";
 import { auditDetail, auditLabel, toneClass } from "./auditLabels";
 import {
   apiImageUrl,
   fetchAudit,
   fetchInspections,
+  fetchUserDocuments,
   isOwner,
+  openDocumentFile,
   type AuditEntry,
+  type ClientDocument,
   updateReservationStatus,
   zoneLabels,
   type InspectionSet,
@@ -47,6 +53,7 @@ import {
   formatDate,
   formatPrice,
   formatTime,
+  ghostBtn,
   inputClass,
   secondaryBtn,
   paymentLabels,
@@ -132,7 +139,52 @@ function DrawerBody({ r, onClose }: { r: ReservationFromApi; onClose: () => void
     !Number.isNaN(acompteNum ?? 0) &&
     (acompteInput.trim() === "" ? Number(r.acompte_amount ?? 0) > 0 : Number(String(r.acompte_amount ?? "")) !== acompteNum);
 
+  // Documents du client (passeport, permis) : uniquement pour les réservations liées à un compte.
+  const { token } = useAuth();
+  const [clientDocs, setClientDocs] = useState<ClientDocument[] | null>(null);
+  const [docsBusyId, setDocsBusyId] = useState<number | null>(null);
+  const [docErr, setDocErr] = useState("");
+  const [docPreview, setDocPreview] = useState<{ url: string; label: string } | null>(null);
+  useEffect(() => {
+    if (!r.user_id) {
+      setClientDocs(null);
+      return;
+    }
+    let cancelled = false;
+    fetchUserDocuments(r.user_id)
+      .then((d) => !cancelled && setClientDocs(d))
+      .catch(() => !cancelled && setClientDocs(null));
+    return () => {
+      cancelled = true;
+    };
+  }, [r.user_id]);
+
+  const viewClientDoc = async (doc: ClientDocument) => {
+    if (!token) return;
+    setDocsBusyId(doc.id);
+    setDocErr("");
+    try {
+      const isPdf = doc.mime === "application/pdf";
+      const { url } = await openDocumentFile(token, doc.id, isPdf ? 60_000 : 0);
+      if (isPdf) {
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = doc.original_name || doc.type;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      } else {
+        setDocPreview({ url, label: doc.type === "passeport" ? "Passeport" : "Permis de conduire" });
+      }
+    } catch (e) {
+      setDocErr(e instanceof Error ? e.message : "Document indisponible.");
+    } finally {
+      setDocsBusyId(null);
+    }
+  };
+
   return (
+    <>
     <Drawer
       onClose={onClose}
       title={
@@ -222,6 +274,54 @@ function DrawerBody({ r, onClose }: { r: ReservationFromApi; onClose: () => void
                 </p>
               )}
             </div>
+
+            {!!r.user_id && (
+              <div className="mt-4 border-t border-slate-100 pt-3">
+                <p className="text-xs font-medium text-slate-500">Documents du client</p>
+                {clientDocs === null ? (
+                  <p className="mt-1.5 flex items-center gap-2 text-xs text-slate-500">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" /> Chargement…
+                  </p>
+                ) : (
+                  <ul className="mt-1.5 flex flex-col gap-1.5 text-sm">
+                    {(["passeport", "permis"] as const).map((type) => {
+                      const doc = clientDocs.find((d) => d.type === type);
+                      return (
+                        <li key={type} className="flex flex-wrap items-center gap-2">
+                          {doc ? (
+                            <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-emerald-600" />
+                          ) : (
+                            <XCircle className="h-4 w-4 flex-shrink-0 text-slate-300" />
+                          )}
+                          <span className={doc ? "text-slate-700" : "text-slate-400"}>
+                            {type === "passeport" ? "Passeport" : "Permis de conduire"}
+                          </span>
+                          {!doc && <span className="text-xs text-amber-700">Manquant</span>}
+                          {doc && (
+                            <button
+                              type="button"
+                              className={ghostBtn}
+                              disabled={docsBusyId !== null}
+                              onClick={() => viewClientDoc(doc)}
+                            >
+                              {docsBusyId === doc.id ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : null}
+                              {doc.mime === "application/pdf" ? "Télécharger" : "Voir"}
+                              {doc.uploaded_at && (
+                                <span className="text-xs text-slate-400">· {formatDate(doc.uploaded_at.slice(0, 10))}</span>
+                              )}
+                            </button>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+                {docErr && <p className="mt-1.5 text-xs text-red-700">{docErr}</p>}
+              </div>
+            )}
+
             <div className="mt-4 flex flex-wrap gap-2">
               <a
                 href={clientWhatsApp(r.phone, whatsappText(r, "pending", ""))}
@@ -370,8 +470,7 @@ function DrawerBody({ r, onClose }: { r: ReservationFromApi; onClose: () => void
       </div>
 
       {/* Actions */}
-      <div className="sticky bottom-0 border-t border-slate-200 bg-slate-50 px-5 pb-[calc(env(safe-area-inset-bottom)+0.875rem)] pt-3.5">
-        {asking ? (
+      <div className="sticky bottom-0 border-t border-slate-200 bg-slate-50 px-5 pb-[calc(env(safe-area-inset-bottom)+0.875rem)] pt-3.5">        {asking ? (
           <div className="flex flex-col gap-3">
             <p className="text-sm text-slate-900">
               {asking === "rejected" ? "Refuser cette demande ?" : "Annuler cette réservation ?"}{" "}
@@ -416,7 +515,21 @@ function DrawerBody({ r, onClose }: { r: ReservationFromApi; onClose: () => void
           </div>
         )}
       </div>
-    </Drawer>
+      </Drawer>
+      {docPreview && (
+        <Modal
+          title={docPreview.label}
+          onClose={() => {
+            URL.revokeObjectURL(docPreview.url);
+            setDocPreview(null);
+          }}
+          wide
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={docPreview.url} alt={docPreview.label} className="mx-auto max-h-[70vh] w-auto max-w-full" />
+        </Modal>
+      )}
+    </>
   );
 }
 

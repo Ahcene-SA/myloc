@@ -725,6 +725,67 @@ export async function uploadInspectionPhoto(file: File): Promise<string> {
   return res.path;
 }
 
+/* ─────────────── Documents du client (passeport, permis) ─────────────── */
+
+export type ClientDocumentType = "passeport" | "permis";
+
+export interface ClientDocument {
+  id: number;
+  type: ClientDocumentType;
+  filename: string;
+  original_name?: string | null;
+  mime: string;
+  size_bytes: number;
+  uploaded_at: string;
+}
+
+export async function fetchMyDocuments(): Promise<ClientDocument[]> {
+  const res = await request<{ success: boolean; documents?: ClientDocument[] }>("GET", "/me/documents", undefined, true);
+  return res.documents || [];
+}
+
+/** Téléverse (ou remplace) une pièce : photos réduites côté client, PDF envoyés tels quels. */
+export async function uploadMyDocument(type: ClientDocumentType, file: File): Promise<ClientDocument[]> {
+  const isPdf = file.type === "application/pdf";
+  const blob = isPdf ? (file as unknown as Blob) : await shrinkPhoto(file, 2200);
+  const form = new FormData();
+  form.append("type", type);
+  form.append("file", blob, isPdf ? file.name : file.name.replace(/\.[^.]+$/, "") + ".jpg");
+  const res = await request<{ success: boolean; documents?: ClientDocument[] }>("POST", "/me/documents", form, true);
+  return res.documents || [];
+}
+
+/** Équipe : documents d'un client (tiroir de réservation). */
+export async function fetchUserDocuments(userId: number): Promise<ClientDocument[]> {
+  const res = await request<{ success: boolean; documents?: ClientDocument[] }>(
+    "GET",
+    `/admin/user-documents?user_id=${userId}`,
+    undefined,
+    true
+  );
+  return res.documents || [];
+}
+
+/** Ouvre (ou télécharge) un document : fetch authentifié → blob → URL objet.
+ *  request() ne convient pas ici (il attend du JSON). Renvoie {url, mime} ;
+ *  l'appelant décide aperçu (image) ou téléchargement (PDF, CSP object-src 'none'). */
+export async function openDocumentFile(accessToken: string, id: number, revokeAfter = 60_000): Promise<{ url: string; mime: string }> {
+  const res = await fetch(`${getApiBase()}/api/documents/${id}/file`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => null);
+    throw new HttpError(data?.error ? translate(data.error) : "Document indisponible.", res.status);
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  if (revokeAfter > 0) {
+    window.setTimeout(() => URL.revokeObjectURL(url), revokeAfter);
+  }
+  return { url, mime: blob.type };
+}
+
 /* ─────────────── Espace agence ─────────────── */
 
 /** Étape de connexion agence commencée depuis la page de connexion client (reprise sur /agence). */

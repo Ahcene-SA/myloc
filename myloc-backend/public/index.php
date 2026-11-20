@@ -23,6 +23,7 @@ use Myloc\Config\Timezone;
 use Myloc\Controllers\AgencyController;
 use Myloc\Controllers\AuthController;
 use Myloc\Controllers\CarController;
+use Myloc\Controllers\DocumentController;
 use Myloc\Controllers\InspectionController;
 use Myloc\Controllers\PasswordResetController;
 use Myloc\Controllers\PricingController;
@@ -74,6 +75,7 @@ $pricingController = new PricingController($db);
 $inspectionController = new InspectionController($db);
 $agencyController = new AgencyController($db);
 $passwordResetController = new PasswordResetController($db);
+$documentController = new DocumentController($db);
 
 $router = new Router();
 
@@ -142,6 +144,14 @@ $router->get('/api/reservations/me', fn() => $reservationController->myReservati
 $router->patch('/api/reservations/{id}/cancel', fn(array $params) => $reservationController->cancel($params));
 $router->get('/api/reservations', fn() => $reservationController->allReservations());
 $router->patch('/api/reservations/{id}/status', fn(array $params) => $reservationController->updateStatus($params));
+
+// Documents du client (passeport, permis) : obligatoires avant toute réservation.
+$router->get('/api/me/documents', fn() => $documentController->listMine(), 'client');
+$router->post('/api/me/documents', fn() => $documentController->upload(), 'client');
+// Équipe : documents d'un client donné (tiroir de réservation).
+$router->get('/api/admin/user-documents', fn() => $documentController->listForUser(), 'staff');
+// Lecture d'un fichier : client propriétaire ou équipe (contrôle dans le contrôleur, pas par Router).
+$router->get('/api/documents/{id}/file', fn(array $params) => $documentController->streamFile($params));
 
 // The Router enforces the role argument above before invoking the handler.
 $router->dispatch();
