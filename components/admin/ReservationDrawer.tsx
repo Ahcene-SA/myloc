@@ -320,7 +320,7 @@ function DrawerBody({ r, onClose }: { r: ReservationFromApi; onClose: () => void
               </span>
             </p>
             <p className="text-xs text-slate-500">
-              Vide = aucun acompte. Enregistré au moment de confirmer, ou avec « Enregistrer le message » plus tard ; visible sur le contrat.
+              Vide = aucun acompte. Pré-rempli à la règle des 10 %, mais envoyé seulement avec « Confirmer » ou « Enregistrer l'acompte » ; visible ensuite sur le contrat.
             </p>
           </div>
         </section>
